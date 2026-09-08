@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/providers/currency_provider.dart';
-import '../../../core/utils/currency_formatter.dart';
-import '../models/set_product_item.dart';
+import '../../../../core/providers/currency_provider.dart';
+import '../../../../core/utils/currency_formatter.dart';
+import '../../models/set_product_item.dart';
 
 class SetProductCard extends ConsumerWidget {
   final SetProductItem product;

@@ -9,6 +9,7 @@ import '../../../../core/widgets/condition_badge.dart';
 import '../../../../core/widgets/pokemon_card_image.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../catalog/models/pokemon_card_item.dart';
+import '../../../monitoring/services/price_monitoring_service.dart';
 
 class CollectionDashboardWidget extends ConsumerWidget {
   final List<UserCard> cards;
@@ -37,14 +38,19 @@ class CollectionDashboardWidget extends ConsumerWidget {
     final Map<String, int> finishCounts = {};
     final Map<String, int> languageCounts = {};
 
-    for (final card in cards) {
+    final monitoredItems = PriceMonitoringService.generateMonitoredItems(
+      cards: cards,
+      folders: const [],
+    );
+
+    for (int i = 0; i < cards.length; i++) {
+      final card = cards[i];
       final qty = card.quantity;
       totalCount += qty;
       totalInvestedBrl += (card.purchasePriceBrl * qty);
 
-      final baseVal = card.purchasePriceBrl > 0 ? card.purchasePriceBrl : 15.0;
-      final cardEstValue = baseVal * 1.12;
-      estimatedCurrentValueBrl += (cardEstValue * qty);
+      final item = monitoredItems[i];
+      estimatedCurrentValueBrl += (item.estimatedCurrentPriceBrl * qty);
 
       final finishKey = card.finish.isNotEmpty ? card.finish : 'Regular';
       finishCounts[finishKey] = (finishCounts[finishKey] ?? 0) + qty;
@@ -77,13 +83,9 @@ class CollectionDashboardWidget extends ConsumerWidget {
         : CurrencyFormatter.toBrl(profitLossBrl.abs());
 
     // Sort Top 10 most valuable cards
-    final sortedCards = List<UserCard>.from(cards)
-      ..sort((a, b) {
-        final valA = a.purchasePriceBrl > 0 ? a.purchasePriceBrl : 15.0;
-        final valB = b.purchasePriceBrl > 0 ? b.purchasePriceBrl : 15.0;
-        return valB.compareTo(valA);
-      });
-    final topCards = sortedCards.take(10).toList();
+    final sortedMonitored = List.of(monitoredItems)
+      ..sort((a, b) => b.estimatedCurrentPriceBrl.compareTo(a.estimatedCurrentPriceBrl));
+    final topCards = sortedMonitored.take(10).map((m) => m.card).toList();
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -127,35 +129,48 @@ class CollectionDashboardWidget extends ConsumerWidget {
                     ],
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: (isProfit ? AppColors.profitGreen : AppColors.lossRed).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: (isProfit ? AppColors.profitGreen : AppColors.lossRed).withValues(alpha: 0.5),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isProfit ? Icons.arrow_upward : Icons.arrow_downward,
-                        size: 12,
-                        color: isProfit ? AppColors.profitGreen : AppColors.lossRed,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${isProfit ? "+" : "-"}${profitLossPct.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: isProfit ? AppColors.profitGreen : AppColors.lossRed,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: (isProfit ? AppColors.profitGreen : AppColors.lossRed).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: (isProfit ? AppColors.profitGreen : AppColors.lossRed).withValues(alpha: 0.5),
+                          width: 1,
                         ),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isProfit ? Icons.arrow_upward : Icons.arrow_downward,
+                            size: 12,
+                            color: isProfit ? AppColors.profitGreen : AppColors.lossRed,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${isProfit ? "+" : "-"}${profitLossPct.toStringAsFixed(1)}%',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: isProfit ? AppColors.profitGreen : AppColors.lossRed,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    IconButton(
+                      icon: const Icon(Icons.analytics_outlined, size: 18),
+                      tooltip: strings.monitoringTabTitle,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      onPressed: () => AppNavigator.toPriceMonitoring(context),
+                    ),
+                  ],
                 ),
               ],
             ),

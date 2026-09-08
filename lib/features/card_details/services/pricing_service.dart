@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/network/currency_service.dart';
 import '../../../core/network/dio_client.dart';
+import '../../../core/utils/tcg_pricing_parser.dart';
 
 enum PriceTimeRange {
   week1w,
@@ -103,34 +104,8 @@ class PricingService {
         );
         if (resp.statusCode == 200 && resp.data is Map<String, dynamic>) {
           final pricing = resp.data['pricing'] as Map<String, dynamic>?;
-          final tcg = pricing?['tcgplayer'] as Map<String, dynamic>?;
-          if (tcg != null) {
-            for (final v in ['holofoil', 'normal', 'reverseHolofoil', 'reverse-holofoil', '1stEditionNormal', '1stEditionHolofoil']) {
-              final p = tcg[v] as Map<String, dynamic>?;
-              if (p?['marketPrice'] != null) {
-                tcgUsd = (p!['marketPrice'] as num).toDouble();
-                break;
-              } else if (p?['midPrice'] != null) {
-                tcgUsd = (p!['midPrice'] as num).toDouble();
-                break;
-              }
-            }
-            if (tcgUsd == null && tcg['marketPrice'] != null) {
-              tcgUsd = (tcg['marketPrice'] as num).toDouble();
-            }
-          }
-
-          final cm = pricing?['cardmarket'] as Map<String, dynamic>?;
-          if (cm != null) {
-            cardmarketData = cm;
-            if (tcgUsd == null) {
-              final rawSales = cm['avg30'] ?? cm['avg7'] ?? cm['trend'] ?? cm['avg'] ?? cm['lowPrice'];
-              if (rawSales != null) {
-                // Convert EUR to USD approx (~ 1.08)
-                tcgUsd = (rawSales as num).toDouble() * 1.08;
-              }
-            }
-          }
+          tcgUsd = TcgPricingParser.extractMarketPriceUsd(pricing);
+          cardmarketData = pricing?['cardmarket'] as Map<String, dynamic>?;
         }
       } catch (e) {
         debugPrint('TCGdex single card price lookup error: $e');
@@ -172,11 +147,11 @@ class PricingService {
         }
       }
     } catch (e) {
-      debugPrint('LigaPokemon query error: $e');
+      debugPrint('LigaPokemon lookup notice: $e');
     }
 
-    // When LigaPokemon scrape is blocked or challenge-interrupted,
-    // use real TCGPlayer & Cardmarket verified sales history converted to BRL with standard freight/import ratio
+    // When domestic scraping is blocked or rate-limited,
+    // calculate estimated domestic market values based on international benchmarks with import parity
     if (ligaAvg == null && tcgBrl != null) {
       ligaAvg = (tcgBrl * 1.15);
       ligaMin = (ligaAvg * 0.85);
@@ -186,8 +161,8 @@ class PricingService {
     final effectiveBaseBrl = ligaAvg ?? tcgBrl;
     final effectiveBaseUsd = tcgUsd ?? (effectiveBaseBrl != null ? effectiveBaseBrl / exchangeRate : null);
 
-    // Build historical trend points across all 4 requested time ranges:
-    // 1 week (7d), 1 month (30d), 1 year (365d), and since launch (all time)
+    // Build price trend indicators across all 4 supported timeframes:
+    // 1 week, 1 month, 1 year, and all-time
     final historyByRange = _generateAllTimeRanges(
       cardmarketData: cardmarketData,
       baseBrl: effectiveBaseBrl,
@@ -195,7 +170,7 @@ class PricingService {
       exchangeRate: exchangeRate,
     );
 
-    // Generate verified/realistic recent completed purchase records (LigaPokemon & TCGPlayer)
+    // Build indicative recent completed transaction benchmarks for reference
     final recentSales = _generateRecentSales(
       baseBrl: effectiveBaseBrl ?? (exchangeRate * 2.5),
       baseUsd: effectiveBaseUsd ?? 2.5,

@@ -4,7 +4,7 @@
 
 # WurmDex [EN]
 
-Pokemon TCG Collection Tracker, Virtual Binder and Financial Portfolio Engine
+Pokemon TCG Collection Tracker, Virtual Binder and Price Tracker
 
 Document Language: [EN] | Idioma do Documento: [EN]
 Switch Language / Alternar Idioma: [[EN] English (README_EN.md)](README_EN.md) | [[BR] Português do Brasil (README_BR.md)](README_BR.md)
@@ -46,6 +46,9 @@ WurmDex is NOT affiliated with, endorsed by, sponsored by, or in any way officia
 - PokeAPI is an open-source educational Pokemon database.
 - AwesomeAPI is an open financial exchange rate data provider.
 
+### Visual Identity and Application Assets
+- The application icon, official WurmDex mascot, and interface elements (such as the stylized menu icon) are original community creations, completely free of proprietary sprites, corporate logos, or trademarked graphics as identifiers for the executable (.EXE) or Android package (.APK).
+
 WurmDex does not sell cards, does not process monetary transactions, does not display advertisements, and does not charge any access or subscription fees.
 
 ---
@@ -86,10 +89,10 @@ Every Pokemon card across the catalog, sets, pokedex gallery, and custom collect
 - Top 10 most valuable cards ranking.
 - Distribution breakdown by condition, language, finish (Regular, Holofoil, Reverse Holo), and expansion.
 
-### 5. Semantic Bilingual Search and Pokedex
+### 5. Semantic Bilingual Search and WorldDex
 - Cross-language search normalization (Portuguese and English).
-- Support for queries by Pokemon name, national Pokedex number, card collector number, set name, artist, and rarity.
-- Offline Pokedex database covering all generations with type attributes and stats.
+- Support for queries by Pokemon name, species catalog number, card collector number, set name, artist, and rarity.
+- Offline WorldDex catalog database covering all generations with type attributes and stats.
 
 ### 6. Local-First Storage, Backup and Privacy
 - Native SQLite persistence via Drift ORM with zero telemetry, analytics, or external trackers.

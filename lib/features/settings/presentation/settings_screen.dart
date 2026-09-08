@@ -132,11 +132,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     subtitle: Text(strings.themeWurmpleSub),
                     secondary: CircleAvatar(
                       backgroundColor: AppColors.wurmpleSurface,
-                      child: Image.asset(
-                        'assets/images/wurmple.png',
-                        width: 26,
-                        height: 18,
-                        fit: BoxFit.contain,
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/wurmple.png',
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.pest_control_outlined,
+                            size: 18,
+                            color: AppColors.wurmplePrimary,
+                          ),
+                        ),
                       ),
                     ),
                     value: AppThemeMode.wurmple,
@@ -256,6 +263,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => _showLegalNoticeDialog(context, strings),
                 ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.hub_outlined, color: AppColors.darkCyan),
+                  title: Text(strings.labelDataSources),
+                  subtitle: Text(strings.subDataSources),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showDataSourcesDialog(context, strings),
+                ),
               ],
             ),
           ),
@@ -278,6 +293,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         content: SingleChildScrollView(
           child: Text(
             strings.legalNoticeBody,
+            style: const TextStyle(fontSize: 13, height: 1.4),
+          ),
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(strings.isEn ? 'Close' : 'Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDataSourcesDialog(BuildContext context, AppStrings strings) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.hub_outlined, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(strings.dataSourcesTitle, style: const TextStyle(fontSize: 16))),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Text(
+            strings.dataSourcesBody,
             style: const TextStyle(fontSize: 13, height: 1.4),
           ),
         ),

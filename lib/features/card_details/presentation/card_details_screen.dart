@@ -1,11 +1,5 @@
-import 'dart:math' as math;
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import 'package:drift/drift.dart' as drift;
-import 'package:uuid/uuid.dart';
-import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_provider.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/providers/currency_provider.dart';
@@ -13,7 +7,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/marketplace_url_helper.dart';
 import '../../../../core/utils/semantic_search_helper.dart';
-import '../../../../core/widgets/bottom_sheet_drag_handle.dart';
 import '../../../../core/widgets/condition_badge.dart';
 import '../../../../core/widgets/holographic_card_view.dart';
 import '../../../../core/widgets/pokemon_card_image.dart';
@@ -21,6 +14,9 @@ import '../../../../core/widgets/quick_currency_toggle.dart';
 import '../services/pricing_service.dart';
 import '../../catalog/models/pokemon_card_item.dart';
 import '../../catalog/presentation/widgets/card_quick_action_sheet.dart';
+import 'widgets/card_price_history_section.dart';
+import 'widgets/card_quick_wishlist_dialog.dart';
+import 'widgets/card_recent_sales_sheet.dart';
 
 class CardDetailsScreen extends ConsumerStatefulWidget {
   final PokemonCardItem card;
@@ -35,7 +31,6 @@ class CardDetailsScreen extends ConsumerStatefulWidget {
 class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
   late Future<CardPricesResult> _pricesFuture;
   late AppStrings _strings;
-  PriceTimeRange _selectedRange = PriceTimeRange.month1m;
 
   @override
   void initState() {
@@ -79,98 +74,11 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
   }
 
   Future<void> _showQuickWishlistDialog() async {
-    final currency = ref.read(currencyProvider);
-    final isUsd = currency == AppCurrency.usd;
-    final rate = ref.read(exchangeRateProvider);
-    final card = widget.card;
-    final db = ref.read(databaseProvider);
-
-    double targetInput = 0.0;
-    String priority = 'Média';
-    String folderName = 'Geral';
-
-    await showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text('${_strings.wishlistTitle}: ${card.name}'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: isUsd ? _strings.labelTargetPriceUsd : _strings.labelTargetPriceBrl,
-                    prefixText: isUsd ? '\$ ' : 'R\$ ',
-                    helperText: _strings.isEn
-                        ? 'Alerts if market price drops below target'
-                        : 'Avisa se o preço de mercado ficar abaixo deste valor',
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (val) {
-                    targetInput = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: folderName,
-                  decoration: InputDecoration(
-                    labelText: _strings.wishlistFolderNameLabel,
-                    prefixIcon: const Icon(Icons.folder_outlined, size: 20),
-                    isDense: true,
-                  ),
-                  onChanged: (val) => folderName = val.trim().isEmpty ? 'Geral' : val.trim(),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(labelText: _strings.labelPriority),
-                  initialValue: priority,
-                  items: [
-                    DropdownMenuItem(value: 'Baixa', child: Text(_strings.priorityLow)),
-                    DropdownMenuItem(value: 'Média', child: Text(_strings.priorityMedium)),
-                    DropdownMenuItem(value: 'Alta', child: Text(_strings.priorityHigh)),
-                  ],
-                  onChanged: (val) => setState(() => priority = val!),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(_strings.cancel),
-              ),
-              FilledButton(
-                onPressed: () async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  final successMsg = _strings.cardAddedToWishlist(card.name);
-                  final targetBrl = isUsd ? (targetInput * rate) : targetInput;
-                  await db.insertWishlistItem(
-                    WishlistItemsCompanion(
-                      id: drift.Value(const Uuid().v4()),
-                      cardApiId: drift.Value(card.id),
-                      name: drift.Value(card.name),
-                      number: drift.Value(card.number),
-                      setName: drift.Value(card.setName),
-                      imageUrl: drift.Value(card.imageUrlLarge.isNotEmpty ? card.imageUrlLarge : card.imageUrlSmall),
-                      targetPriceBrl: drift.Value(targetBrl),
-                      priority: drift.Value(priority),
-                      folderName: drift.Value(folderName),
-                      createdAt: drift.Value(DateTime.now()),
-                    ),
-                  );
-                  if (ctx.mounted) {
-                    Navigator.pop(ctx);
-                  }
-                  messenger.showSnackBar(
-                    SnackBar(content: Text(successMsg)),
-                  );
-                },
-                child: Text(_strings.save),
-              ),
-            ],
-          );
-        },
-      ),
+    await CardQuickWishlistDialog.show(
+      context,
+      ref: ref,
+      card: widget.card,
+      strings: _strings,
     );
   }
 
@@ -611,227 +519,10 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
 
                 // Historical Price Graph
                 if (prices != null) ...[
-                  Builder(
-                    builder: (context) {
-                      final currentPoints = prices.historyByRange[_selectedRange] ?? prices.historyPoints;
-                      if (currentPoints.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
-
-                      final spots = currentPoints.asMap().entries.map((e) {
-                        final yVal = isUsd ? e.value.priceUsd : e.value.priceBrl;
-                        return FlSpot(e.key.toDouble(), yVal);
-                      }).toList();
-
-                      final yValues = spots.map((s) => s.y).toList();
-                      final rawMinY = yValues.isNotEmpty ? yValues.reduce(math.min) : 0.0;
-                      final rawMaxY = yValues.isNotEmpty ? yValues.reduce(math.max) : 10.0;
-                      final deltaY = rawMaxY - rawMinY;
-                      final bottomBuffer = deltaY > 0 ? (deltaY * 0.25) : (rawMinY > 0 ? rawMinY * 0.20 : 1.0);
-                      final topBuffer = deltaY > 0 ? (deltaY * 0.15) : (rawMaxY > 0 ? rawMaxY * 0.15 : 1.0);
-                      final chartMinY = math.max(0.0, rawMinY - bottomBuffer);
-                      final chartMaxY = rawMaxY + topBuffer;
-
-                      final intervalX = (currentPoints.length > 7)
-                          ? (currentPoints.length / 5).ceilToDouble()
-                          : 1.0;
-
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.show_chart, size: 18, color: isUsd ? Colors.amberAccent : AppColors.profitGreen),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _strings.priceHistory30Days,
-                                        style: theme.textTheme.labelMedium?.copyWith(
-                                          letterSpacing: 0.8,
-                                          fontWeight: FontWeight.bold,
-                                          color: isUsd ? Colors.orange : null,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Text(
-                                    isUsd ? 'TCGPlayer (USD)' : 'LigaPokémon (BRL)',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: isUsd ? Colors.orange : theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-
-                              // Time Range Selector: 1 Semana, 1 Mês, 1 Ano, Desde o Lançamento
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: SegmentedButton<PriceTimeRange>(
-                                  segments: [
-                                    ButtonSegment(
-                                      value: PriceTimeRange.week1w,
-                                      label: Text(_strings.timeRangeWeek, style: const TextStyle(fontSize: 11)),
-                                    ),
-                                    ButtonSegment(
-                                      value: PriceTimeRange.month1m,
-                                      label: Text(_strings.timeRangeMonth, style: const TextStyle(fontSize: 11)),
-                                    ),
-                                    ButtonSegment(
-                                      value: PriceTimeRange.year1y,
-                                      label: Text(_strings.timeRangeYear, style: const TextStyle(fontSize: 11)),
-                                    ),
-                                    ButtonSegment(
-                                      value: PriceTimeRange.allTime,
-                                      label: Text(_strings.timeRangeAll, style: const TextStyle(fontSize: 11)),
-                                    ),
-                                  ],
-                                  selected: {_selectedRange},
-                                  onSelectionChanged: (selection) {
-                                    setState(() {
-                                      _selectedRange = selection.first;
-                                    });
-                                  },
-                                  style: SegmentedButton.styleFrom(
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 18),
-                              SizedBox(
-                                height: 200,
-                                child: LineChart(
-                                  LineChartData(
-                                    minY: chartMinY,
-                                    maxY: chartMaxY,
-                                    clipData: const FlClipData.all(),
-                                    lineTouchData: LineTouchData(
-                                      touchTooltipData: LineTouchTooltipData(
-                                        getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                                          return touchedSpots.map((spot) {
-                                            final formattedPrice = isUsd
-                                                ? '\$ ${spot.y.toStringAsFixed(2).replaceAll('.', ',')}'
-                                                : 'R\$ ${spot.y.toStringAsFixed(2).replaceAll('.', ',')}';
-                                            final dateIndex = spot.x.toInt();
-                                            String dateText = '';
-                                            if (dateIndex >= 0 && dateIndex < currentPoints.length) {
-                                              dateText = DateFormat('dd/MM/yyyy').format(currentPoints[dateIndex].date);
-                                            }
-                                            return LineTooltipItem(
-                                              dateText.isNotEmpty ? '$dateText\n$formattedPrice' : formattedPrice,
-                                              const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 11.5,
-                                              ),
-                                            );
-                                          }).toList();
-                                        },
-                                      ),
-                                    ),
-                                    gridData: FlGridData(
-                                      show: true,
-                                      drawVerticalLine: false,
-                                      horizontalInterval: (chartMaxY - chartMinY) > 0
-                                          ? (chartMaxY - chartMinY) / 4
-                                          : 1.0,
-                                      getDrawingHorizontalLine: (val) => FlLine(
-                                        color: theme.dividerColor.withValues(alpha: 0.2),
-                                        strokeWidth: 1,
-                                        dashArray: [4, 4],
-                                      ),
-                                    ),
-                                    titlesData: FlTitlesData(
-                                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                      leftTitles: AxisTitles(
-                                        sideTitles: SideTitles(
-                                          showTitles: true,
-                                          reservedSize: 58,
-                                          getTitlesWidget: (val, meta) {
-                                            if (val == meta.min || val == meta.max) {
-                                              return const SizedBox.shrink();
-                                            }
-                                            final formatted = val.toStringAsFixed(2).replaceAll('.', ',');
-                                            return SideTitleWidget(
-                                              meta: meta,
-                                              space: 6,
-                                              child: Text(
-                                                isUsd ? '\$$formatted' : 'R\$$formatted',
-                                                style: const TextStyle(fontSize: 10, color: Colors.grey),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                      bottomTitles: AxisTitles(
-                                        sideTitles: SideTitles(
-                                          showTitles: true,
-                                          reservedSize: 28,
-                                          interval: intervalX,
-                                          getTitlesWidget: (val, meta) {
-                                            final index = val.toInt();
-                                            if (index >= 0 && index < currentPoints.length && val == index.toDouble()) {
-                                              final date = currentPoints[index].date;
-                                              final String label;
-                                              if (_selectedRange == PriceTimeRange.year1y || _selectedRange == PriceTimeRange.allTime) {
-                                                label = DateFormat('MM/yy').format(date);
-                                              } else {
-                                                label = DateFormat('dd/MM').format(date);
-                                              }
-                                              return SideTitleWidget(
-                                                meta: meta,
-                                                space: 8,
-                                                child: Text(
-                                                  label,
-                                                  style: const TextStyle(fontSize: 10, color: Colors.grey),
-                                                ),
-                                              );
-                                            }
-                                            return const SizedBox.shrink();
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    borderData: FlBorderData(show: false),
-                                    lineBarsData: [
-                                      LineChartBarData(
-                                        spots: spots,
-                                        isCurved: true,
-                                        preventCurveOverShooting: true,
-                                        color: isUsd ? Colors.orange : theme.colorScheme.primary,
-                                        barWidth: 3,
-                                        isStrokeCapRound: true,
-                                        belowBarData: BarAreaData(
-                                          show: true,
-                                          color: (isUsd ? Colors.orange : theme.colorScheme.primary).withValues(alpha: 0.15),
-                                        ),
-                                        dotData: FlDotData(
-                                          show: true,
-                                          getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                                            radius: 3,
-                                            color: isUsd ? Colors.orange : theme.colorScheme.primary,
-                                            strokeWidth: 1.5,
-                                            strokeColor: theme.cardColor,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                  CardPriceHistorySection(
+                    prices: prices,
+                    isUsd: isUsd,
+                    strings: _strings,
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -934,272 +625,14 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
     );
   }
 
-  Widget _saleMetricItem(String label, String value, Color color) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 10, color: Colors.grey),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color),
-        ),
-      ],
-    );
-  }
-
   void _showSalesHistoryModal(BuildContext context, CardPricesResult? prices, bool isUsd) {
-    final card = widget.card;
-    final allSales = prices?.recentSales ?? [];
-
-    showAppModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (modalContext) {
-        String selectedPlatform = isUsd ? 'TCGPlayer' : 'LigaPokémon';
-
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final filteredSales = allSales.where((s) => s.platform == selectedPlatform).toList();
-            final isTcg = selectedPlatform == 'TCGPlayer';
-
-            double avgPrice = 0;
-            double minPrice = 0;
-            double maxPrice = 0;
-            if (filteredSales.isNotEmpty) {
-              final vals = filteredSales.map((s) => isTcg ? s.priceUsd : s.priceBrl).toList();
-              avgPrice = vals.reduce((a, b) => a + b) / vals.length;
-              minPrice = vals.reduce(math.min);
-              maxPrice = vals.reduce(math.max);
-            }
-
-            return Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.82,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const BottomSheetDragHandle(),
-                  Row(
-                    children: [
-                      const Icon(Icons.receipt_long, color: AppColors.profitGreen, size: 24),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _strings.salesHistoryTitle,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              _strings.salesHistorySubtitle,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Platform selector: LigaPokemon (BRL) vs TCGPlayer (USD)
-                  SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(
-                        value: 'LigaPokémon',
-                        label: Text('LigaPokémon (BRL)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        icon: Icon(Icons.storefront, size: 16, color: Colors.blue),
-                      ),
-                      ButtonSegment(
-                        value: 'TCGPlayer',
-                        label: Text('TCGPlayer (USD)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        icon: Icon(Icons.shopping_bag_outlined, size: 16, color: Colors.orange),
-                      ),
-                    ],
-                    selected: {selectedPlatform},
-                    onSelectionChanged: (set) {
-                      setModalState(() {
-                        selectedPlatform = set.first;
-                      });
-                    },
-                    style: SegmentedButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Summary stats row
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: (isTcg ? Colors.orange : Colors.blue).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: (isTcg ? Colors.orange : Colors.blue).withValues(alpha: 0.25),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _saleMetricItem(
-                          _strings.salesAveragePaid,
-                          isTcg
-                              ? '\$ ${avgPrice.toStringAsFixed(2).replaceAll('.', ',')}'
-                              : 'R\$ ${avgPrice.toStringAsFixed(2).replaceAll('.', ',')}',
-                          Colors.amber,
-                        ),
-                        _saleMetricItem(
-                          _strings.salesLowestPaid,
-                          isTcg
-                              ? '\$ ${minPrice.toStringAsFixed(2).replaceAll('.', ',')}'
-                              : 'R\$ ${minPrice.toStringAsFixed(2).replaceAll('.', ',')}',
-                          AppColors.profitGreen,
-                        ),
-                        _saleMetricItem(
-                          _strings.salesHighestPaid,
-                          isTcg
-                              ? '\$ ${maxPrice.toStringAsFixed(2).replaceAll('.', ',')}'
-                              : 'R\$ ${maxPrice.toStringAsFixed(2).replaceAll('.', ',')}',
-                          Colors.redAccent,
-                        ),
-                        _saleMetricItem(
-                          _strings.salesTotalRecorded,
-                          '${filteredSales.length}',
-                          Colors.grey,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Completed sales records list
-                  Flexible(
-                    child: filteredSales.isEmpty
-                        ? const Padding(
-                            padding: EdgeInsets.all(24.0),
-                            child: Center(
-                              child: Text(
-                                'Nenhuma compra registrada.',
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                            ),
-                          )
-                        : ListView.separated(
-                            shrinkWrap: true,
-                            itemCount: filteredSales.length,
-                            separatorBuilder: (context, index) => const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final item = filteredSales[index];
-                              final priceStr = isTcg
-                                  ? '\$ ${item.priceUsd.toStringAsFixed(2).replaceAll('.', ',')}'
-                                  : 'R\$ ${item.priceBrl.toStringAsFixed(2).replaceAll('.', ',')}';
-
-                              return ListTile(
-                                dense: true,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                leading: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.profitGreen.withValues(alpha: 0.15),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.check, size: 16, color: AppColors.profitGreen),
-                                ),
-                                title: Row(
-                                  children: [
-                                    Text(
-                                      DateFormat('dd/MM/yyyy HH:mm').format(item.date),
-                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.withValues(alpha: 0.2),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        item.variant,
-                                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                subtitle: Row(
-                                  children: [
-                                    const Text('Estado: ', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                                    Text(
-                                      item.condition,
-                                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                                trailing: Text(
-                                  priceStr,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.profitGreen,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.open_in_new, size: 14),
-                          label: Text(_strings.openSalesLiga, style: const TextStyle(fontSize: 11)),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.blue,
-                            side: const BorderSide(color: Colors.blue),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                          ),
-                          onPressed: () => MarketplaceUrlHelper.openLigaPokemon(
-                            context,
-                            cardName: card.name,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.open_in_new, size: 14),
-                          label: Text(_strings.openSalesTcg, style: const TextStyle(fontSize: 11)),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.orange,
-                            side: const BorderSide(color: Colors.orange),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                          ),
-                          onPressed: () => MarketplaceUrlHelper.openTcgPlayer(
-                            context,
-                            cardName: card.name,
-                            cardNumber: card.number,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            );
-          },
-        );
-      },
+    CardRecentSalesSheet.show(
+      context,
+      card: widget.card,
+      prices: prices,
+      isUsd: isUsd,
+      strings: _strings,
     );
   }
 }
+

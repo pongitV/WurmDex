@@ -134,8 +134,13 @@ class FileStorageHelper {
       if (content.isEmpty) return -1;
 
       final dynamic decoded = jsonDecode(content);
-      if (decoded is! Map<String, dynamic> ||
-          (decoded['app'] != 'WurmDex' && decoded['app'] != 'Yourdex')) {
+      if (decoded is! Map<String, dynamic>) {
+        return -1;
+      }
+
+      final appIdentifier = decoded['app'] as String?;
+      // Validate application identifier (supports WurmDex and legacy format backups)
+      if (appIdentifier != 'WurmDex' && appIdentifier != 'Yourdex') {
         return -1; // Invalid payload
       }
 

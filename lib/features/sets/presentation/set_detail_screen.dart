@@ -21,7 +21,7 @@ import '../models/set_product_item.dart';
 import '../models/tcg_set_item.dart';
 import '../services/set_completion_helper.dart';
 import '../services/tcg_sets_service.dart';
-import '../widgets/set_product_card.dart';
+import 'widgets/set_product_card.dart';
 
 class SetDetailScreen extends ConsumerStatefulWidget {
   final TcgSetItem set;

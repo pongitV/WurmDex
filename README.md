@@ -14,15 +14,16 @@ Languages / Idiomas: [[EN] English (README_EN.md)](README_EN.md) | [[BR] Portugu
 
 WurmDex is an open-source fan application and portfolio manager for the Pokemon Trading Card Game (TCG), designed for Windows Desktop and Android.
 
-### Key Capabilities
+### Features
 
-- Universal Card Display Standard: Strictly adheres to physical card aspect ratio (63mm x 88mm) with a 3-tier metadata layout (Name/Number, Set, Condition/Price).
-- Real-Time Dual-Market Pricing: Live quotes comparing Brazilian domestic market (LigaPokemon, BRL) and international market (TCGPlayer converted to BRL) with automated currency sync via AwesomeAPI.
-- Interactive Pricing Chart: Multi-timeframe trend visualization (1 Week, 1 Month, 1 Year, All-Time) with strict 2-decimal precision.
-- Completed Sales History: Dedicated buyer transactions record modal with average, min, max, and total transactions across LigaPokemon and TCGPlayer.
-- 3D Virtual Binder: Interactive 3x3 pocket-page view with metallic ring binding, leather textures, and card manipulation.
-- Financial Portfolio Engine: Realized/unrealized profit-and-loss calculation, total invested capital vs. current market value, and Top 10 most valuable cards ranking.
-- Local-First Privacy: Zero telemetry, zero analytics, all data stored locally in embedded SQLite with full JSON export and restore capabilities.
+- **Collection & Folder Management**: Organize cards across custom binders and folders with condition tracking, finishes (Foil, Reverse, Regular), and purchase prices.
+- **Interactive 3x3 Virtual Binder**: Realistic pocket-page binder experience with smooth double-page spread animations.
+- **Market Price Reference**: Compare domestic (LigaPokémon, BRL) and international (TCGPlayer, USD) quotes with real-time currency conversion.
+- **Portfolio & Analytics**: Monitor total collection valuation, cost basis, and price trends across multiple timeframes.
+- **WorldDex (Species Catalog)**: Complete species catalog across all 9 generations with official types and card release galleries.
+- **Sets & Expansions**: Browse releases from Base Set to the latest expansions with set completion statistics.
+- **Booster Pack Simulator**: Experience opening booster packs with realistic odds and card animations.
+- **Local-First Architecture**: 100% offline-first using SQLite (via Drift), zero tracking, with full JSON backup and restore.
 
 ---
 
@@ -54,6 +55,7 @@ WurmDex is an independent, non-commercial fan application developed for educatio
 - Pokemon and all related character names, marks, card artwork, and logos are registered trademarks and copyrights of Nintendo Co., Ltd., Creatures Inc., GAME FREAK inc., and The Pokemon Company.
 - WurmDex is NOT affiliated with, endorsed by, or sponsored by Nintendo or The Pokemon Company.
 - Market references from LigaPokemon, TCGPlayer, Cardmarket, and TCGdex are utilized strictly for informational reference under fair use principles.
+- The application icon, official mascot artwork, and interface branding are original community creations, ensuring full compliance for Android (APK) and Windows (.EXE) distributions without using proprietary sprites as application identifiers.
 
 ---
 

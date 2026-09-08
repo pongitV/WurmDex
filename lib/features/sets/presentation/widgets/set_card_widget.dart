@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/tcg_set_item.dart';
+import '../../models/tcg_set_item.dart';
 
 class SetCardWidget extends StatelessWidget {
   final TcgSetItem set;

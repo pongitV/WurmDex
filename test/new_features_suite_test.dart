@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wurmdex/features/booster_simulator/models/booster_pack_config.dart';
 import 'package:wurmdex/features/booster_simulator/services/booster_generator_service.dart';
 import 'package:wurmdex/features/catalog/models/pokemon_card_item.dart';
-import 'package:wurmdex/features/home/services/home_feed_service.dart';
+import 'package:wurmdex/features/news/services/home_feed_service.dart';
 
 void main() {
   group('BoosterGeneratorService Tests', () {

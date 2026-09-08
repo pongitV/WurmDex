@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// A widget that wobbles/jiggles playfully for 2 seconds when tapped.
+/// An elegant, stylized modern menu icon with a playful 2-second wobble animation when tapped.
 class WobblyMenuIcon extends StatefulWidget {
   final Widget? child;
   final VoidCallback? onTap;
@@ -46,13 +46,7 @@ class WobblyMenuIconState extends State<WobblyMenuIcon>
 
   @override
   Widget build(BuildContext context) {
-    final defaultChild = widget.child ??
-        Image.asset(
-          'assets/images/wurmple.png',
-          width: widget.size,
-          height: widget.size,
-          fit: BoxFit.contain,
-        );
+    final defaultChild = widget.child ?? StylizedMenuBadge(size: widget.size);
 
     Widget content = AnimatedBuilder(
       animation: _controller,
@@ -104,4 +98,99 @@ class WobblyMenuIconState extends State<WobblyMenuIcon>
       ),
     );
   }
+}
+
+/// An elegant, stylized geometric menu badge with staggered rounded pill bars and accent styling.
+class StylizedMenuBadge extends StatelessWidget {
+  final double size;
+
+  const StylizedMenuBadge({super.key, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+
+    final padding = (size * 0.22).clamp(4.0, 12.0);
+    final radius = (size * 0.30).clamp(6.0, 16.0);
+
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(padding),
+      decoration: BoxDecoration(
+        color: primaryColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: 0.30),
+          width: (size * 0.035).clamp(1.0, 2.0),
+        ),
+      ),
+      child: CustomPaint(
+        painter: _StylizedMenuPainter(color: primaryColor),
+      ),
+    );
+  }
+}
+
+class _StylizedMenuPainter extends CustomPainter {
+  final Color color;
+
+  const _StylizedMenuPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+
+    final barThickness = (size.height * 0.18).clamp(2.0, 5.0);
+    final cornerRadius = Radius.circular(barThickness / 2);
+    final spacing = (size.height - (barThickness * 3)) / 2;
+
+    // Bar 1: Top bar (65% width)
+    final y1 = 0.0;
+    final topBarWidth = size.width * 0.65;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, y1, topBarWidth, barThickness),
+        cornerRadius,
+      ),
+      paint,
+    );
+
+    // Accent dot aligned with top bar
+    final dotRadius = barThickness / 2;
+    canvas.drawCircle(
+      Offset(size.width - dotRadius, y1 + dotRadius),
+      dotRadius,
+      paint,
+    );
+
+    // Bar 2: Middle bar (full 100% width)
+    final y2 = barThickness + spacing;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, y2, size.width, barThickness),
+        cornerRadius,
+      ),
+      paint,
+    );
+
+    // Bar 3: Bottom bar (82% width)
+    final y3 = (barThickness + spacing) * 2;
+    final bottomBarWidth = size.width * 0.82;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, y3, bottomBarWidth, barThickness),
+        cornerRadius,
+      ),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _StylizedMenuPainter oldDelegate) =>
+      oldDelegate.color != color;
 }

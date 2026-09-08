@@ -4,7 +4,7 @@
 
 # WurmDex [BR]
 
-Gerenciador de Coleções, Fichário Virtual 3D e Motor de Portfólio Financeiro para Pokémon TCG
+Gerenciador de Coleções, Fichário Virtual e Acompanhamento de Mercado para Pokémon TCG
 
 Idioma do Documento: [BR] | Document Language: [BR]
 Alternar Idioma / Switch Language: [[EN] English (README_EN.md)](README_EN.md) | [[BR] Português do Brasil (README_BR.md)](README_BR.md)
@@ -46,6 +46,9 @@ O WurmDex NÃO possui qualquer vínculo oficial, afiliação, endosso, aprovaç�
 - PokeAPI é uma API aberta de dados educacionais sobre Pokemon.
 - AwesomeAPI é um serviço de consulta pública de taxas cambiais.
 
+### Identidade Visual e Ativos do Aplicativo
+- O ícone do aplicativo, o mascote oficial do WurmDex e os elementos de interface (como o ícone de menu estilizado) são obras originais da comunidade, sem a utilização de sprites, logotipos ou gráficos proprietários como identidade do executável (.EXE) ou pacote Android (.APK).
+
 O WurmDex não comercializa cartas, não intermedia transações financeiras, não exibe anúncios publicitários e não cobra qualquer taxa ou assinatura de seus usuários.
 
 ---
@@ -86,10 +89,10 @@ Todas as cartas exibidas no aplicativo (catálogo, expansões, galeria da pokede
 - Classificação das 10 cartas mais valiosas da coleção.
 - Distribuição analítica por estado de conservação, idioma, acabamento (Regular, Holográfica, Reverse Holo) e expansão.
 
-### 5. Busca Semântica e Pokédex Bilíngue
+### 5. Busca Semântica e DexMundial Bilíngue
 - Normalização de termos e correspondência automática entre Português e Inglês.
-- Consultas por nome, número nacional da pokedex, código da carta, coleção, ilustrador e raridade.
-- Pokédex completa offline cobrindo todas as gerações, fraquezas, resistências e atributos elementares.
+- Consultas por nome, número de catálogo mundial, código da carta, coleção, ilustrador e raridade.
+- DexMundial completa offline cobrindo todas as gerações, fraquezas, resistências e atributos elementares.
 
 ### 6. Armazenamento Local, Backup e Privacidade
 - Persistência nativa em SQLite com Drift ORM, sem envio de telemetria, cookies ou rastreadores externos.

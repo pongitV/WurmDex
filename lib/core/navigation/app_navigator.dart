@@ -3,6 +3,7 @@ import '../../features/booster_simulator/presentation/booster_opening_screen.dar
 import '../../features/card_details/presentation/card_details_screen.dart';
 import '../../features/catalog/models/pokemon_card_item.dart';
 import '../../features/collections/presentation/folder_detail_screen.dart';
+import '../../features/monitoring/presentation/price_monitoring_screen.dart';
 import '../../features/pokedex/models/pokedex_entry.dart';
 import '../../features/pokedex/presentation/pokemon_cards_gallery_screen.dart';
 import '../../features/sets/models/tcg_set_item.dart';
@@ -84,6 +85,14 @@ class AppNavigator {
         set: set,
         allCards: allCards,
       ),
+    );
+  }
+
+  /// Navigates to the Price Monitoring screen.
+  static Future<void> toPriceMonitoring(BuildContext context) {
+    return push(
+      context,
+      const PriceMonitoringScreen(),
     );
   }
 }

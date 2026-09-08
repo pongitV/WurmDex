@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/pokedex_entry.dart';
+import '../../models/pokedex_entry.dart';
 
 class PokemonGridCard extends StatelessWidget {
   final PokedexEntry pokemon;

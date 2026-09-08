@@ -1,3 +1,5 @@
+import '../../../core/utils/tcg_pricing_parser.dart';
+
 class PokemonCardItem {
   final String id;
   final String name;
@@ -167,44 +169,10 @@ class PokemonCardItem {
     final types = (json['types'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
     final category = json['category']?.toString() ?? 'Pokémon';
 
-    double? market;
-    double? mid;
-    double? low;
-    final pricing = json['pricing'] as Map<String, dynamic>?;
-    final tcg = pricing?['tcgplayer'] as Map<String, dynamic>?;
-    if (tcg != null) {
-      for (final v in ['holofoil', 'normal', 'reverseHolofoil', 'reverse-holofoil', '1stEditionNormal', '1stEditionHolofoil']) {
-        final p = tcg[v] as Map<String, dynamic>?;
-        if (p != null) {
-          if (market == null && p['marketPrice'] != null) {
-            market = (p['marketPrice'] as num).toDouble();
-          }
-          if (mid == null && p['midPrice'] != null) {
-            mid = (p['midPrice'] as num).toDouble();
-          }
-          if (low == null && p['lowPrice'] != null) {
-            low = (p['lowPrice'] as num).toDouble();
-          }
-        }
-      }
-      if (market == null && tcg['marketPrice'] != null) {
-        market = (tcg['marketPrice'] as num).toDouble();
-      }
-    }
-
-    // Fallback to Cardmarket completed sales history (EUR converted to USD ~1.08)
-    if (market == null) {
-      final cm = pricing?['cardmarket'] as Map<String, dynamic>?;
-      if (cm != null) {
-        final rawSales = cm['avg30'] ?? cm['avg7'] ?? cm['trend'] ?? cm['avg'] ?? cm['lowPrice'];
-        if (rawSales != null) {
-          market = (rawSales as num).toDouble() * 1.08;
-        }
-        if (low == null && cm['lowPrice'] != null) {
-          low = (cm['lowPrice'] as num).toDouble() * 1.08;
-        }
-      }
-    }
+    final prices = TcgPricingParser.parsePricing(json['pricing'] as Map<String, dynamic>?);
+    final market = prices.market;
+    final mid = prices.mid;
+    final low = prices.low;
 
     return PokemonCardItem(
       id: id,

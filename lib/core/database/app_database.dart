@@ -110,7 +110,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'yourdex_database');
+    return driftDatabase(name: 'wurmdex_database');
   }
 
   // --- Folder Queries ---

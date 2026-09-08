@@ -9,7 +9,7 @@ import '../models/tcg_set_item.dart';
 import '../services/set_completion_helper.dart';
 import '../services/tcg_sets_service.dart';
 import '../../../core/navigation/app_navigator.dart';
-import '../widgets/set_card_widget.dart';
+import 'widgets/set_card_widget.dart';
 
 class SetsScreen extends ConsumerStatefulWidget {
   const SetsScreen({super.key});

@@ -98,8 +98,12 @@ void main() {
       const enStrings = AppStrings(AppLanguage.enUs);
       const ptStrings = AppStrings(AppLanguage.ptBr);
 
-      expect(enStrings.navPokedex, 'PokéDex');
-      expect(ptStrings.navPokedex, 'PokéDex');
+      expect(enStrings.navPokedex, 'WorldDex');
+      expect(ptStrings.navPokedex, 'DexMundial');
+      expect(enStrings.pokedexTitle, 'WorldDex');
+      expect(ptStrings.pokedexTitle, 'DexMundial');
+      expect(enStrings.dataSourcesTitle, 'Data Sources & Attribution');
+      expect(ptStrings.dataSourcesTitle, 'Fontes de Dados & Atribuição');
 
       expect(enStrings.pokedexGen(1), 'Gen 1');
       expect(ptStrings.pokedexGen(1), 'Geração 1');

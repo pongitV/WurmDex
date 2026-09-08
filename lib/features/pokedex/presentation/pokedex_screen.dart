@@ -6,7 +6,7 @@ import '../../../core/widgets/quick_currency_toggle.dart';
 import '../../../core/navigation/app_navigator.dart';
 import '../data/pokedex_data.dart';
 import '../models/pokedex_entry.dart';
-import '../widgets/pokemon_grid_card.dart';
+import 'widgets/pokemon_grid_card.dart';
 
 class PokedexScreen extends ConsumerStatefulWidget {
   const PokedexScreen({super.key});
@@ -32,13 +32,14 @@ class _PokedexScreenState extends ConsumerState<PokedexScreen> {
       if (_selectedGeneration > 0 && entry.generation != _selectedGeneration) {
         return false;
       }
-      // Text query filter (name or formatted number)
+      // Text query filter (name, formatted number, or type)
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase().trim();
         final matchesName = entry.name.toLowerCase().contains(query);
         final matchesNumber = entry.id.toString() == query ||
             entry.formattedNumber.toLowerCase().contains(query);
-        if (!matchesName && !matchesNumber) {
+        final matchesType = entry.types.any((t) => t.toLowerCase().contains(query));
+        if (!matchesName && !matchesNumber && !matchesType) {
           return false;
         }
       }

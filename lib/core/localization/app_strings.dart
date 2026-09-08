@@ -20,7 +20,7 @@ class AppStrings {
 
   // Navigation
   String get navCatalog => isEn ? 'Catalog' : 'Catálogo';
-  String get navPokedex => 'PokéDex';
+  String get navPokedex => isEn ? 'WorldDex' : 'DexMundial';
   String get navSets => isEn ? 'Expansions' : 'Coleções TCG';
   String get navCollections => isEn ? 'Collections' : 'Coleções';
   String get navCollection => isEn ? 'Collection' : 'Coleção';
@@ -30,9 +30,9 @@ class AppStrings {
   String get navWishlist => 'Wishlist';
   String get navSettings => isEn ? 'Settings' : 'Ajustes';
 
-  // PokéDex Screen
-  String get pokedexTitle => isEn ? 'National PokéDex' : 'PokéDex Nacional';
-  String get pokedexSearchHint => isEn ? 'Search Pokémon by name or #number...' : 'Buscar Pokémon por nome ou #número...';
+  // WorldDex Screen
+  String get pokedexTitle => isEn ? 'WorldDex' : 'DexMundial';
+  String get pokedexSearchHint => isEn ? 'Search Pokémon by name, #number, or type...' : 'Buscar Pokémon por nome, #número ou tipo...';
   String pokedexCardsFor(String name) => isEn ? 'Cards for $name' : 'Cartas de $name';
   String get pokedexAllGens => isEn ? 'All Gens' : 'Todas';
   String pokedexGen(int g) => isEn ? 'Gen $g' : 'Geração $g';
@@ -40,7 +40,7 @@ class AppStrings {
   String get pokedexLoadingCards => isEn ? 'Loading cards...' : 'Carregando cartas...';
 
   // Sets & Expansions Screen
-  String get setsTitle => isEn ? 'Pokémon TCG Sets & Releases' : 'Coleções & Lançamentos Pokémon TCG';
+  String get setsTitle => isEn ? 'TCG Expansions & Releases' : 'Expansões & Lançamentos TCG';
   String get tabReleasedSets => isEn ? 'Released Sets' : 'Coleções Lançadas';
   String get tabUpcomingReleases => isEn ? 'Upcoming Releases' : 'Futuros Lançamentos';
   String get tabSetProducts => isEn ? 'Set Products' : 'Produtos da Coleção';
@@ -158,13 +158,29 @@ class AppStrings {
   String get legalNoticeTitle => isEn ? 'Legal Notice & Fan Disclaimer' : 'Aviso Legal e Isenção';
   String get legalNoticeBody => isEn
       ? 'Pokémon and Pokémon character names, card artwork, and assets are trademarks and copyrights of Nintendo, Creatures Inc., and GAME FREAK Inc.\n\n'
-        'WurmDex is an independent, non-commercial, open-source fan application created strictly for personal recreation, organization, and educational purposes. WurmDex is NOT affiliated with, endorsed, sponsored, or specifically approved by Nintendo, The Pokémon Company, Creatures Inc., GAME FREAK Inc., TCGPlayer, or LigaPokémon.\n\n'
-        'Marketplace names, prices, and links (LigaPokémon, TCGPlayer, Cardmarket) are provided solely for convenience and reference under fair use. All intellectual property belongs exclusively to their respective owners.\n\n'
-        'Note: This project is made for fun and is subject to sudden breaking changes without notice.'
+        'WurmDex is an independent, non-commercial fan application created strictly for personal organization, recreation, and educational purposes. WurmDex is NOT affiliated with, endorsed, sponsored, or specifically approved by Nintendo, The Pokémon Company, Creatures Inc., GAME FREAK Inc., TCGPlayer, or LigaPokémon.\n\n'
+        'Marketplace names, prices, and external links (LigaPokémon, TCGPlayer, Cardmarket) are provided solely for convenience and collector reference under nominative fair use. All intellectual property remains the exclusive property of their respective owners.\n\n'
+        'This software is distributed as-is without warranties of any kind.'
       : 'Pokémon e nomes de personagens, cartas e ilustrações são marcas registradas e direitos autorais da Nintendo, Creatures Inc. e GAME FREAK Inc.\n\n'
-        'O WurmDex é um aplicativo de fãs gratuito, de código aberto e sem fins lucrativos, criado estritamente para diversão, organização pessoal e propósitos educacionais. O WurmDex NÃO possui qualquer vínculo, afiliação, endosso, patrocínio ou aprovação da Nintendo, The Pokémon Company, Creatures Inc., GAME FREAK Inc., TCGPlayer ou LigaPokémon.\n\n'
-        'Nomes de marketplaces, cotações e links (LigaPokémon, TCGPlayer, Cardmarket) são disponibilizados exclusivamente para conveniência e referência do colecionador sob uso justo (fair use). Toda propriedade intelectual pertence aos seus respectivos titulares.\n\n'
-        'Aviso: Este projeto é desenvolvido por pura diversão e está sujeito a mudanças bruscas em sua estrutura sem aviso prévio.';
+        'O WurmDex é um aplicativo independente de fãs, sem fins lucrativos, criado estritamente para organização pessoal, consulta e propósitos educacionais. O WurmDex NÃO possui qualquer vínculo, afiliação, endosso, patrocínio ou aprovação da Nintendo, The Pokémon Company, Creatures Inc., GAME FREAK Inc., TCGPlayer ou LigaPokémon.\n\n'
+        'Nomes de marketplaces, cotações e links externos (LigaPokémon, TCGPlayer, Cardmarket) são disponibilizados exclusivamente para conveniência e referência do colecionador sob as diretrizes de uso justo nominativo (fair use). Toda propriedade intelectual pertence com exclusividade aos seus respectivos titulares.\n\n'
+        'Este software é distribuído no estado em que se encontra, sem garantias de qualquer tipo.';
+
+  // Data Sources & Community Credits
+  String get labelDataSources => isEn ? 'Data Sources & Community Credits' : 'Fontes de Dados & Créditos';
+  String get subDataSources => isEn ? 'TCGdex, PokéAPI, AwesomeAPI' : 'TCGdex, PokéAPI, AwesomeAPI';
+  String get dataSourcesTitle => isEn ? 'Data Sources & Attribution' : 'Fontes de Dados & Atribuição';
+  String get dataSourcesBody => isEn
+      ? 'WurmDex aggregates publicly available community data from open APIs and services:\n\n'
+        '• TCGdex: Comprehensive multilingual Pokémon TCG card database and high-resolution card artwork (https://tcgdex.dev)\n\n'
+        '• PokéAPI: Public RESTful API providing Pokémon metadata, species numbers, and elemental attributes (https://pokeapi.co)\n\n'
+        '• AwesomeAPI: Real-time currency exchange rates for USD to BRL market conversion (https://economia.awesomeapi.com.br)\n\n'
+        'We express our gratitude to these open projects and community maintainers who make fan cataloging possible.'
+      : 'O WurmDex integra e consolida dados públicos disponibilizados pela comunidade por meio de APIs abertas:\n\n'
+        '• TCGdex: Banco de dados multilíngue de cartas do Pokémon TCG e ilustrações em alta resolução (https://tcgdex.dev)\n\n'
+        '• PokéAPI: API REST pública fornecendo metadados, numeração oficial de espécies e atributos elementares (https://pokeapi.co)\n\n'
+        '• AwesomeAPI: Cotação cambial em tempo real para conversão de mercado USD/BRL (https://economia.awesomeapi.com.br)\n\n'
+        'Agradecemos a todos os mantenedores desses projetos abertos que viabilizam o gerenciamento de coleções pela comunidade.';
 
   // Collections Screen
   String get collectionsTitle => isEn ? 'My Folders & Collections' : 'Meus Fichários e Coleções';

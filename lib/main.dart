@@ -32,7 +32,3 @@ class WurmDexApp extends ConsumerWidget {
     );
   }
 }
-
-// Backward-compatibility aliases
-typedef YourDexApp = WurmDexApp;
-typedef YourdexApp = WurmDexApp;

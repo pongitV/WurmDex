@@ -16,7 +16,7 @@ import '../../../../core/widgets/card_scale_button.dart';
 import '../../../../core/widgets/card_sort_button.dart';
 import '../../../../core/widgets/quick_currency_toggle.dart';
 import '../../../../core/widgets/wobbly_menu_icon.dart';
-import '../../home/presentation/widgets/tcg_news_widget.dart';
+import '../../news/presentation/widgets/tcg_news_widget.dart';
 import '../models/catalog_filter_state.dart';
 import '../models/pokemon_card_item.dart';
 import '../services/pokemon_catalog_service.dart';

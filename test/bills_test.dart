@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wurmdex/features/home/services/tcg_news_service.dart';
+import 'package:wurmdex/features/news/services/tcg_news_service.dart';
 
 void main() {
   test('Test fetchLiveNews and Bills Archive delivers TCG news', () async {
