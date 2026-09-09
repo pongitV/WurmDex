@@ -1,3 +1,5 @@
+import '../data/tcg_sets_data.dart';
+
 class TcgSetItem {
   final String id;
   final String name;
@@ -24,6 +26,9 @@ class TcgSetItem {
     this.serieName,
     this.isUpcoming = false,
   });
+
+  /// Returns true if this set is exclusive to digital Pokémon TCG games (e.g. Pocket)
+  bool get isDigital => TcgSetsData.isDigitalGameSet(id, name);
 
   /// User requested format: "Name (X)" where X is the number of prints/cards
   String get displayNameWithCount {

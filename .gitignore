@@ -47,7 +47,7 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
-# Output distribution binaries
-/dist/windows/*
-/dist/android/*
+# Distribution binaries (kept in git per user request for direct download)
+!/dist/
+!/dist/**
 

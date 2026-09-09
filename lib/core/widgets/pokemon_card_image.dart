@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../network/app_image_headers.dart';
 
 /// Universal Pokémon Card Image widget.
 ///
@@ -44,6 +45,7 @@ class PokemonCardImage extends StatelessWidget {
 
     Widget imageWidget = CachedNetworkImage(
       imageUrl: effectiveUrl,
+      httpHeaders: AppImageHeaders.common,
       fit: fit,
       alignment: alignment,
       fadeInDuration: const Duration(milliseconds: 180),
@@ -55,6 +57,7 @@ class PokemonCardImage extends StatelessWidget {
             fallbackImageUrl != effectiveUrl) {
           return CachedNetworkImage(
             imageUrl: fallbackImageUrl!,
+            httpHeaders: AppImageHeaders.common,
             fit: fit,
             alignment: alignment,
             placeholder: (context, url) => placeholder ?? _buildDefaultPlaceholder(context),

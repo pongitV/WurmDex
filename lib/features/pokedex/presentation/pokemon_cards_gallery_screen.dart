@@ -7,6 +7,7 @@ import '../../../core/providers/currency_provider.dart';
 import '../../../core/providers/grid_composition_provider.dart';
 import '../../../core/utils/card_sorting_helper.dart';
 import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/card_grid_skeleton.dart';
 import '../../../core/widgets/card_sort_button.dart';
 import '../../../core/widgets/grid_composition_button.dart';
@@ -55,10 +56,11 @@ class _PokemonCardsGalleryScreenState
         query: widget.pokemon.name,
         isEn: isEn,
       );
+      final cleanCards = cards.where((c) => !c.isDigital).toList();
 
       if (mounted) {
         setState(() {
-          _cards = cards;
+          _cards = cleanCards;
           _isLoading = false;
         });
       }
@@ -86,15 +88,14 @@ class _PokemonCardsGalleryScreenState
           children: [
             Hero(
               tag: 'pokemon_art_${widget.pokemon.id}',
-              child: SizedBox(
+              child: AppNetworkImage(
+                imageUrl: widget.pokemon.artworkUrl,
+                fallbackImageUrl: widget.pokemon.spriteUrl,
                 width: 32,
                 height: 32,
-                child: Image.network(
-                  widget.pokemon.artworkUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(Icons.catching_pokemon, size: 24),
-                ),
+                fit: BoxFit.contain,
+                fallbackIcon: Icons.catching_pokemon,
+                fallbackIconSize: 24,
               ),
             ),
             const SizedBox(width: 10),

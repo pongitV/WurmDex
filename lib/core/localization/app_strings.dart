@@ -28,7 +28,17 @@ class AppStrings {
   String get emptySlot => isEn ? 'Empty Slot' : 'Espaço Vazio';
   String get navTrades => isEn ? 'Trades' : 'Trocas';
   String get navWishlist => 'Wishlist';
+  String get navLigaRadar => isEn ? 'Liga Radar' : 'Radar Liga';
   String get navSettings => isEn ? 'Settings' : 'Ajustes';
+  String get navMore => isEn ? 'More' : 'Mais';
+  String get moreOptionsTitle => isEn ? 'More Features' : 'Mais Opções';
+  String get moreOptionsSubtitle => isEn ? 'Select a section to navigate' : 'Selecione uma seção para navegar';
+  String get descPokedex => isEn ? 'All Pokémon generations' : 'WorldDex de todas as gerações';
+  String get descSets => isEn ? 'TCG sets and releases' : 'Expansões & lançamentos TCG';
+  String get descCollections => isEn ? 'Binders, folders & cards' : 'Pastas, fichários e cartas';
+  String get descTrades => isEn ? 'Trade evaluator' : 'Avaliador de trocas TCG';
+  String get descWishlist => isEn ? 'Target prices and cards' : 'Cartas desejadas e metas';
+  String get descSettings => isEn ? 'Theme, backup & language' : 'Tema, backup e preferências';
 
   // WorldDex Screen
   String get pokedexTitle => isEn ? 'WorldDex' : 'DexMundial';
@@ -542,6 +552,76 @@ class AppStrings {
   String get paidPricePrefix => isEn ? 'Paid: ' : 'Pago: ';
   String get currentPricePrefix => isEn ? 'Now: ' : 'Agora: ';
   String get sortingMenuTooltip => isEn ? 'Sort Cards' : 'Ordenar Cartas';
+
+  // Liga Radar & Pre-Sale Strings
+  String get ligaRadarTitle => isEn ? 'LigaPokémon Radar' : 'Radar LigaPokémon';
+  String get ligaRadarSubtitle => isEn
+      ? 'Target price drops & pre-orders tracking'
+      : 'Monitore faixas de preço e ofertas em pré-venda';
+  String get btnAddAlert => isEn ? 'Monitor Product' : 'Monitorar Produto';
+  String get btnCheckAllNow => isEn ? 'Check Prices Now' : 'Verificar Preços Agora';
+  String get checkingAlerts => isEn ? 'Checking LigaPokémon...' : 'Consultando LigaPokémon...';
+  String alertsCheckedSuccess(int count) => isEn
+      ? '$count deals found in target range!'
+      : '$count ofertas encontradas na faixa desejada!';
+  String get statusInRange => isEn ? 'In Target Range' : 'Dentro da Faixa';
+  String get statusAboveRange => isEn ? 'Above Target' : 'Acima da Faixa';
+  String get statusBelowRange => isEn ? 'Below Target' : 'Abaixo da Faixa';
+  String get statusOutOfStock => isEn ? 'Out of Stock' : 'Sem Estoque';
+  String get statusPreSale => isEn ? 'Pre-Order' : 'Pré-Venda';
+  String get allowPreSaleLabel => isEn ? 'Include Pre-Orders' : 'Permitir itens em Pré-Venda';
+  String get allowPreSaleDesc => isEn
+      ? 'Alert if pre-sale deals match price range'
+      : 'Ativar aviso quando ofertas em pré-venda entrarem na faixa';
+  String get targetRangeLabel => isEn ? 'Target Price Range' : 'Faixa de Preço Desejada';
+  String get minPriceLabel => isEn ? 'Min Price (R\$)' : 'Preço Mínimo (R\$)';
+  String get maxPriceLabel => isEn ? 'Max Price (R\$)' : 'Preço Máximo (R\$)';
+  String get urlOrQueryLabel => isEn ? 'LigaPokémon Link or Card Name' : 'Link da LigaPokémon ou Nome';
+  String get urlOrQueryHint => isEn
+      ? 'Paste URL from ligapokemon.com.br or type name'
+      : 'Cole o link de ligapokemon.com.br ou digite o nome';
+  String get deleteAlertTitle => isEn ? 'Remove Monitored Item' : 'Remover Monitoramento';
+  String get deleteAlertConfirm => isEn
+      ? 'Stop monitoring this product?'
+      : 'Deseja parar de monitorar este produto?';
+  String get emptyRadarTitle => isEn ? 'No monitored products yet' : 'Nenhum produto monitorado ainda';
+  String get emptyRadarSubtitle => isEn
+      ? 'Add a card or sealed item link from LigaPokémon to receive alerts when available in your price range.'
+      : 'Adicione o link de uma carta ou produto da LigaPokémon para ser avisado quando entrar na faixa de preço desejada.';
+  String get filterAllAlerts => isEn ? 'All' : 'Todos';
+  String get filterInRangeAlerts => isEn ? 'In Range' : 'Na Faixa';
+  String get filterPreSaleAlerts => isEn ? 'Pre-Order' : 'Pré-Venda';
+  String get filterActiveAlerts => isEn ? 'Active' : 'Ativos';
+  String get kpiMonitoredTotal => isEn ? 'Monitored' : 'Monitorados';
+  String get kpiInRangeTotal => isEn ? 'In Range' : 'Na Faixa';
+  String get kpiPreSaleTotal => isEn ? 'Pre-Orders' : 'Em Pré-Venda';
+  String get lastCheckedPrefix => isEn ? 'Checked: ' : 'Checado: ';
+  String get neverChecked => isEn ? 'Never' : 'Nunca';
+  String get lowestPricePrefix => isEn ? 'Lowest: ' : 'Menor: ';
+  String get targetRangePrefix => isEn ? 'Target: ' : 'Alvo: ';
+  String get activeToggle => isEn ? 'Active' : 'Ativo';
+  String get inactiveToggle => isEn ? 'Paused' : 'Pausado';
+  String get previewProductButton => isEn ? 'Search / Preview' : 'Consultar / Prévia';
+  String get fetchingProductDetails => isEn ? 'Fetching product...' : 'Buscando informações...';
+  String get registeredStoreLabel => isEn ? 'Store: ' : 'Loja: ';
+  String get currentLowestPriceLabel => isEn ? 'Current Lowest Price' : 'Menor Preço Atual';
+  String get monitoringBarTitle => isEn ? 'Active Monitoring' : 'Monitoramento Ativo';
+  String get bestDealFound => isEn ? 'Lowest Price:' : 'Menor Preço:';
+  String get marketplaceFallback => isEn ? 'Marketplace (LigaPokémon)' : 'Marketplace (LigaPokémon)';
+  String get storeSellerHeader => isEn ? 'STORE / SELLER' : 'LOJA / VENDEDOR';
+  String get currentLowestPriceHeader => isEn ? 'CURRENT LOWEST PRICE' : 'MENOR PREÇO ATUAL';
+  String get targetRangeLabelText => isEn ? 'Target range: ' : 'Faixa desejada: ';
+  String get openOfferInBrowser => isEn ? 'Open deal in browser' : 'Abrir oferta no navegador';
+  String get noPriceCeiling => isEn ? 'No limit' : 'Sem teto';
+  String get statusPending => isEn ? 'Pending...' : 'Aguardando...';
+  String get preSaleAcceptedTag => isEn ? 'Pre-orders accepted' : 'Pré-venda aceita';
+  String get filterProductsHint => isEn ? 'Filter products...' : 'Filtrar produtos...';
+  String get alertUrlOrNameRequired => isEn
+      ? 'Please enter the LigaPokémon product URL or name'
+      : 'Informe o link ou nome do produto na LigaPokémon';
+  String get alertTitleRequired => isEn
+      ? 'Please provide a display name for the product'
+      : 'Informe o nome para o produto';
 }
 
 AppStrings getStrings(AppLanguage language) => AppStrings(language);

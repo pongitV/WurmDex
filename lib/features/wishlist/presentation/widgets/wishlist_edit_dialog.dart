@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/localization/app_strings.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class WishlistEditDialog extends StatefulWidget {
   final AppDatabase db;
@@ -131,7 +132,7 @@ class _WishlistEditDialogState extends State<WishlistEditDialog> {
         ),
         FilledButton(
           onPressed: () async {
-            final inputVal = double.tryParse(_priceController.text.replaceAll(',', '.')) ?? 0.0;
+            final inputVal = CurrencyFormatter.parseCurrencyOrDefault(_priceController.text);
             final targetBrl = widget.isUsd ? (inputVal * widget.exchangeRate) : inputVal;
             final updatedFolder = _folderController.text.trim().isEmpty ? 'Geral' : _folderController.text.trim();
 

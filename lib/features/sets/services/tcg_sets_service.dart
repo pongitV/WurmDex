@@ -35,6 +35,13 @@ class TcgSetsService {
         for (final raw in list) {
           if (raw is Map<String, dynamic>) {
             final id = raw['id']?.toString() ?? '';
+            final name = raw['name']?.toString() ?? '';
+
+            // Ignore digital-only Pokémon TCG Pocket / digital game sets
+            if (TcgSetsData.isDigitalGameSet(id, name)) {
+              continue;
+            }
+
             final inferredYear = TcgSetsData.setYearMap[id] ?? _inferYearFromId(id);
             final isUpcoming = TcgSetsData.upcomingSetIds.contains(id) || inferredYear >= 2026;
 
@@ -66,9 +73,9 @@ class TcgSetsService {
   }
 
   static int _inferYearFromId(String id) {
-    if (id.startsWith('me') || id.startsWith('B')) return 2026;
-    if (id.startsWith('sv09') || id.startsWith('sv10') || id.startsWith('A3') || id.startsWith('A4')) return 2025;
-    if (id.startsWith('sv05') || id.startsWith('sv06') || id.startsWith('sv07') || id.startsWith('sv08') || id.startsWith('A1')) return 2024;
+    if (id.startsWith('me')) return 2026;
+    if (id.startsWith('sv09') || id.startsWith('sv10')) return 2025;
+    if (id.startsWith('sv05') || id.startsWith('sv06') || id.startsWith('sv07') || id.startsWith('sv08')) return 2024;
     if (id.startsWith('sv')) return 2023;
     if (id.startsWith('swsh')) return 2021;
     if (id.startsWith('sm')) return 2018;

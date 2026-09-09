@@ -23,6 +23,15 @@ Switch Language / Alternar Idioma: [[EN] English (README_EN.md)](README_EN.md) |
 
 ---
 
+## Pre-compiled Releases (Download)
+
+Pre-built packages are ready to run directly from the repository's `dist/` directory:
+
+- **Android (APK)**: [`dist/android/WurmDex-release.apk`](dist/android/WurmDex-release.apk)
+- **Windows Desktop (EXE)**: [`dist/windows/wurmdex.exe`](dist/windows/wurmdex.exe) (run directly from the `dist/windows` folder with all bundled DLLs)
+
+---
+
 ## Legal Disclaimer and Intellectual Property Notice
 
 WurmDex is an independent, non-commercial, open-source fan application developed strictly for educational, archival, and personal hobbyist entertainment purposes.
@@ -99,6 +108,17 @@ Every Pokemon card across the catalog, sets, pokedex gallery, and custom collect
 - All collection data remains locally on the user's device.
 - Full backup export and import in JSON format compatible with native file pickers and sharing sheets.
 - Merge and Replace restore options with validation to prevent data corruption.
+
+### 7. LigaPokemon Price Radar (Pre-Orders & Deals)
+- Continuous monitoring of sealed products and individual cards entered via direct LigaPokémon URLs.
+- Real-time detection of stock status, lowest offer, store name, and pre-order badge.
+- Automatic local OS notifications when prices match target thresholds.
+- Direct quick-action button to open the product page in the default web browser.
+
+### 8. Unified Navigation & Session Persistence
+- Clean, ergonomic 3-button bottom dock (Catalog, Liga Radar, and More Hub) identical across Windows Desktop and Android.
+- Stylized "More Features" modal sheet for rapid 1-tap jumping to WorldDex, Expansions, Collections, Wishlist, Trades, and Settings.
+- Complete session persistence: selected theme (Dark, Light, Gramado, Wurmple), active language, and card zoom levels automatically restored upon restart.
 
 ---
 

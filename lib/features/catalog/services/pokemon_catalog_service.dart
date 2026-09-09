@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/utils/semantic_search_helper.dart';
+import '../../sets/data/tcg_sets_data.dart';
 import '../models/pokemon_card_item.dart';
 
 class PokemonCatalogService {
@@ -70,6 +71,7 @@ class PokemonCatalogService {
             final id = item['id']?.toString();
             final name = item['name']?.toString();
             if (id != null && name != null && name.isNotEmpty) {
+              if (TcgSetsData.isDigitalGameSet(id, name)) continue;
               _setNamesCache![id] = name;
             }
           }
@@ -211,6 +213,9 @@ class PokemonCatalogService {
     final isNumSearch = RegExp(r'^\d+$').hasMatch(numTarget);
 
     final filtered = candidateCards.where((card) {
+      // Exclude digital-only Pokémon TCG Pocket cards
+      if (card.isDigital) return false;
+
       final cardNameLower = card.name.toLowerCase();
       final cardNumLower = card.number.toLowerCase();
       final setNameLower = card.setName.toLowerCase();
@@ -277,7 +282,9 @@ class PokemonCatalogService {
             final cardId = item['id']?.toString() ?? '';
             final setId = cardId.contains('-') ? cardId.split('-').first : '';
             final setName = _setNamesCache?[setId] ?? _knownSets[setId];
-            items.add(PokemonCardItem.fromTcgdex(item, setName: setName));
+            final card = PokemonCardItem.fromTcgdex(item, setName: setName);
+            if (card.isDigital) continue;
+            items.add(card);
           }
         }
         return items;

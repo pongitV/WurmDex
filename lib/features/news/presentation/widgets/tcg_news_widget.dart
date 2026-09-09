@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_network_image.dart';
 import '../../models/tcg_news_item.dart';
 import '../../services/tcg_news_service.dart';
 
@@ -74,19 +74,25 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.feed_outlined, size: 18, color: theme.colorScheme.primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    strings.sectionNews,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
-                      color: theme.colorScheme.primary,
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.feed_outlined, size: 18, color: theme.colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        strings.sectionNews,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0,
+                          color: theme.colorScheme.primary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.refresh, size: 18),
@@ -263,24 +269,14 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
             children: [
               // News Image Thumbnail
               if (item.imageUrl != null && item.imageUrl!.isNotEmpty) ...[
-                ClipRRect(
+                AppNetworkImage(
+                  imageUrl: item.imageUrl!,
+                  width: 88,
+                  height: 76,
+                  fit: BoxFit.cover,
                   borderRadius: BorderRadius.circular(8),
-                  child: SizedBox(
-                    width: 88,
-                    height: 76,
-                    child: CachedNetworkImage(
-                      imageUrl: item.imageUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.black12,
-                        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.black26,
-                        child: const Icon(Icons.broken_image, size: 28),
-                      ),
-                    ),
-                  ),
+                  fallbackIcon: Icons.broken_image,
+                  fallbackIconSize: 28,
                 ),
                 const SizedBox(width: 12),
               ],
@@ -310,17 +306,21 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
                         ),
                         const SizedBox(width: 6),
                         if (item.category.isNotEmpty) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              item.category,
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: theme.colorScheme.onSurfaceVariant,
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                item.category,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import '../../../core/network/app_image_headers.dart';
 import '../../../core/network/dio_client.dart';
 import '../models/tcg_news_item.dart';
 
@@ -189,8 +190,7 @@ class TcgNewsService {
       url,
       options: Options(
         headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+          'User-Agent': AppImageHeaders.browserUserAgent,
           'Accept': 'application/rss+xml,application/xml,text/xml',
         },
         validateStatus: (status) => status != null && status < 500,
@@ -279,8 +279,7 @@ class TcgNewsService {
           'https://billsarchive.com/$path',
           options: Options(
             headers: {
-              'User-Agent':
-                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+              'User-Agent': AppImageHeaders.browserUserAgent,
               'Accept': 'text/html,application/xhtml+xml,application/xml',
             },
             validateStatus: (status) => status != null && status < 500,

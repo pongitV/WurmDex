@@ -23,6 +23,15 @@ Alternar Idioma / Switch Language: [[EN] English (README_EN.md)](README_EN.md) |
 
 ---
 
+## Downloads Pré-Compilados (Instalação Direta)
+
+Os pacotes prontos para uso estão disponíveis diretamente na pasta `dist/` do repositório:
+
+- **Android (APK)**: [`dist/android/WurmDex-release.apk`](dist/android/WurmDex-release.apk)
+- **Windows Desktop (EXE)**: [`dist/windows/wurmdex.exe`](dist/windows/wurmdex.exe) (execute diretamente da pasta `dist/windows` com todas as dependências e DLLs inclusas)
+
+---
+
 ## Isenção de Responsabilidade Legal e Direitos de Propriedade Intelectual
 
 O WurmDex é um aplicativo de código aberto, gratuito, sem fins lucrativos e desenvolvido exclusivamente para propósitos educacionais, de arquivo e entretenimento recreativo de colecionadores.
@@ -99,6 +108,17 @@ Todas as cartas exibidas no aplicativo (catálogo, expansões, galeria da pokede
 - Todas as coleções, notas pessoais e registros de preços permanecem restritos ao dispositivo local do usuário.
 - Exportação e restauração completa de backup em formato JSON compatível com pastas do sistema.
 - Modos de restauração por Mesclagem ou Substituição com validação estrutural de segurança.
+
+### 7. Radar de Preços LigaPokémon (Pré-Vendas & Ofertas)
+- Monitoramento contínuo de cartas avulsas e produtos selados cadastrados via URL direta da LigaPokémon.
+- Detecção em tempo real de estoque, menor preço ofertado, nome da loja vendedora e badge de pré-venda.
+- Notificações locais automáticas no sistema operacional quando ofertas caírem na faixa de preço desejada.
+- Atalho direto para abrir o anúncio no navegador padrão com um clique.
+
+### 8. Navegação Unificada e Persistência de Sessão
+- Dock inferior unificado de 3 botões (Catálogo, Radar Liga e Menu Mais) idêntico no Windows e Android.
+- Menu "Mais Opções" estilizado para acesso imediato a WorldDex, Expansões TCG, Pastas de Coleções, Wishlist, Avaliador de Trocas e Ajustes.
+- Persistência total de preferências: tema escolhido, idioma ativo e escalas de zoom são restaurados automaticamente ao reabrir o app.
 
 ---
 

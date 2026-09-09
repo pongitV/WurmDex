@@ -2421,6 +2421,900 @@ class PriceSnapshotsCompanion extends UpdateCompanion<PriceSnapshot> {
   }
 }
 
+class $LigaPriceAlertsTable extends LigaPriceAlerts
+    with TableInfo<$LigaPriceAlertsTable, LigaPriceAlert> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LigaPriceAlertsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _targetUrlMeta = const VerificationMeta(
+    'targetUrl',
+  );
+  @override
+  late final GeneratedColumn<String> targetUrl = GeneratedColumn<String>(
+    'target_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _imageUrlMeta = const VerificationMeta(
+    'imageUrl',
+  );
+  @override
+  late final GeneratedColumn<String> imageUrl = GeneratedColumn<String>(
+    'image_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _minTargetPriceMeta = const VerificationMeta(
+    'minTargetPrice',
+  );
+  @override
+  late final GeneratedColumn<double> minTargetPrice = GeneratedColumn<double>(
+    'min_target_price',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _maxTargetPriceMeta = const VerificationMeta(
+    'maxTargetPrice',
+  );
+  @override
+  late final GeneratedColumn<double> maxTargetPrice = GeneratedColumn<double>(
+    'max_target_price',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _allowPreSaleMeta = const VerificationMeta(
+    'allowPreSale',
+  );
+  @override
+  late final GeneratedColumn<bool> allowPreSale = GeneratedColumn<bool>(
+    'allow_pre_sale',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("allow_pre_sale" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _currentLowestPriceMeta =
+      const VerificationMeta('currentLowestPrice');
+  @override
+  late final GeneratedColumn<double> currentLowestPrice =
+      GeneratedColumn<double>(
+        'current_lowest_price',
+        aliasedName,
+        true,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _currentStoreNameMeta = const VerificationMeta(
+    'currentStoreName',
+  );
+  @override
+  late final GeneratedColumn<String> currentStoreName = GeneratedColumn<String>(
+    'current_store_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _isPreSaleMeta = const VerificationMeta(
+    'isPreSale',
+  );
+  @override
+  late final GeneratedColumn<bool> isPreSale = GeneratedColumn<bool>(
+    'is_pre_sale',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pre_sale" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _isAvailableInRangeMeta =
+      const VerificationMeta('isAvailableInRange');
+  @override
+  late final GeneratedColumn<bool> isAvailableInRange = GeneratedColumn<bool>(
+    'is_available_in_range',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_available_in_range" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _lastCheckedAtMeta = const VerificationMeta(
+    'lastCheckedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastCheckedAt =
+      GeneratedColumn<DateTime>(
+        'last_checked_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _lastNotifiedAtMeta = const VerificationMeta(
+    'lastNotifiedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastNotifiedAt =
+      GeneratedColumn<DateTime>(
+        'last_notified_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    title,
+    targetUrl,
+    imageUrl,
+    minTargetPrice,
+    maxTargetPrice,
+    allowPreSale,
+    currentLowestPrice,
+    currentStoreName,
+    isPreSale,
+    isAvailableInRange,
+    isActive,
+    lastCheckedAt,
+    lastNotifiedAt,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'liga_price_alerts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LigaPriceAlert> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('target_url')) {
+      context.handle(
+        _targetUrlMeta,
+        targetUrl.isAcceptableOrUnknown(data['target_url']!, _targetUrlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_targetUrlMeta);
+    }
+    if (data.containsKey('image_url')) {
+      context.handle(
+        _imageUrlMeta,
+        imageUrl.isAcceptableOrUnknown(data['image_url']!, _imageUrlMeta),
+      );
+    }
+    if (data.containsKey('min_target_price')) {
+      context.handle(
+        _minTargetPriceMeta,
+        minTargetPrice.isAcceptableOrUnknown(
+          data['min_target_price']!,
+          _minTargetPriceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('max_target_price')) {
+      context.handle(
+        _maxTargetPriceMeta,
+        maxTargetPrice.isAcceptableOrUnknown(
+          data['max_target_price']!,
+          _maxTargetPriceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('allow_pre_sale')) {
+      context.handle(
+        _allowPreSaleMeta,
+        allowPreSale.isAcceptableOrUnknown(
+          data['allow_pre_sale']!,
+          _allowPreSaleMeta,
+        ),
+      );
+    }
+    if (data.containsKey('current_lowest_price')) {
+      context.handle(
+        _currentLowestPriceMeta,
+        currentLowestPrice.isAcceptableOrUnknown(
+          data['current_lowest_price']!,
+          _currentLowestPriceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('current_store_name')) {
+      context.handle(
+        _currentStoreNameMeta,
+        currentStoreName.isAcceptableOrUnknown(
+          data['current_store_name']!,
+          _currentStoreNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_pre_sale')) {
+      context.handle(
+        _isPreSaleMeta,
+        isPreSale.isAcceptableOrUnknown(data['is_pre_sale']!, _isPreSaleMeta),
+      );
+    }
+    if (data.containsKey('is_available_in_range')) {
+      context.handle(
+        _isAvailableInRangeMeta,
+        isAvailableInRange.isAcceptableOrUnknown(
+          data['is_available_in_range']!,
+          _isAvailableInRangeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('last_checked_at')) {
+      context.handle(
+        _lastCheckedAtMeta,
+        lastCheckedAt.isAcceptableOrUnknown(
+          data['last_checked_at']!,
+          _lastCheckedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_notified_at')) {
+      context.handle(
+        _lastNotifiedAtMeta,
+        lastNotifiedAt.isAcceptableOrUnknown(
+          data['last_notified_at']!,
+          _lastNotifiedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LigaPriceAlert map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LigaPriceAlert(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      targetUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}target_url'],
+      )!,
+      imageUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_url'],
+      )!,
+      minTargetPrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}min_target_price'],
+      )!,
+      maxTargetPrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}max_target_price'],
+      )!,
+      allowPreSale: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}allow_pre_sale'],
+      )!,
+      currentLowestPrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}current_lowest_price'],
+      ),
+      currentStoreName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}current_store_name'],
+      )!,
+      isPreSale: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pre_sale'],
+      )!,
+      isAvailableInRange: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_available_in_range'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      lastCheckedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_checked_at'],
+      ),
+      lastNotifiedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_notified_at'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $LigaPriceAlertsTable createAlias(String alias) {
+    return $LigaPriceAlertsTable(attachedDatabase, alias);
+  }
+}
+
+class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
+  final String id;
+  final String title;
+  final String targetUrl;
+  final String imageUrl;
+  final double minTargetPrice;
+  final double maxTargetPrice;
+  final bool allowPreSale;
+  final double? currentLowestPrice;
+  final String currentStoreName;
+  final bool isPreSale;
+  final bool isAvailableInRange;
+  final bool isActive;
+  final DateTime? lastCheckedAt;
+  final DateTime? lastNotifiedAt;
+  final DateTime createdAt;
+  const LigaPriceAlert({
+    required this.id,
+    required this.title,
+    required this.targetUrl,
+    required this.imageUrl,
+    required this.minTargetPrice,
+    required this.maxTargetPrice,
+    required this.allowPreSale,
+    this.currentLowestPrice,
+    required this.currentStoreName,
+    required this.isPreSale,
+    required this.isAvailableInRange,
+    required this.isActive,
+    this.lastCheckedAt,
+    this.lastNotifiedAt,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['title'] = Variable<String>(title);
+    map['target_url'] = Variable<String>(targetUrl);
+    map['image_url'] = Variable<String>(imageUrl);
+    map['min_target_price'] = Variable<double>(minTargetPrice);
+    map['max_target_price'] = Variable<double>(maxTargetPrice);
+    map['allow_pre_sale'] = Variable<bool>(allowPreSale);
+    if (!nullToAbsent || currentLowestPrice != null) {
+      map['current_lowest_price'] = Variable<double>(currentLowestPrice);
+    }
+    map['current_store_name'] = Variable<String>(currentStoreName);
+    map['is_pre_sale'] = Variable<bool>(isPreSale);
+    map['is_available_in_range'] = Variable<bool>(isAvailableInRange);
+    map['is_active'] = Variable<bool>(isActive);
+    if (!nullToAbsent || lastCheckedAt != null) {
+      map['last_checked_at'] = Variable<DateTime>(lastCheckedAt);
+    }
+    if (!nullToAbsent || lastNotifiedAt != null) {
+      map['last_notified_at'] = Variable<DateTime>(lastNotifiedAt);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  LigaPriceAlertsCompanion toCompanion(bool nullToAbsent) {
+    return LigaPriceAlertsCompanion(
+      id: Value(id),
+      title: Value(title),
+      targetUrl: Value(targetUrl),
+      imageUrl: Value(imageUrl),
+      minTargetPrice: Value(minTargetPrice),
+      maxTargetPrice: Value(maxTargetPrice),
+      allowPreSale: Value(allowPreSale),
+      currentLowestPrice: currentLowestPrice == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentLowestPrice),
+      currentStoreName: Value(currentStoreName),
+      isPreSale: Value(isPreSale),
+      isAvailableInRange: Value(isAvailableInRange),
+      isActive: Value(isActive),
+      lastCheckedAt: lastCheckedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastCheckedAt),
+      lastNotifiedAt: lastNotifiedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastNotifiedAt),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory LigaPriceAlert.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LigaPriceAlert(
+      id: serializer.fromJson<String>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      targetUrl: serializer.fromJson<String>(json['targetUrl']),
+      imageUrl: serializer.fromJson<String>(json['imageUrl']),
+      minTargetPrice: serializer.fromJson<double>(json['minTargetPrice']),
+      maxTargetPrice: serializer.fromJson<double>(json['maxTargetPrice']),
+      allowPreSale: serializer.fromJson<bool>(json['allowPreSale']),
+      currentLowestPrice: serializer.fromJson<double?>(
+        json['currentLowestPrice'],
+      ),
+      currentStoreName: serializer.fromJson<String>(json['currentStoreName']),
+      isPreSale: serializer.fromJson<bool>(json['isPreSale']),
+      isAvailableInRange: serializer.fromJson<bool>(json['isAvailableInRange']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      lastCheckedAt: serializer.fromJson<DateTime?>(json['lastCheckedAt']),
+      lastNotifiedAt: serializer.fromJson<DateTime?>(json['lastNotifiedAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'title': serializer.toJson<String>(title),
+      'targetUrl': serializer.toJson<String>(targetUrl),
+      'imageUrl': serializer.toJson<String>(imageUrl),
+      'minTargetPrice': serializer.toJson<double>(minTargetPrice),
+      'maxTargetPrice': serializer.toJson<double>(maxTargetPrice),
+      'allowPreSale': serializer.toJson<bool>(allowPreSale),
+      'currentLowestPrice': serializer.toJson<double?>(currentLowestPrice),
+      'currentStoreName': serializer.toJson<String>(currentStoreName),
+      'isPreSale': serializer.toJson<bool>(isPreSale),
+      'isAvailableInRange': serializer.toJson<bool>(isAvailableInRange),
+      'isActive': serializer.toJson<bool>(isActive),
+      'lastCheckedAt': serializer.toJson<DateTime?>(lastCheckedAt),
+      'lastNotifiedAt': serializer.toJson<DateTime?>(lastNotifiedAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  LigaPriceAlert copyWith({
+    String? id,
+    String? title,
+    String? targetUrl,
+    String? imageUrl,
+    double? minTargetPrice,
+    double? maxTargetPrice,
+    bool? allowPreSale,
+    Value<double?> currentLowestPrice = const Value.absent(),
+    String? currentStoreName,
+    bool? isPreSale,
+    bool? isAvailableInRange,
+    bool? isActive,
+    Value<DateTime?> lastCheckedAt = const Value.absent(),
+    Value<DateTime?> lastNotifiedAt = const Value.absent(),
+    DateTime? createdAt,
+  }) => LigaPriceAlert(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    targetUrl: targetUrl ?? this.targetUrl,
+    imageUrl: imageUrl ?? this.imageUrl,
+    minTargetPrice: minTargetPrice ?? this.minTargetPrice,
+    maxTargetPrice: maxTargetPrice ?? this.maxTargetPrice,
+    allowPreSale: allowPreSale ?? this.allowPreSale,
+    currentLowestPrice: currentLowestPrice.present
+        ? currentLowestPrice.value
+        : this.currentLowestPrice,
+    currentStoreName: currentStoreName ?? this.currentStoreName,
+    isPreSale: isPreSale ?? this.isPreSale,
+    isAvailableInRange: isAvailableInRange ?? this.isAvailableInRange,
+    isActive: isActive ?? this.isActive,
+    lastCheckedAt: lastCheckedAt.present
+        ? lastCheckedAt.value
+        : this.lastCheckedAt,
+    lastNotifiedAt: lastNotifiedAt.present
+        ? lastNotifiedAt.value
+        : this.lastNotifiedAt,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  LigaPriceAlert copyWithCompanion(LigaPriceAlertsCompanion data) {
+    return LigaPriceAlert(
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      targetUrl: data.targetUrl.present ? data.targetUrl.value : this.targetUrl,
+      imageUrl: data.imageUrl.present ? data.imageUrl.value : this.imageUrl,
+      minTargetPrice: data.minTargetPrice.present
+          ? data.minTargetPrice.value
+          : this.minTargetPrice,
+      maxTargetPrice: data.maxTargetPrice.present
+          ? data.maxTargetPrice.value
+          : this.maxTargetPrice,
+      allowPreSale: data.allowPreSale.present
+          ? data.allowPreSale.value
+          : this.allowPreSale,
+      currentLowestPrice: data.currentLowestPrice.present
+          ? data.currentLowestPrice.value
+          : this.currentLowestPrice,
+      currentStoreName: data.currentStoreName.present
+          ? data.currentStoreName.value
+          : this.currentStoreName,
+      isPreSale: data.isPreSale.present ? data.isPreSale.value : this.isPreSale,
+      isAvailableInRange: data.isAvailableInRange.present
+          ? data.isAvailableInRange.value
+          : this.isAvailableInRange,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      lastCheckedAt: data.lastCheckedAt.present
+          ? data.lastCheckedAt.value
+          : this.lastCheckedAt,
+      lastNotifiedAt: data.lastNotifiedAt.present
+          ? data.lastNotifiedAt.value
+          : this.lastNotifiedAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LigaPriceAlert(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('targetUrl: $targetUrl, ')
+          ..write('imageUrl: $imageUrl, ')
+          ..write('minTargetPrice: $minTargetPrice, ')
+          ..write('maxTargetPrice: $maxTargetPrice, ')
+          ..write('allowPreSale: $allowPreSale, ')
+          ..write('currentLowestPrice: $currentLowestPrice, ')
+          ..write('currentStoreName: $currentStoreName, ')
+          ..write('isPreSale: $isPreSale, ')
+          ..write('isAvailableInRange: $isAvailableInRange, ')
+          ..write('isActive: $isActive, ')
+          ..write('lastCheckedAt: $lastCheckedAt, ')
+          ..write('lastNotifiedAt: $lastNotifiedAt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    title,
+    targetUrl,
+    imageUrl,
+    minTargetPrice,
+    maxTargetPrice,
+    allowPreSale,
+    currentLowestPrice,
+    currentStoreName,
+    isPreSale,
+    isAvailableInRange,
+    isActive,
+    lastCheckedAt,
+    lastNotifiedAt,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LigaPriceAlert &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.targetUrl == this.targetUrl &&
+          other.imageUrl == this.imageUrl &&
+          other.minTargetPrice == this.minTargetPrice &&
+          other.maxTargetPrice == this.maxTargetPrice &&
+          other.allowPreSale == this.allowPreSale &&
+          other.currentLowestPrice == this.currentLowestPrice &&
+          other.currentStoreName == this.currentStoreName &&
+          other.isPreSale == this.isPreSale &&
+          other.isAvailableInRange == this.isAvailableInRange &&
+          other.isActive == this.isActive &&
+          other.lastCheckedAt == this.lastCheckedAt &&
+          other.lastNotifiedAt == this.lastNotifiedAt &&
+          other.createdAt == this.createdAt);
+}
+
+class LigaPriceAlertsCompanion extends UpdateCompanion<LigaPriceAlert> {
+  final Value<String> id;
+  final Value<String> title;
+  final Value<String> targetUrl;
+  final Value<String> imageUrl;
+  final Value<double> minTargetPrice;
+  final Value<double> maxTargetPrice;
+  final Value<bool> allowPreSale;
+  final Value<double?> currentLowestPrice;
+  final Value<String> currentStoreName;
+  final Value<bool> isPreSale;
+  final Value<bool> isAvailableInRange;
+  final Value<bool> isActive;
+  final Value<DateTime?> lastCheckedAt;
+  final Value<DateTime?> lastNotifiedAt;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const LigaPriceAlertsCompanion({
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.targetUrl = const Value.absent(),
+    this.imageUrl = const Value.absent(),
+    this.minTargetPrice = const Value.absent(),
+    this.maxTargetPrice = const Value.absent(),
+    this.allowPreSale = const Value.absent(),
+    this.currentLowestPrice = const Value.absent(),
+    this.currentStoreName = const Value.absent(),
+    this.isPreSale = const Value.absent(),
+    this.isAvailableInRange = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.lastCheckedAt = const Value.absent(),
+    this.lastNotifiedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LigaPriceAlertsCompanion.insert({
+    required String id,
+    required String title,
+    required String targetUrl,
+    this.imageUrl = const Value.absent(),
+    this.minTargetPrice = const Value.absent(),
+    this.maxTargetPrice = const Value.absent(),
+    this.allowPreSale = const Value.absent(),
+    this.currentLowestPrice = const Value.absent(),
+    this.currentStoreName = const Value.absent(),
+    this.isPreSale = const Value.absent(),
+    this.isAvailableInRange = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.lastCheckedAt = const Value.absent(),
+    this.lastNotifiedAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       title = Value(title),
+       targetUrl = Value(targetUrl);
+  static Insertable<LigaPriceAlert> custom({
+    Expression<String>? id,
+    Expression<String>? title,
+    Expression<String>? targetUrl,
+    Expression<String>? imageUrl,
+    Expression<double>? minTargetPrice,
+    Expression<double>? maxTargetPrice,
+    Expression<bool>? allowPreSale,
+    Expression<double>? currentLowestPrice,
+    Expression<String>? currentStoreName,
+    Expression<bool>? isPreSale,
+    Expression<bool>? isAvailableInRange,
+    Expression<bool>? isActive,
+    Expression<DateTime>? lastCheckedAt,
+    Expression<DateTime>? lastNotifiedAt,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (targetUrl != null) 'target_url': targetUrl,
+      if (imageUrl != null) 'image_url': imageUrl,
+      if (minTargetPrice != null) 'min_target_price': minTargetPrice,
+      if (maxTargetPrice != null) 'max_target_price': maxTargetPrice,
+      if (allowPreSale != null) 'allow_pre_sale': allowPreSale,
+      if (currentLowestPrice != null)
+        'current_lowest_price': currentLowestPrice,
+      if (currentStoreName != null) 'current_store_name': currentStoreName,
+      if (isPreSale != null) 'is_pre_sale': isPreSale,
+      if (isAvailableInRange != null)
+        'is_available_in_range': isAvailableInRange,
+      if (isActive != null) 'is_active': isActive,
+      if (lastCheckedAt != null) 'last_checked_at': lastCheckedAt,
+      if (lastNotifiedAt != null) 'last_notified_at': lastNotifiedAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LigaPriceAlertsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? title,
+    Value<String>? targetUrl,
+    Value<String>? imageUrl,
+    Value<double>? minTargetPrice,
+    Value<double>? maxTargetPrice,
+    Value<bool>? allowPreSale,
+    Value<double?>? currentLowestPrice,
+    Value<String>? currentStoreName,
+    Value<bool>? isPreSale,
+    Value<bool>? isAvailableInRange,
+    Value<bool>? isActive,
+    Value<DateTime?>? lastCheckedAt,
+    Value<DateTime?>? lastNotifiedAt,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return LigaPriceAlertsCompanion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      targetUrl: targetUrl ?? this.targetUrl,
+      imageUrl: imageUrl ?? this.imageUrl,
+      minTargetPrice: minTargetPrice ?? this.minTargetPrice,
+      maxTargetPrice: maxTargetPrice ?? this.maxTargetPrice,
+      allowPreSale: allowPreSale ?? this.allowPreSale,
+      currentLowestPrice: currentLowestPrice ?? this.currentLowestPrice,
+      currentStoreName: currentStoreName ?? this.currentStoreName,
+      isPreSale: isPreSale ?? this.isPreSale,
+      isAvailableInRange: isAvailableInRange ?? this.isAvailableInRange,
+      isActive: isActive ?? this.isActive,
+      lastCheckedAt: lastCheckedAt ?? this.lastCheckedAt,
+      lastNotifiedAt: lastNotifiedAt ?? this.lastNotifiedAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (targetUrl.present) {
+      map['target_url'] = Variable<String>(targetUrl.value);
+    }
+    if (imageUrl.present) {
+      map['image_url'] = Variable<String>(imageUrl.value);
+    }
+    if (minTargetPrice.present) {
+      map['min_target_price'] = Variable<double>(minTargetPrice.value);
+    }
+    if (maxTargetPrice.present) {
+      map['max_target_price'] = Variable<double>(maxTargetPrice.value);
+    }
+    if (allowPreSale.present) {
+      map['allow_pre_sale'] = Variable<bool>(allowPreSale.value);
+    }
+    if (currentLowestPrice.present) {
+      map['current_lowest_price'] = Variable<double>(currentLowestPrice.value);
+    }
+    if (currentStoreName.present) {
+      map['current_store_name'] = Variable<String>(currentStoreName.value);
+    }
+    if (isPreSale.present) {
+      map['is_pre_sale'] = Variable<bool>(isPreSale.value);
+    }
+    if (isAvailableInRange.present) {
+      map['is_available_in_range'] = Variable<bool>(isAvailableInRange.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (lastCheckedAt.present) {
+      map['last_checked_at'] = Variable<DateTime>(lastCheckedAt.value);
+    }
+    if (lastNotifiedAt.present) {
+      map['last_notified_at'] = Variable<DateTime>(lastNotifiedAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LigaPriceAlertsCompanion(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('targetUrl: $targetUrl, ')
+          ..write('imageUrl: $imageUrl, ')
+          ..write('minTargetPrice: $minTargetPrice, ')
+          ..write('maxTargetPrice: $maxTargetPrice, ')
+          ..write('allowPreSale: $allowPreSale, ')
+          ..write('currentLowestPrice: $currentLowestPrice, ')
+          ..write('currentStoreName: $currentStoreName, ')
+          ..write('isPreSale: $isPreSale, ')
+          ..write('isAvailableInRange: $isAvailableInRange, ')
+          ..write('isActive: $isActive, ')
+          ..write('lastCheckedAt: $lastCheckedAt, ')
+          ..write('lastNotifiedAt: $lastNotifiedAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2428,6 +3322,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $UserCardsTable userCards = $UserCardsTable(this);
   late final $WishlistItemsTable wishlistItems = $WishlistItemsTable(this);
   late final $PriceSnapshotsTable priceSnapshots = $PriceSnapshotsTable(this);
+  late final $LigaPriceAlertsTable ligaPriceAlerts = $LigaPriceAlertsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2437,6 +3334,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     userCards,
     wishlistItems,
     priceSnapshots,
+    ligaPriceAlerts,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3868,6 +4766,427 @@ typedef $$PriceSnapshotsTableProcessedTableManager =
       PriceSnapshot,
       PrefetchHooks Function()
     >;
+typedef $$LigaPriceAlertsTableCreateCompanionBuilder =
+    LigaPriceAlertsCompanion Function({
+      required String id,
+      required String title,
+      required String targetUrl,
+      Value<String> imageUrl,
+      Value<double> minTargetPrice,
+      Value<double> maxTargetPrice,
+      Value<bool> allowPreSale,
+      Value<double?> currentLowestPrice,
+      Value<String> currentStoreName,
+      Value<bool> isPreSale,
+      Value<bool> isAvailableInRange,
+      Value<bool> isActive,
+      Value<DateTime?> lastCheckedAt,
+      Value<DateTime?> lastNotifiedAt,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$LigaPriceAlertsTableUpdateCompanionBuilder =
+    LigaPriceAlertsCompanion Function({
+      Value<String> id,
+      Value<String> title,
+      Value<String> targetUrl,
+      Value<String> imageUrl,
+      Value<double> minTargetPrice,
+      Value<double> maxTargetPrice,
+      Value<bool> allowPreSale,
+      Value<double?> currentLowestPrice,
+      Value<String> currentStoreName,
+      Value<bool> isPreSale,
+      Value<bool> isAvailableInRange,
+      Value<bool> isActive,
+      Value<DateTime?> lastCheckedAt,
+      Value<DateTime?> lastNotifiedAt,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$LigaPriceAlertsTableFilterComposer
+    extends Composer<_$AppDatabase, $LigaPriceAlertsTable> {
+  $$LigaPriceAlertsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get targetUrl => $composableBuilder(
+    column: $table.targetUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imageUrl => $composableBuilder(
+    column: $table.imageUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get minTargetPrice => $composableBuilder(
+    column: $table.minTargetPrice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get maxTargetPrice => $composableBuilder(
+    column: $table.maxTargetPrice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get allowPreSale => $composableBuilder(
+    column: $table.allowPreSale,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get currentLowestPrice => $composableBuilder(
+    column: $table.currentLowestPrice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currentStoreName => $composableBuilder(
+    column: $table.currentStoreName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPreSale => $composableBuilder(
+    column: $table.isPreSale,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isAvailableInRange => $composableBuilder(
+    column: $table.isAvailableInRange,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastNotifiedAt => $composableBuilder(
+    column: $table.lastNotifiedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LigaPriceAlertsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LigaPriceAlertsTable> {
+  $$LigaPriceAlertsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetUrl => $composableBuilder(
+    column: $table.targetUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get imageUrl => $composableBuilder(
+    column: $table.imageUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get minTargetPrice => $composableBuilder(
+    column: $table.minTargetPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get maxTargetPrice => $composableBuilder(
+    column: $table.maxTargetPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get allowPreSale => $composableBuilder(
+    column: $table.allowPreSale,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get currentLowestPrice => $composableBuilder(
+    column: $table.currentLowestPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currentStoreName => $composableBuilder(
+    column: $table.currentStoreName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPreSale => $composableBuilder(
+    column: $table.isPreSale,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isAvailableInRange => $composableBuilder(
+    column: $table.isAvailableInRange,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastNotifiedAt => $composableBuilder(
+    column: $table.lastNotifiedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LigaPriceAlertsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LigaPriceAlertsTable> {
+  $$LigaPriceAlertsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get targetUrl =>
+      $composableBuilder(column: $table.targetUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get imageUrl =>
+      $composableBuilder(column: $table.imageUrl, builder: (column) => column);
+
+  GeneratedColumn<double> get minTargetPrice => $composableBuilder(
+    column: $table.minTargetPrice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get maxTargetPrice => $composableBuilder(
+    column: $table.maxTargetPrice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get allowPreSale => $composableBuilder(
+    column: $table.allowPreSale,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get currentLowestPrice => $composableBuilder(
+    column: $table.currentLowestPrice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get currentStoreName => $composableBuilder(
+    column: $table.currentStoreName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isPreSale =>
+      $composableBuilder(column: $table.isPreSale, builder: (column) => column);
+
+  GeneratedColumn<bool> get isAvailableInRange => $composableBuilder(
+    column: $table.isAvailableInRange,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastNotifiedAt => $composableBuilder(
+    column: $table.lastNotifiedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$LigaPriceAlertsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LigaPriceAlertsTable,
+          LigaPriceAlert,
+          $$LigaPriceAlertsTableFilterComposer,
+          $$LigaPriceAlertsTableOrderingComposer,
+          $$LigaPriceAlertsTableAnnotationComposer,
+          $$LigaPriceAlertsTableCreateCompanionBuilder,
+          $$LigaPriceAlertsTableUpdateCompanionBuilder,
+          (
+            LigaPriceAlert,
+            BaseReferences<
+              _$AppDatabase,
+              $LigaPriceAlertsTable,
+              LigaPriceAlert
+            >,
+          ),
+          LigaPriceAlert,
+          PrefetchHooks Function()
+        > {
+  $$LigaPriceAlertsTableTableManager(
+    _$AppDatabase db,
+    $LigaPriceAlertsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LigaPriceAlertsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LigaPriceAlertsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LigaPriceAlertsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> targetUrl = const Value.absent(),
+                Value<String> imageUrl = const Value.absent(),
+                Value<double> minTargetPrice = const Value.absent(),
+                Value<double> maxTargetPrice = const Value.absent(),
+                Value<bool> allowPreSale = const Value.absent(),
+                Value<double?> currentLowestPrice = const Value.absent(),
+                Value<String> currentStoreName = const Value.absent(),
+                Value<bool> isPreSale = const Value.absent(),
+                Value<bool> isAvailableInRange = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime?> lastCheckedAt = const Value.absent(),
+                Value<DateTime?> lastNotifiedAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LigaPriceAlertsCompanion(
+                id: id,
+                title: title,
+                targetUrl: targetUrl,
+                imageUrl: imageUrl,
+                minTargetPrice: minTargetPrice,
+                maxTargetPrice: maxTargetPrice,
+                allowPreSale: allowPreSale,
+                currentLowestPrice: currentLowestPrice,
+                currentStoreName: currentStoreName,
+                isPreSale: isPreSale,
+                isAvailableInRange: isAvailableInRange,
+                isActive: isActive,
+                lastCheckedAt: lastCheckedAt,
+                lastNotifiedAt: lastNotifiedAt,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String title,
+                required String targetUrl,
+                Value<String> imageUrl = const Value.absent(),
+                Value<double> minTargetPrice = const Value.absent(),
+                Value<double> maxTargetPrice = const Value.absent(),
+                Value<bool> allowPreSale = const Value.absent(),
+                Value<double?> currentLowestPrice = const Value.absent(),
+                Value<String> currentStoreName = const Value.absent(),
+                Value<bool> isPreSale = const Value.absent(),
+                Value<bool> isAvailableInRange = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime?> lastCheckedAt = const Value.absent(),
+                Value<DateTime?> lastNotifiedAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LigaPriceAlertsCompanion.insert(
+                id: id,
+                title: title,
+                targetUrl: targetUrl,
+                imageUrl: imageUrl,
+                minTargetPrice: minTargetPrice,
+                maxTargetPrice: maxTargetPrice,
+                allowPreSale: allowPreSale,
+                currentLowestPrice: currentLowestPrice,
+                currentStoreName: currentStoreName,
+                isPreSale: isPreSale,
+                isAvailableInRange: isAvailableInRange,
+                isActive: isActive,
+                lastCheckedAt: lastCheckedAt,
+                lastNotifiedAt: lastNotifiedAt,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$LigaPriceAlertsTable, LigaPriceAlert>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $LigaPriceAlertsTable,
+                    LigaPriceAlert
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LigaPriceAlertsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LigaPriceAlertsTable,
+      LigaPriceAlert,
+      $$LigaPriceAlertsTableFilterComposer,
+      $$LigaPriceAlertsTableOrderingComposer,
+      $$LigaPriceAlertsTableAnnotationComposer,
+      $$LigaPriceAlertsTableCreateCompanionBuilder,
+      $$LigaPriceAlertsTableUpdateCompanionBuilder,
+      (
+        LigaPriceAlert,
+        BaseReferences<_$AppDatabase, $LigaPriceAlertsTable, LigaPriceAlert>,
+      ),
+      LigaPriceAlert,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3880,4 +5199,6 @@ class $AppDatabaseManager {
       $$WishlistItemsTableTableManager(_db, _db.wishlistItems);
   $$PriceSnapshotsTableTableManager get priceSnapshots =>
       $$PriceSnapshotsTableTableManager(_db, _db.priceSnapshots);
+  $$LigaPriceAlertsTableTableManager get ligaPriceAlerts =>
+      $$LigaPriceAlertsTableTableManager(_db, _db.ligaPriceAlerts);
 }

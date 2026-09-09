@@ -46,7 +46,18 @@ class WobblyMenuIconState extends State<WobblyMenuIcon>
 
   @override
   Widget build(BuildContext context) {
-    final defaultChild = widget.child ?? StylizedMenuBadge(size: widget.size);
+    final defaultChild = widget.child ??
+        SizedBox(
+          width: widget.size > 36 ? 58 : widget.size * 1.4,
+          height: widget.size,
+          child: Image.asset(
+            'assets/images/wurmple_menu.png',
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.medium,
+            errorBuilder: (context, error, stackTrace) =>
+                StylizedMenuBadge(size: widget.size),
+          ),
+        );
 
     Widget content = AnimatedBuilder(
       animation: _controller,

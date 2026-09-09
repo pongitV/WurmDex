@@ -6,6 +6,7 @@ import 'package:wurmdex/core/database/app_database.dart';
 import 'package:wurmdex/core/database/database_provider.dart';
 import 'package:wurmdex/core/localization/app_strings.dart';
 import 'package:wurmdex/core/providers/currency_provider.dart';
+import 'package:wurmdex/core/utils/currency_formatter.dart';
 import 'package:wurmdex/features/catalog/models/pokemon_card_item.dart';
 
 class CardQuickWishlistDialog {
@@ -43,7 +44,7 @@ class CardQuickWishlistDialog {
                   ),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   onChanged: (val) {
-                    targetInput = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                    targetInput = CurrencyFormatter.parseCurrencyOrDefault(val);
                   },
                 ),
                 const SizedBox(height: 12),

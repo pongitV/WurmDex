@@ -14,11 +14,12 @@ enum RestoreMode {
 }
 
 class FileStorageHelper {
-  /// Exports all user data (folders, cards, wishlist, price snapshots) to a JSON string
+  /// Exports all user data (folders, cards, wishlist, price snapshots, radar alerts) to a JSON string
   static Future<String> generateBackupJson(AppDatabase db) async {
     final folders = await db.getAllFolders();
     final cards = await db.getAllCards();
     final wishlist = await db.getAllWishlist();
+    final ligaAlerts = await db.getAllLigaAlerts();
 
     final backupMap = {
       'app': 'WurmDex',
@@ -59,6 +60,22 @@ class FileStorageHelper {
         'priority': w.priority,
         'notes': w.notes,
         'createdAt': w.createdAt.toIso8601String(),
+      }).toList(),
+      'ligaAlerts': ligaAlerts.map((a) => {
+        'id': a.id,
+        'title': a.title,
+        'imageUrl': a.imageUrl,
+        'targetUrl': a.targetUrl,
+        'minTargetPrice': a.minTargetPrice,
+        'maxTargetPrice': a.maxTargetPrice,
+        'currentLowestPrice': a.currentLowestPrice,
+        'currentStoreName': a.currentStoreName,
+        'allowPreSale': a.allowPreSale,
+        'isPreSale': a.isPreSale,
+        'isAvailableInRange': a.isAvailableInRange,
+        'isActive': a.isActive,
+        'lastCheckedAt': a.lastCheckedAt?.toIso8601String(),
+        'createdAt': a.createdAt.toIso8601String(),
       }).toList(),
     };
 
@@ -201,6 +218,29 @@ class FileStorageHelper {
             priority: Value(w['priority'] as String? ?? 'Média'),
             notes: Value(w['notes'] as String? ?? ''),
             createdAt: Value(DateTime.tryParse(w['createdAt'] as String? ?? '') ?? DateTime.now()),
+          ),
+        );
+      }
+
+      // Restore Liga Alerts
+      final alertsData = decoded['ligaAlerts'] as List<dynamic>? ?? [];
+      for (final a in alertsData) {
+        await db.insertLigaAlert(
+          LigaPriceAlertsCompanion(
+            id: Value(a['id'] as String),
+            title: Value(a['title'] as String),
+            imageUrl: Value(a['imageUrl'] as String? ?? ''),
+            targetUrl: Value(a['targetUrl'] as String),
+            minTargetPrice: Value((a['minTargetPrice'] as num?)?.toDouble() ?? 0.0),
+            maxTargetPrice: Value((a['maxTargetPrice'] as num?)?.toDouble() ?? 0.0),
+            currentLowestPrice: Value((a['currentLowestPrice'] as num?)?.toDouble()),
+            currentStoreName: Value(a['currentStoreName'] as String? ?? ''),
+            allowPreSale: Value(a['allowPreSale'] as bool? ?? true),
+            isPreSale: Value(a['isPreSale'] as bool? ?? false),
+            isAvailableInRange: Value(a['isAvailableInRange'] as bool? ?? false),
+            isActive: Value(a['isActive'] as bool? ?? true),
+            lastCheckedAt: Value(a['lastCheckedAt'] != null ? DateTime.tryParse(a['lastCheckedAt'] as String) : null),
+            createdAt: Value(DateTime.tryParse(a['createdAt'] as String? ?? '') ?? DateTime.now()),
           ),
         );
       }

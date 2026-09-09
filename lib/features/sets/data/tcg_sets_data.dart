@@ -12,10 +12,6 @@ class TcgSetsData {
     'me05': 2026,
     'mee': 2026,
     'mep': 2026,
-    'B1': 2026,
-    'B1a': 2026,
-    'B2': 2026,
-    'B2a': 2026,
 
     // 2025
     'sv08.5': 2025,
@@ -23,14 +19,6 @@ class TcgSetsData {
     'sv10': 2025,
     'sv10.5b': 2025,
     'sv10.5w': 2025,
-    'A2': 2025,
-    'A2a': 2025,
-    'A2b': 2025,
-    'A3': 2025,
-    'A3a': 2025,
-    'A3b': 2025,
-    'A4': 2025,
-    'A4a': 2025,
 
     // 2024
     'sv04.5': 2024,
@@ -40,9 +28,6 @@ class TcgSetsData {
     'sv07': 2024,
     'sv08': 2024,
     '2024sv': 2024,
-    'P-A': 2024,
-    'A1': 2024,
-    'A1a': 2024,
 
     // 2023
     'sv01': 2023,
@@ -519,9 +504,39 @@ class TcgSetsData {
     'me05',
     'mee',
     'mep',
-    'B1',
-    'B1a',
-    'B2',
-    'B2a',
   };
+
+  /// Checks if a set ID or name belongs to digital-only games (Pokémon TCG Pocket, TCG Live/Online)
+  static bool isDigitalGameSet(String setId, [String? setName]) {
+    final lowerId = setId.trim().toLowerCase();
+    final lowerName = setName?.toLowerCase() ?? '';
+
+    // Pokémon TCG Pocket series A sets (A1, A1a, A2, A2a, A2b, A3, A4, etc.)
+    if (RegExp(r'^a\d', caseSensitive: false).hasMatch(lowerId)) return true;
+    // Pokémon TCG Pocket series B sets (B1, B1a, B2, etc.)
+    if (RegExp(r'^b\d', caseSensitive: false).hasMatch(lowerId)) return true;
+    // Promos-A / Promo-A
+    if (lowerId == 'p-a' || lowerId.startsWith('p-a') || lowerId == 'pa') return true;
+    // Digital identifiers
+    if (lowerId.contains('tcgp') || lowerId.contains('pocket') || lowerId.contains('tcgo')) return true;
+    if (lowerName.contains('pocket') || lowerName.contains('tcgp')) return true;
+
+    return false;
+  }
+
+  /// Checks if a card belongs to a digital-only game (Pokémon TCG Pocket)
+  static bool isDigitalCard({
+    required String cardId,
+    String? setId,
+    String? setName,
+    String? imageUrlSmall,
+    String? imageUrlLarge,
+  }) {
+    if (setId != null && isDigitalGameSet(setId, setName)) return true;
+    final lowerId = cardId.trim().toLowerCase();
+    if (RegExp(r'^(a\d|b\d|p-a|tcgp|pocket)', caseSensitive: false).hasMatch(lowerId)) return true;
+    if (imageUrlSmall != null && (imageUrlSmall.contains('/tcgp/') || imageUrlSmall.contains('/pocket/'))) return true;
+    if (imageUrlLarge != null && (imageUrlLarge.contains('/tcgp/') || imageUrlLarge.contains('/pocket/'))) return true;
+    return false;
+  }
 }

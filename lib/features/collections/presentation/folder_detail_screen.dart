@@ -16,6 +16,7 @@ import '../../../../core/utils/semantic_search_helper.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/widgets/app_empty_state.dart';
+import '../../../../core/widgets/app_network_image.dart';
 import '../../../../core/widgets/app_search_bar.dart';
 import '../../../../core/widgets/bottom_sheet_drag_handle.dart';
 import '../../../../core/widgets/card_grid_skeleton.dart';
@@ -348,15 +349,14 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
             children: [
               const BottomSheetDragHandle(bottomPadding: 8),
               ListTile(
-                leading: ClipRRect(
+                leading: AppNetworkImage(
+                  imageUrl: card.imageUrl,
+                  width: 36,
+                  height: 50,
+                  fit: BoxFit.cover,
                   borderRadius: BorderRadius.circular(4),
-                  child: Image.network(
-                    card.imageUrl,
-                    width: 36,
-                    height: 50,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.style),
-                  ),
+                  fallbackIcon: Icons.style,
+                  fallbackIconSize: 24,
                 ),
                 title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text('${card.setName} • ${card.condition} • x${card.quantity}'),

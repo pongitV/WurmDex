@@ -75,12 +75,34 @@ class PriceSnapshots extends Table {
   RealColumn get exchangeRateBrl => real().withDefault(const Constant(5.60))();
 }
 
-@DriftDatabase(tables: [Folders, UserCards, WishlistItems, PriceSnapshots])
+// LigaPriceAlerts Table (Monitored products on LigaPokemon with price range & pre-sale flags)
+class LigaPriceAlerts extends Table {
+  TextColumn get id => text()();
+  TextColumn get title => text()();
+  TextColumn get targetUrl => text()();
+  TextColumn get imageUrl => text().withDefault(const Constant(''))();
+  RealColumn get minTargetPrice => real().withDefault(const Constant(0.0))();
+  RealColumn get maxTargetPrice => real().withDefault(const Constant(0.0))();
+  BoolColumn get allowPreSale => boolean().withDefault(const Constant(true))();
+  RealColumn get currentLowestPrice => real().nullable()();
+  TextColumn get currentStoreName => text().withDefault(const Constant(''))();
+  BoolColumn get isPreSale => boolean().withDefault(const Constant(false))();
+  BoolColumn get isAvailableInRange => boolean().withDefault(const Constant(false))();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get lastCheckedAt => dateTime().nullable()();
+  DateTimeColumn get lastNotifiedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [Folders, UserCards, WishlistItems, PriceSnapshots, LigaPriceAlerts])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -94,6 +116,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 3) {
         await m.addColumn(wishlistItems, wishlistItems.folderName);
+      }
+      if (from < 4) {
+        await m.createTable(ligaPriceAlerts);
       }
       await _createIndexes();
     },
@@ -151,8 +176,25 @@ class AppDatabase extends _$AppDatabase {
   Future<List<PriceSnapshot>> getSnapshotsForCard(String cardApiId) => 
       (select(priceSnapshots)..where((t) => t.cardApiId.equals(cardApiId))..orderBy([(t) => OrderingTerm.asc(t.timestamp)])).get();
 
+  // --- LigaPriceAlerts Queries ---
+  Stream<List<LigaPriceAlert>> watchAllLigaAlerts() =>
+      (select(ligaPriceAlerts)..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
+  Future<List<LigaPriceAlert>> getAllLigaAlerts() =>
+      (select(ligaPriceAlerts)..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
+  Future<List<LigaPriceAlert>> getAllActiveLigaAlerts() =>
+      (select(ligaPriceAlerts)..where((t) => t.isActive.equals(true))).get();
+  Future<LigaPriceAlert?> getLigaAlertById(String id) =>
+      (select(ligaPriceAlerts)..where((t) => t.id.equals(id))).getSingleOrNull();
+  Future<int> insertLigaAlert(LigaPriceAlertsCompanion alert) =>
+      into(ligaPriceAlerts).insert(alert);
+  Future<bool> updateLigaAlert(LigaPriceAlertsCompanion alert) =>
+      update(ligaPriceAlerts).replace(alert);
+  Future<int> deleteLigaAlert(String id) =>
+      (delete(ligaPriceAlerts)..where((t) => t.id.equals(id))).go();
+
   // --- Backup / Restore ---
   Future<void> clearAllUserData() async {
+    await delete(ligaPriceAlerts).go();
     await delete(priceSnapshots).go();
     await delete(wishlistItems).go();
     await delete(userCards).go();

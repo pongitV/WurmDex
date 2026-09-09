@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/app_preferences_service.dart';
 
 enum CardScaleTarget {
   menu,
@@ -9,12 +10,12 @@ enum CardScaleTarget {
 class MenuCardScaleNotifier extends Notifier<double> {
   @override
   double build() {
-    // Default generous scale for Menu and Catalog: 1.15 (clear and prominent)
-    return 1.15;
+    return AppPreferencesService.getSavedMenuScale() ?? 1.15;
   }
 
   void setScale(double value) {
     state = double.parse(value.clamp(0.70, 1.50).toStringAsFixed(2));
+    AppPreferencesService.saveMenuScale(state);
   }
 
   void zoomIn() {
@@ -26,7 +27,7 @@ class MenuCardScaleNotifier extends Notifier<double> {
   }
 
   void reset() {
-    state = 1.15;
+    setScale(1.15);
   }
 }
 
@@ -34,12 +35,12 @@ class MenuCardScaleNotifier extends Notifier<double> {
 class CollectionCardScaleNotifier extends Notifier<double> {
   @override
   double build() {
-    // Default balanced scale for 3x3 Virtual Binder and folder grid: 0.85
-    return 0.85;
+    return AppPreferencesService.getSavedCollectionScale() ?? 0.85;
   }
 
   void setScale(double value) {
     state = double.parse(value.clamp(0.50, 1.30).toStringAsFixed(2));
+    AppPreferencesService.saveCollectionScale(state);
   }
 
   void zoomIn() {
@@ -51,7 +52,7 @@ class CollectionCardScaleNotifier extends Notifier<double> {
   }
 
   void reset() {
-    state = 0.85;
+    setScale(0.85);
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/app_preferences_service.dart';
 
 enum AppLanguage {
   enUs,
@@ -8,12 +9,12 @@ enum AppLanguage {
 class LanguageNotifier extends Notifier<AppLanguage> {
   @override
   AppLanguage build() {
-    // Default language is English En-US
-    return AppLanguage.enUs;
+    return AppPreferencesService.getSavedLanguage() ?? AppLanguage.enUs;
   }
 
   void setLanguage(AppLanguage language) {
     state = language;
+    AppPreferencesService.saveLanguage(language);
   }
 
   bool get isEnglish => state == AppLanguage.enUs;

@@ -9,6 +9,7 @@ import '../../../core/providers/currency_provider.dart';
 import '../../../core/providers/grid_composition_provider.dart';
 import '../../../core/utils/card_sorting_helper.dart';
 import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/card_grid_skeleton.dart';
 import '../../../core/widgets/card_sort_button.dart';
@@ -215,11 +216,12 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
             children: [
               Row(
                 children: [
-                  if (widget.set.logoUrl != null)
-                    Image.network(
-                      widget.set.logoUrl!,
+                  if (widget.set.logoUrl != null && widget.set.logoUrl!.isNotEmpty)
+                    AppNetworkImage(
+                      imageUrl: widget.set.logoUrl!,
                       height: 36,
-                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                      fit: BoxFit.contain,
+                      errorWidget: const SizedBox.shrink(),
                     ),
                   const SizedBox(width: 12),
                   Expanded(

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/network/currency_service.dart';
 import '../../../core/network/dio_client.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/tcg_pricing_parser.dart';
 
 enum PriceTimeRange {
@@ -133,17 +134,17 @@ class PricingService {
 
         final minMatch = minRegex.firstMatch(html);
         if (minMatch != null) {
-          ligaMin = double.tryParse(minMatch.group(1)!.replaceAll('.', '').replaceAll(',', '.'));
+          ligaMin = CurrencyFormatter.parseCurrency(minMatch.group(1));
         }
 
         final avgMatch = avgRegex.firstMatch(html);
         if (avgMatch != null) {
-          ligaAvg = double.tryParse(avgMatch.group(1)!.replaceAll('.', '').replaceAll(',', '.'));
+          ligaAvg = CurrencyFormatter.parseCurrency(avgMatch.group(1));
         }
 
         final maxMatch = maxRegex.firstMatch(html);
         if (maxMatch != null) {
-          ligaMax = double.tryParse(maxMatch.group(1)!.replaceAll('.', '').replaceAll(',', '.'));
+          ligaMax = CurrencyFormatter.parseCurrency(maxMatch.group(1));
         }
       }
     } catch (e) {

@@ -27,3 +27,9 @@ final folderCardsProvider = StreamProvider.family<List<UserCard>, String?>((ref,
   final db = ref.watch(databaseProvider);
   return db.watchCardsByFolder(folderId);
 });
+
+final ligaAlertsStreamProvider = StreamProvider<List<LigaPriceAlert>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return db.watchAllLigaAlerts();
+});
+

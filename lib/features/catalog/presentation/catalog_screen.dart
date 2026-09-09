@@ -10,6 +10,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/semantic_search_helper.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/widgets/app_empty_state.dart';
+import '../../../../core/widgets/app_network_image.dart';
 import '../../../../core/widgets/bottom_sheet_drag_handle.dart';
 import '../../../../core/widgets/card_grid_skeleton.dart';
 import '../../../../core/widgets/card_scale_button.dart';
@@ -412,15 +413,14 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
         return ListTile(
           dense: true,
-          leading: ClipRRect(
+          leading: AppNetworkImage(
+            imageUrl: card.imageUrlSmall,
+            width: 32,
+            height: 44,
+            fit: BoxFit.cover,
             borderRadius: BorderRadius.circular(4),
-            child: Image.network(
-              card.imageUrlSmall,
-              width: 32,
-              height: 44,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 24),
-            ),
+            fallbackIcon: Icons.broken_image,
+            fallbackIconSize: 24,
           ),
           title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           subtitle: Text(

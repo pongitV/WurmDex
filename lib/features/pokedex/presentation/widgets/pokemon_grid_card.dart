@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_network_image.dart';
 import '../../models/pokedex_entry.dart';
 
 class PokemonGridCard extends StatelessWidget {
@@ -30,67 +31,32 @@ class PokemonGridCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(10.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Pokédex Number Badge
+              // Top row: #Number
               Align(
                 alignment: Alignment.topRight,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    pokemon.formattedNumber,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                child: Text(
+                  pokemon.formattedNumber,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               const SizedBox(height: 2),
-              // Pokémon Artwork
+              // Pokémon Artwork with sprite fallback
               Expanded(
                 child: Hero(
                   tag: 'pokemon_art_${pokemon.id}',
-                  child: Image.network(
-                    pokemon.artworkUrl,
+                  child: AppNetworkImage(
+                    imageUrl: pokemon.artworkUrl,
+                    fallbackImageUrl: pokemon.spriteUrl,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Image.network(
-                        pokemon.spriteUrl,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            Icons.catching_pokemon,
-                            size: 40,
-                            color: colorScheme.primary.withValues(alpha: 0.5),
-                          );
-                        },
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        ),
-                      );
-                    },
+                    fallbackIcon: Icons.catching_pokemon,
+                    fallbackIconSize: 40,
                   ),
                 ),
               ),

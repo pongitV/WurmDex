@@ -55,6 +55,17 @@ void main() {
       expect(CurrencyFormatter.formatPercent(12.34), '+12.3%');
       expect(CurrencyFormatter.formatPercent(-5.67), '-5.7%');
     });
+
+    test('Parses various currency formats reliably', () {
+      expect(CurrencyFormatter.parseCurrency('R\$ 1.450,90'), 1450.90);
+      expect(CurrencyFormatter.parseCurrency('45,50'), 45.50);
+      expect(CurrencyFormatter.parseCurrency('45.50'), 45.50);
+      expect(CurrencyFormatter.parseCurrency('\$ 1,450.90'), 1450.90);
+      expect(CurrencyFormatter.parseCurrency(''), null);
+      expect(CurrencyFormatter.parseCurrency(null), null);
+      expect(CurrencyFormatter.parseCurrencyOrDefault('invalid', 10.0), 10.0);
+      expect(CurrencyFormatter.parseCurrencyOrDefault('123,45'), 123.45);
+    });
   });
 
   group('CatalogFilterState Tests', () {

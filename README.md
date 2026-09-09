@@ -16,14 +16,25 @@ WurmDex is an open-source fan application and portfolio manager for the Pokemon 
 
 ### Features
 
+- **LigaPokemon Price Radar**: Monitor specific sealed products and singles in real time with pre-order tracking, lowest price alerts, direct store detection, and browser links.
 - **Collection & Folder Management**: Organize cards across custom binders and folders with condition tracking, finishes (Foil, Reverse, Regular), and purchase prices.
 - **Interactive 3x3 Virtual Binder**: Realistic pocket-page binder experience with smooth double-page spread animations.
 - **Market Price Reference**: Compare domestic (LigaPokémon, BRL) and international (TCGPlayer, USD) quotes with real-time currency conversion.
+- **Unified Navigation Dock**: Clean 3-button dock (Catalog, Radar, More Hub) identical on both Windows and Android with persistent themes and language across sessions.
 - **Portfolio & Analytics**: Monitor total collection valuation, cost basis, and price trends across multiple timeframes.
 - **WorldDex (Species Catalog)**: Complete species catalog across all 9 generations with official types and card release galleries.
 - **Sets & Expansions**: Browse releases from Base Set to the latest expansions with set completion statistics.
 - **Booster Pack Simulator**: Experience opening booster packs with realistic odds and card animations.
 - **Local-First Architecture**: 100% offline-first using SQLite (via Drift), zero tracking, with full JSON backup and restore.
+
+---
+
+## Pre-compiled Releases (Download)
+
+Pre-built binaries are available directly from the repository's `dist/` directory:
+
+- **Android (APK)**: [`dist/android/WurmDex-release.apk`](dist/android/WurmDex-release.apk)
+- **Windows Desktop (EXE)**: [`dist/windows/wurmdex.exe`](dist/windows/wurmdex.exe) (run directly from the `dist/windows` folder with bundled DLLs)
 
 ---
 

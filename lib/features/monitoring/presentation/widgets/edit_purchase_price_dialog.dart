@@ -6,6 +6,7 @@ import '../../../../core/database/database_provider.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class EditPurchasePriceDialog extends ConsumerStatefulWidget {
   final UserCard card;
@@ -66,8 +67,7 @@ class _EditPurchasePriceDialogState extends ConsumerState<EditPurchasePriceDialo
   }
 
   Future<void> _handleSave() async {
-    final rawText = _controller.text.trim().replaceAll(',', '.');
-    final parsed = double.tryParse(rawText);
+    final parsed = CurrencyFormatter.parseCurrency(_controller.text);
 
     if (parsed == null || parsed < 0) {
       setState(() => _errorText = 'Informe um valor numérico válido.');

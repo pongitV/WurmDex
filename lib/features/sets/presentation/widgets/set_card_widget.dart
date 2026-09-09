@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_network_image.dart';
 import '../../models/tcg_set_item.dart';
 
 class SetCardWidget extends StatelessWidget {
@@ -65,29 +66,11 @@ class SetCardWidget extends StatelessWidget {
               Expanded(
                 child: Hero(
                   tag: 'set_logo_${set.id}',
-                  child: set.logoUrl != null
-                      ? Image.network(
-                          set.logoUrl!,
+                  child: set.logoUrl != null && set.logoUrl!.isNotEmpty
+                      ? AppNetworkImage(
+                          imageUrl: set.logoUrl!,
                           fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildFallbackLogo(colorScheme);
-                          },
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
-                                ),
-                              ),
-                            );
-                          },
+                          errorWidget: _buildFallbackLogo(colorScheme),
                         )
                       : _buildFallbackLogo(colorScheme),
                 ),

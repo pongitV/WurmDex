@@ -54,4 +54,46 @@ class CurrencyFormatter {
   }) {
     return format(usdValue, exchangeRate: exchangeRate, currency: currency);
   }
+
+  /// Universal currency parser that safely handles Brazilian (pt-BR) and international number formats
+  /// e.g. "R$ 1.450,90", "1.450,90", "45,50", "$ 1,450.90", "12.50"
+  static double? parseCurrency(String? raw) {
+    if (raw == null) return null;
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return null;
+
+    try {
+      var sanitized = trimmed
+          .replaceAll('R\$', '')
+          .replaceAll('r\$', '')
+          .replaceAll('\$', '')
+          .replaceAll(' ', '')
+          .trim();
+
+      if (sanitized.contains(',') && sanitized.contains('.')) {
+        // e.g. 1.450,90 (BRL standard) vs 1,450.90 (US standard)
+        final lastComma = sanitized.lastIndexOf(',');
+        final lastDot = sanitized.lastIndexOf('.');
+        if (lastComma > lastDot) {
+          // BRL: dot is thousands, comma is decimal
+          sanitized = sanitized.replaceAll('.', '').replaceAll(',', '.');
+        } else {
+          // US: comma is thousands, dot is decimal
+          sanitized = sanitized.replaceAll(',', '');
+        }
+      } else if (sanitized.contains(',')) {
+        // e.g. 45,50 -> 45.50
+        sanitized = sanitized.replaceAll(',', '.');
+      }
+
+      return double.tryParse(sanitized);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Convenience method that defaults to [defaultValue] (0.0) if parsing fails or input is empty
+  static double parseCurrencyOrDefault(String? raw, [double defaultValue = 0.0]) {
+    return parseCurrency(raw) ?? defaultValue;
+  }
 }

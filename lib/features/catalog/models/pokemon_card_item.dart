@@ -1,4 +1,5 @@
 import '../../../core/utils/tcg_pricing_parser.dart';
+import '../../sets/data/tcg_sets_data.dart';
 
 class PokemonCardItem {
   final String id;
@@ -34,6 +35,15 @@ class PokemonCardItem {
     this.tcgMidUsd,
     this.tcgLowUsd,
   });
+
+  /// Returns true if this card belongs to a digital-only Pokémon TCG game (e.g. Pocket)
+  bool get isDigital => TcgSetsData.isDigitalCard(
+        cardId: id,
+        setId: setId,
+        setName: setName,
+        imageUrlSmall: imageUrlSmall,
+        imageUrlLarge: imageUrlLarge,
+      );
 
   /// Returns true if an explicit price was returned by API pricing data
   bool get hasExplicitPrice =>

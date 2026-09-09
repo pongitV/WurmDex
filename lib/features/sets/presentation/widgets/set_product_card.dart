@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_network_image.dart';
 import '../../models/set_product_item.dart';
 
 class SetProductCard extends ConsumerWidget {
@@ -47,7 +48,9 @@ class SetProductCard extends ConsumerWidget {
                   height: 96,
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.brightness == Brightness.dark
+                        ? colorScheme.surfaceContainerHighest
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
@@ -57,36 +60,15 @@ class SetProductCard extends ConsumerWidget {
                       ),
                     ],
                     border: Border.all(
-                      color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.4),
                     ),
                   ),
-                  child: ClipRRect(
+                  child: AppNetworkImage(
+                    imageUrl: product.imageUrl,
+                    fit: BoxFit.contain,
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      product.imageUrl,
-                      fit: BoxFit.contain,
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return Center(
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              value: progress.expectedTotalBytes != null
-                                  ? progress.cumulativeBytesLoaded /
-                                      progress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.inventory_2_outlined,
-                        size: 40,
-                        color: colorScheme.primary,
-                      ),
-                    ),
+                    fallbackIcon: Icons.inventory_2_outlined,
+                    fallbackIconSize: 40,
                   ),
                 ),
                 const SizedBox(width: 14),

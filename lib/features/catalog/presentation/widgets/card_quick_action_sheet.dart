@@ -8,6 +8,7 @@ import 'package:wurmdex/core/database/database_provider.dart';
 import 'package:wurmdex/core/localization/app_strings.dart';
 import 'package:wurmdex/core/navigation/app_navigator.dart';
 import 'package:wurmdex/core/theme/app_colors.dart';
+import 'package:wurmdex/core/utils/currency_formatter.dart';
 import 'package:wurmdex/core/utils/marketplace_url_helper.dart';
 import 'package:wurmdex/core/utils/semantic_search_helper.dart';
 import 'package:wurmdex/core/widgets/bottom_sheet_drag_handle.dart';
@@ -262,7 +263,7 @@ class CardQuickActionSheet extends ConsumerWidget {
                           ),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           onChanged: (val) {
-                            purchasePrice = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                            purchasePrice = CurrencyFormatter.parseCurrencyOrDefault(val);
                           },
                         ),
                       ),
@@ -349,7 +350,7 @@ class CardQuickActionSheet extends ConsumerWidget {
                   ),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   onChanged: (val) {
-                    targetPrice = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                    targetPrice = CurrencyFormatter.parseCurrencyOrDefault(val);
                   },
                 ),
                 const SizedBox(height: 12),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'app_image_headers.dart';
 
 /// Cached response entry with expiration.
 class _CacheEntry {
@@ -24,8 +25,7 @@ class DioClient {
         connectTimeout: const Duration(seconds: 20),
         receiveTimeout: const Duration(seconds: 25),
         headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+          'User-Agent': AppImageHeaders.browserUserAgent,
           'Accept': 'application/json, text/plain, */*',
           'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
         },
