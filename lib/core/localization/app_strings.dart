@@ -159,6 +159,30 @@ class AppStrings {
       ? 'Abyssal shadow corruption with spectral purple and crimson eye'
       : 'Sombra abissal corrompida com roxo espectral e olho carmesim';
 
+  String get themeWurmpleShinyLockedSub => isEn
+      ? 'Unlock with 1,000,000 pts in Wurmple Clicker'
+      : 'Desbloqueie com 1.000.000 pts no Wurmple Clicker';
+  String get themeLugiaShinyLockedSub => isEn
+      ? 'Unlock with 1,000,000 pts in Lugia Clicker'
+      : 'Desbloqueie com 1.000.000 pts no Lugia Clicker';
+  String get themeDarkLugiaLockedSub => isEn
+      ? 'Secret: Create a collection named "DarkLugia"'
+      : 'Segredo: Crie uma coleção chamada "DarkLugia"';
+
+  String get themeWurmpleShinyLockedToast => isEn
+      ? 'Reach 1,000,000 pts in Wurmple Clicker to unlock!'
+      : 'Alcance 1.000.000 pts no Wurmple Clicker para desbloquear!';
+  String get themeLugiaShinyLockedToast => isEn
+      ? 'Reach 1,000,000 pts in Lugia Clicker to unlock!'
+      : 'Alcance 1.000.000 pts no Lugia Clicker para desbloquear!';
+  String get themeDarkLugiaLockedToast => isEn
+      ? 'Create a collection named "DarkLugia" to unlock!'
+      : 'Crie uma coleção com o nome "DarkLugia" para desbloquear!';
+
+  // Common Dialog Actions
+  String get confirm => isEn ? 'Confirm' : 'Confirmar';
+  String get done => isEn ? 'Done' : 'Concluir';
+
   // Extra Themes Unlock Dialog
   String get btnUnlockExtraThemes => isEn ? 'Unlock Extra Themes' : 'Desbloquear Temas Extras';
   String get manageExtraThemesTitle => isEn ? 'Manage Extra Themes' : 'Gerenciar Temas Extras';
@@ -174,6 +198,30 @@ class AppStrings {
   String get allThemesOption => isEn ? 'All Extra Themes' : 'Todos os Temas Extras';
   String get btnUnlockAll => isEn ? 'Unlock All' : 'Desbloquear Todos';
   String get btnLockAll => isEn ? 'Lock All' : 'Bloquear Todos';
+
+  // Clicker Minigame Localization
+  String get clickerResetTooltip => isEn ? 'Reset progress' : 'Resetar progresso';
+  String clickerTotalClicks(int count) => isEn ? 'Total clicks: $count' : 'Total de cliques: $count';
+  String get clickerPerSecond => isEn ? 'Per Second' : 'Por Segundo';
+  String get clickerPerClick => isEn ? 'Per Click' : 'Por Clique';
+  String get clickerUnlockShinyLugia => isEn ? 'Unlock Shiny Lugia Theme' : 'Desbloquear Tema Shiny Lugia';
+  String get clickerUnlockShinyWurmple => isEn ? 'Unlock Shiny Wurmple Theme' : 'Desbloquear Tema Shiny Wurmple';
+  String get clickerShinyUnlockCostDesc => isEn
+      ? 'Costs 1,000,000 points. Keeps upgrades and score!'
+      : 'Custa 1.000.000 pontos. Mantém upgrades e pontuação!';
+  String get clickerUpgradesSection => isEn ? 'UPGRADES & EVOLUTION' : 'MELHORIAS & EVOLUÇÃO';
+  String clickerLevel(int level) => isEn ? 'Lv. $level' : 'Nv. $level';
+  String get clickerResetDialogTitle => isEn ? 'Reset Progress?' : 'Resetar Progresso?';
+  String get clickerResetDialogMessage => isEn
+      ? 'Are you sure you want to reset all points, clicks, and upgrades? This action cannot be undone.'
+      : 'Tem certeza de que deseja zerar todos os pontos, cliques e melhorias? Esta ação não pode ser desfeita.';
+  String get clickerResetConfirm => isEn ? 'Yes, Reset' : 'Sim, Resetar';
+  String get clickerShinyLugiaUnlockedToast => isEn
+      ? 'Congratulations! Shiny Lugia Theme unlocked and applied!'
+      : 'Parabéns! Tema Shiny Lugia desbloqueado e ativado!';
+  String get clickerShinyWurmpleUnlockedToast => isEn
+      ? 'Congratulations! Shiny Wurmple Theme unlocked and applied!'
+      : 'Parabéns! Tema Shiny Wurmple desbloqueado e ativado!';
 
   String get sectionCardScale => isEn
       ? 'CARD VISUAL SCALE (MENU & COLLECTION)'

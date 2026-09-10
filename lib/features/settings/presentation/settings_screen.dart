@@ -97,19 +97,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 if (themeMode != null) {
                   if (themeMode == AppThemeMode.wurmpleShiny && !AppPreferencesService.isWurmpleShinyUnlocked()) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(strings.isEn ? 'Reach 1,000,000 pts in Wurmple Clicker to unlock!' : 'Alcance 1.000.000 pts no Wurmple Clicker para desbloquear!')),
+                      SnackBar(content: Text(strings.themeWurmpleShinyLockedToast)),
                     );
                     return;
                   }
                   if (themeMode == AppThemeMode.lugiaShiny && !AppPreferencesService.isLugiaShinyUnlocked()) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(strings.isEn ? 'Reach 1,000,000 pts in Lugia Clicker to unlock!' : 'Alcance 1.000.000 pts no Lugia Clicker para desbloquear!')),
+                      SnackBar(content: Text(strings.themeLugiaShinyLockedToast)),
                     );
                     return;
                   }
                   if (themeMode == AppThemeMode.darkLugia && !AppPreferencesService.isDarkLugiaUnlocked()) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(strings.isEn ? 'Create a collection named "DarkLugia" to unlock!' : 'Crie uma coleção com o nome "DarkLugia" para desbloquear!')),
+                      SnackBar(content: Text(strings.themeDarkLugiaLockedToast)),
                     );
                     return;
                   }
@@ -197,7 +197,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     subtitle: Text(
                       AppPreferencesService.isWurmpleShinyUnlocked()
                           ? strings.themeWurmpleShinySub
-                          : (strings.isEn ? 'Unlock with 1,000,000 pts in Wurmple Clicker' : 'Desbloqueie com 1.000.000 pts no Wurmple Clicker'),
+                          : strings.themeWurmpleShinyLockedSub,
                     ),
                     secondary: _buildThemeAvatar(
                       backgroundColor: AppColors.wurmpleShinySurface,
@@ -224,7 +224,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     subtitle: Text(
                       AppPreferencesService.isLugiaShinyUnlocked()
                           ? strings.themeLugiaShinySub
-                          : (strings.isEn ? 'Unlock with 1,000,000 pts in Lugia Clicker' : 'Desbloqueie com 1.000.000 pts no Lugia Clicker'),
+                          : strings.themeLugiaShinyLockedSub,
                     ),
                     secondary: _buildThemeAvatar(
                       backgroundColor: AppColors.lugiaShinySurface,
@@ -251,7 +251,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     subtitle: Text(
                       AppPreferencesService.isDarkLugiaUnlocked()
                           ? strings.themeDarkLugiaSub
-                          : (strings.isEn ? 'Secret: Create a collection named "DarkLugia"' : 'Segredo: Crie uma coleção chamada "DarkLugia"'),
+                          : strings.themeDarkLugiaLockedSub,
                     ),
                     secondary: _buildThemeAvatar(
                       backgroundColor: AppColors.darkLugiaSurface,
@@ -436,7 +436,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(strings.isEn ? 'Close' : 'Fechar'),
+            child: Text(strings.close),
           ),
         ],
       ),
@@ -463,7 +463,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(strings.isEn ? 'Close' : 'Fechar'),
+            child: Text(strings.close),
           ),
         ],
       ),
@@ -615,7 +615,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogCtx).pop(false),
-                  child: Text(strings.isEn ? 'Cancel' : 'Cancelar'),
+                  child: Text(strings.cancel),
                 ),
                 FilledButton(
                   onPressed: () {
@@ -630,7 +630,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       );
                     }
                   },
-                  child: Text(strings.isEn ? 'Confirm' : 'Confirmar'),
+                  child: Text(strings.confirm),
                 ),
               ],
             );
@@ -868,7 +868,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               actions: [
                 FilledButton(
                   onPressed: () => Navigator.of(dialogCtx).pop(),
-                  child: Text(strings.isEn ? 'Done' : 'Concluir'),
+                  child: Text(strings.done),
                 ),
               ],
             );

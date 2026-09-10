@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/services/app_preferences_service.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../../../../core/theme/theme_provider.dart';
@@ -17,8 +18,10 @@ enum ClickerCharacter {
 
 class ClickerUpgrade {
   final String id;
-  final String name;
-  final String description;
+  final String nameEn;
+  final String namePt;
+  final String descEn;
+  final String descPt;
   final IconData icon;
   final int baseCost;
   final double wpsGain;
@@ -27,14 +30,19 @@ class ClickerUpgrade {
 
   ClickerUpgrade({
     required this.id,
-    required this.name,
-    required this.description,
+    required this.nameEn,
+    required this.namePt,
+    required this.descEn,
+    required this.descPt,
     required this.icon,
     required this.baseCost,
     this.wpsGain = 0,
     this.wpcGain = 0,
     this.count = 0,
   });
+
+  String name(bool isEn) => isEn ? nameEn : namePt;
+  String description(bool isEn) => isEn ? descEn : descPt;
 
   int get cost => (baseCost * math.pow(1.15, count)).round();
 }
@@ -115,31 +123,31 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
       _character == ClickerCharacter.lugiaShiny ||
       _character == ClickerCharacter.darkLugia;
 
-  String get _characterTitle {
+  String _characterTitle(bool isEn) {
     switch (_character) {
       case ClickerCharacter.wurmple:
         return 'Wurmple Clicker';
       case ClickerCharacter.wurmpleShiny:
-        return 'Shiny Wurmple Clicker';
+        return isEn ? 'Shiny Wurmple Clicker' : 'Wurmple Shiny Clicker';
       case ClickerCharacter.lugia:
         return 'Lugia Clicker';
       case ClickerCharacter.lugiaShiny:
-        return 'Shiny Lugia Clicker';
+        return isEn ? 'Shiny Lugia Clicker' : 'Lugia Shiny Clicker';
       case ClickerCharacter.darkLugia:
         return 'Dark Lugia Clicker';
     }
   }
 
-  String get _pointsLabel {
+  String _pointsLabel(bool isEn) {
     switch (_character) {
       case ClickerCharacter.wurmple:
       case ClickerCharacter.wurmpleShiny:
         return 'Wurmples';
       case ClickerCharacter.lugia:
       case ClickerCharacter.lugiaShiny:
-        return 'Lugia Power';
+        return isEn ? 'Lugia Power' : 'Poder de Lugia';
       case ClickerCharacter.darkLugia:
-        return 'Shadow Energy';
+        return isEn ? 'Shadow Energy' : 'Energia Sombria';
     }
   }
 
@@ -242,72 +250,90 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
       _upgrades = [
         ClickerUpgrade(
           id: 'whirlpool',
-          name: 'Redemoinho (Whirlpool)',
-          description: '+0.5 por segundo',
+          nameEn: 'Whirlpool',
+          namePt: 'Redemoinho (Whirlpool)',
+          descEn: '+0.5 per second',
+          descPt: '+0.5 por segundo',
           icon: Icons.waves,
           baseCost: 15,
           wpsGain: 0.5,
         ),
         ClickerUpgrade(
           id: 'silver_wing',
-          name: 'Asa de Prata (Silver Wing)',
-          description: '+1 por clique',
+          nameEn: 'Silver Wing',
+          namePt: 'Asa de Prata (Silver Wing)',
+          descEn: '+1 per click',
+          descPt: '+1 por clique',
           icon: Icons.flight,
           baseCost: 40,
           wpcGain: 1,
         ),
         ClickerUpgrade(
           id: 'diving_bell',
-          name: 'Sino dos Mares',
-          description: '+4 por segundo',
+          nameEn: 'Tide Bell',
+          namePt: 'Sino dos Mares',
+          descEn: '+4 per second',
+          descPt: '+4 por segundo',
           icon: Icons.notifications_active,
           baseCost: 120,
           wpsGain: 4.0,
         ),
         ClickerUpgrade(
           id: 'aeroblast',
-          name: 'Rajada de Vento (Aeroblast)',
-          description: '+5 por clique',
+          nameEn: 'Aeroblast',
+          namePt: 'Rajada de Vento (Aeroblast)',
+          descEn: '+5 per click',
+          descPt: '+5 por clique',
           icon: Icons.air,
           baseCost: 350,
           wpcGain: 5,
         ),
         ClickerUpgrade(
           id: 'ocean_current',
-          name: 'Correnteza Abissal',
-          description: '+16 por segundo',
+          nameEn: 'Abyssal Current',
+          namePt: 'Correnteza Abissal',
+          descEn: '+16 per second',
+          descPt: '+16 por segundo',
           icon: Icons.water,
           baseCost: 1000,
           wpsGain: 16.0,
         ),
         ClickerUpgrade(
           id: 'guardian_sanctuary',
-          name: 'Santuário do Guardião',
-          description: '+45 por segundo',
+          nameEn: 'Guardian Sanctuary',
+          namePt: 'Santuário do Guardião',
+          descEn: '+45 per second',
+          descPt: '+45 por segundo',
           icon: Icons.temple_buddhist,
           baseCost: 3500,
           wpsGain: 45.0,
         ),
         ClickerUpgrade(
           id: 'deep_trench',
-          name: 'Fossa Oceânica Profunda',
-          description: '+150 por segundo',
+          nameEn: 'Deep Sea Trench',
+          namePt: 'Fossa Oceânica Profunda',
+          descEn: '+150 per second',
+          descPt: '+150 por segundo',
           icon: Icons.south,
           baseCost: 12000,
           wpsGain: 150.0,
         ),
         ClickerUpgrade(
           id: 'psychic_storm',
-          name: 'Tempestade Psíquica',
-          description: '+500 por segundo',
+          nameEn: 'Psychic Storm',
+          namePt: 'Tempestade Psíquica',
+          descEn: '+500 per second',
+          descPt: '+500 por segundo',
           icon: Icons.bolt,
           baseCost: 40000,
           wpsGain: 500.0,
         ),
         ClickerUpgrade(
           id: 'whirl_islands_temple',
-          name: 'Templo das Ilhas dos Redemoinhos',
-          description: '+2.000 por segundo',
+          nameEn: 'Whirl Islands Temple',
+          namePt: 'Templo das Ilhas dos Redemoinhos',
+          descEn: '+2,000 per second',
+          descPt: '+2.000 por segundo',
           icon: Icons.castle,
           baseCost: 150000,
           wpsGain: 2000.0,
@@ -317,72 +343,90 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
       _upgrades = [
         ClickerUpgrade(
           id: 'string_shot',
-          name: 'Tiro de Seda (String Shot)',
-          description: '+0.5 por segundo',
+          nameEn: 'String Shot',
+          namePt: 'Tiro de Seda (String Shot)',
+          descEn: '+0.5 per second',
+          descPt: '+0.5 por segundo',
           icon: Icons.gesture,
           baseCost: 15,
           wpsGain: 0.5,
         ),
         ClickerUpgrade(
           id: 'pecha_berry',
-          name: 'Fruta Pêssego (Pecha Berry)',
-          description: '+1 por clique',
+          nameEn: 'Pecha Berry',
+          namePt: 'Fruta Pêssego (Pecha Berry)',
+          descEn: '+1 per click',
+          descPt: '+1 por clique',
           icon: Icons.eco,
           baseCost: 40,
           wpcGain: 1,
         ),
         ClickerUpgrade(
           id: 'bug_catcher',
-          name: 'Caçador de Insetos (Bug Catcher)',
-          description: '+4 por segundo',
+          nameEn: 'Bug Catcher',
+          namePt: 'Caçador de Insetos (Bug Catcher)',
+          descEn: '+4 per second',
+          descPt: '+4 por segundo',
           icon: Icons.catching_pokemon,
           baseCost: 120,
           wpsGain: 4.0,
         ),
         ClickerUpgrade(
           id: 'poison_barb',
-          name: 'Ferrão Venenoso (Poison Barb)',
-          description: '+5 por clique',
+          nameEn: 'Poison Barb',
+          namePt: 'Ferrão Venenoso (Poison Barb)',
+          descEn: '+5 per click',
+          descPt: '+5 por clique',
           icon: Icons.colorize,
           baseCost: 350,
           wpcGain: 5,
         ),
         ClickerUpgrade(
           id: 'silcoon_cocoon',
-          name: 'Casulo Silcoon',
-          description: '+16 por segundo',
+          nameEn: 'Silcoon Cocoon',
+          namePt: 'Casulo Silcoon',
+          descEn: '+16 per second',
+          descPt: '+16 por segundo',
           icon: Icons.shield_outlined,
           baseCost: 1000,
           wpsGain: 16.0,
         ),
         ClickerUpgrade(
           id: 'cascoon_cocoon',
-          name: 'Casulo Cascoon',
-          description: '+45 por segundo',
+          nameEn: 'Cascoon Cocoon',
+          namePt: 'Casulo Cascoon',
+          descEn: '+45 per second',
+          descPt: '+45 por segundo',
           icon: Icons.lens,
           baseCost: 3500,
           wpsGain: 45.0,
         ),
         ClickerUpgrade(
           id: 'beautifly_garden',
-          name: 'Jardim de Beautifly',
-          description: '+150 por segundo',
+          nameEn: 'Beautifly Garden',
+          namePt: 'Jardim de Beautifly',
+          descEn: '+150 per second',
+          descPt: '+150 por segundo',
           icon: Icons.flutter_dash,
           baseCost: 12000,
           wpsGain: 150.0,
         ),
         ClickerUpgrade(
           id: 'dustox_swarm',
-          name: 'Enxame Noturno Dustox',
-          description: '+500 por segundo',
+          nameEn: 'Dustox Night Swarm',
+          namePt: 'Enxame Noturno Dustox',
+          descEn: '+500 per second',
+          descPt: '+500 por segundo',
           icon: Icons.nights_stay,
           baseCost: 40000,
           wpsGain: 500.0,
         ),
         ClickerUpgrade(
           id: 'shiny_shrine',
-          name: 'Santuário Wurmple',
-          description: '+2.000 por segundo',
+          nameEn: 'Wurmple Shrine',
+          namePt: 'Santuário Wurmple',
+          descEn: '+2,000 per second',
+          descPt: '+2.000 por segundo',
           icon: Icons.stars,
           baseCost: 150000,
           wpsGain: 2000.0,
@@ -436,18 +480,16 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
     }
   }
 
-  void _resetProgress() {
+  void _resetProgress(AppStrings strings) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Resetar Progresso?'),
-        content: const Text(
-          'Deseja realmente resetar o minigame? Sua pontuação e upgrades retornarão ao início.',
-        ),
+        title: Text(strings.clickerResetDialogTitle),
+        content: Text(strings.clickerResetDialogMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
+            child: Text(strings.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
@@ -463,14 +505,14 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
               });
               _saveState();
             },
-            child: const Text('Sim, Resetar'),
+            child: Text(strings.clickerResetConfirm),
           ),
         ],
       ),
     );
   }
 
-  void _buyShinyTheme() {
+  void _buyShinyTheme(AppStrings strings) {
     const cost = 1000000;
     if (_totalPoints < cost) return;
 
@@ -499,8 +541,8 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
             Expanded(
               child: Text(
                 _isLugiaFamily
-                    ? 'Parabéns! Tema Shiny Lugia desbloqueado e ativado!'
-                    : 'Parabéns! Tema Shiny Wurmple desbloqueado e ativado!',
+                    ? strings.clickerShinyLugiaUnlockedToast
+                    : strings.clickerShinyWurmpleUnlockedToast,
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
@@ -574,6 +616,8 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final strings = AppStrings(ref.watch(languageProvider));
+    final isEn = strings.isEn;
     final canBuyShiny = _totalPoints >= 1000000;
     final isShinyUnlocked = _isLugiaFamily
         ? AppPreferencesService.isLugiaShinyUnlocked()
@@ -595,7 +639,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                 children: [
                   Expanded(
                     child: Text(
-                      _characterTitle,
+                      _characterTitle(isEn),
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -605,12 +649,12 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                   ),
                   IconButton(
                     icon: const Icon(Icons.refresh_rounded),
-                    tooltip: 'Resetar progresso',
-                    onPressed: _resetProgress,
+                    tooltip: strings.clickerResetTooltip,
+                    onPressed: () => _resetProgress(strings),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    tooltip: 'Fechar',
+                    tooltip: strings.close,
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -635,7 +679,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                         ),
                       ),
                       Text(
-                        _pointsLabel,
+                        _pointsLabel(isEn),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -656,7 +700,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                         ),
                       ),
                       Text(
-                        'Por Segundo',
+                        strings.clickerPerSecond,
                         style: TextStyle(
                           fontSize: 11,
                           color: theme.colorScheme.onSurfaceVariant,
@@ -676,7 +720,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                         ),
                       ),
                       Text(
-                        'Por Clique',
+                        strings.clickerPerClick,
                         style: TextStyle(
                           fontSize: 11,
                           color: theme.colorScheme.onSurfaceVariant,
@@ -824,7 +868,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                         ),
                       ),
                       child: Text(
-                        'Total de cliques: $_clickCount',
+                        strings.clickerTotalClicks(_clickCount),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -875,7 +919,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _isLugiaFamily ? 'Desbloquear Tema Shiny Lugia' : 'Desbloquear Tema Shiny Wurmple',
+                            _isLugiaFamily ? strings.clickerUnlockShinyLugia : strings.clickerUnlockShinyWurmple,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
@@ -883,7 +927,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                             ),
                           ),
                           Text(
-                            'Custa 1.000.000 pontos. Mantém upgrades e pontuação!',
+                            strings.clickerShinyUnlockCostDesc,
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.white.withValues(alpha: 0.8),
@@ -898,7 +942,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                         backgroundColor: canBuyShiny ? Colors.amber : Colors.white24,
                         foregroundColor: canBuyShiny ? Colors.black : Colors.white60,
                       ),
-                      onPressed: canBuyShiny ? _buyShinyTheme : null,
+                      onPressed: canBuyShiny ? () => _buyShinyTheme(strings) : null,
                       child: const Text('1.000.000', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
@@ -911,7 +955,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'UPGRADES & EVOLUÇÃO',
+                  strings.clickerUpgradesSection,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -966,7 +1010,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      up.name,
+                                      up.name(isEn),
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
@@ -985,7 +1029,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
-                                        'Nv. ${up.count}',
+                                        strings.clickerLevel(up.count),
                                         style: const TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
@@ -997,7 +1041,7 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                up.description,
+                                up.description(isEn),
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: theme.colorScheme.onSurfaceVariant,
