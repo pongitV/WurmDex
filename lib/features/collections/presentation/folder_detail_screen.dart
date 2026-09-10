@@ -21,6 +21,7 @@ import '../../../../core/widgets/app_search_bar.dart';
 import '../../../../core/widgets/bottom_sheet_drag_handle.dart';
 import '../../../../core/widgets/card_grid_skeleton.dart';
 import '../../../../core/widgets/card_scale_button.dart';
+import '../../../../core/widgets/card_scale_dialog.dart';
 import '../../../../core/widgets/card_shimmer_glow.dart';
 import '../../../../core/widgets/card_sort_button.dart';
 import '../../../../core/widgets/quick_currency_toggle.dart';
@@ -163,41 +164,118 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
     final folderName = widget.folder?.name ?? strings.generalCollectionTitle;
     final cardsAsync = ref.watch(folderCardsProvider(folderId));
 
+    final isCompact = MediaQuery.of(context).size.width < 650 ||
+        Theme.of(context).platform == TargetPlatform.android;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(folderName),
-        actions: [
-          // Share Folder Button
-          cardsAsync.when(
-            data: (cards) => IconButton(
-              icon: const Icon(Icons.share_outlined),
-              tooltip: strings.tooltipShareFolder,
-              onPressed: () => _shareFolder(cards, folderName, strings),
-            ),
-            loading: () => const SizedBox.shrink(),
-            error: (err, stack) => const SizedBox.shrink(),
-          ),
-          // Quick Currency Toggle
-          const QuickCurrencyToggle(),
-          // Scale Adjuster button
-          const CardScaleButton(target: CardScaleTarget.collection),
-          // Sort Button
-          CardSortButton(
-            currentOption: _sortOption,
-            isEn: strings.isEn,
-            onSelected: (option) {
-              setState(() {
-                _sortOption = option;
-              });
-            },
-          ),
-          // 1-Click Toggle between Grande (Grid) and Virtual Binder 3D
-          IconButton(
-            icon: Icon(_displayMode == 'grid' ? Icons.book : Icons.grid_view),
-            tooltip: _displayMode == 'grid' ? strings.viewAsBinder : strings.viewAsGrid,
-            onPressed: _toggleDisplayMode,
-          ),
-        ],
+        title: Text(
+          folderName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: isCompact
+            ? [
+                // 1. Alternar entre Fichário e Grid
+                IconButton(
+                  icon: Icon(_displayMode == 'grid' ? Icons.book : Icons.grid_view),
+                  tooltip: _displayMode == 'grid' ? strings.viewAsBinder : strings.viewAsGrid,
+                  onPressed: _toggleDisplayMode,
+                ),
+                // 2. Botão de Ordenação
+                CardSortButton(
+                  currentOption: _sortOption,
+                  isEn: strings.isEn,
+                  onSelected: (option) {
+                    setState(() {
+                      _sortOption = option;
+                    });
+                  },
+                ),
+                // 3. Menu de Opções Secundárias (Evita qualquer colisão com voltar e título)
+                cardsAsync.when(
+                  data: (cards) => PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    tooltip: strings.isEn ? 'More options' : 'Mais opções',
+                    onSelected: (val) {
+                      if (val == 'share') {
+                        _shareFolder(cards, folderName, strings);
+                      } else if (val == 'scale') {
+                        showCardScaleBottomSheet(context, initialTarget: CardScaleTarget.collection);
+                      } else if (val == 'currency') {
+                        ref.read(currencyProvider.notifier).toggleCurrency();
+                      }
+                    },
+                    itemBuilder: (ctx) => [
+                      PopupMenuItem(
+                        value: 'share',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.share_outlined, size: 20),
+                            const SizedBox(width: 10),
+                            Text(strings.tooltipShareFolder),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'scale',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.aspect_ratio, size: 20),
+                            const SizedBox(width: 10),
+                            Text(strings.scaleCollectionTitle),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'currency',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.currency_exchange, size: 20),
+                            const SizedBox(width: 10),
+                            Text(
+                              currency == AppCurrency.usd
+                                  ? (strings.isEn ? 'Switch to BRL (R\$)' : 'Mudar para Real (R\$)')
+                                  : (strings.isEn ? 'Switch to USD (\$)' : 'Mudar para Dólar (\$)'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (err, stack) => const SizedBox.shrink(),
+                ),
+                const SizedBox(width: 4),
+              ]
+            : [
+                // Desktop / Tela Larga: Mantém todos os botões visíveis
+                cardsAsync.when(
+                  data: (cards) => IconButton(
+                    icon: const Icon(Icons.share_outlined),
+                    tooltip: strings.tooltipShareFolder,
+                    onPressed: () => _shareFolder(cards, folderName, strings),
+                  ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (err, stack) => const SizedBox.shrink(),
+                ),
+                const QuickCurrencyToggle(),
+                const CardScaleButton(target: CardScaleTarget.collection),
+                CardSortButton(
+                  currentOption: _sortOption,
+                  isEn: strings.isEn,
+                  onSelected: (option) {
+                    setState(() {
+                      _sortOption = option;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: Icon(_displayMode == 'grid' ? Icons.book : Icons.grid_view),
+                  tooltip: _displayMode == 'grid' ? strings.viewAsBinder : strings.viewAsGrid,
+                  onPressed: _toggleDisplayMode,
+                ),
+              ],
       ),
       body: cardsAsync.when(
         data: (cards) {
@@ -517,6 +595,7 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
           child: CardGridItem(
             card: catalogCard,
             condition: card.condition,
+            language: card.language,
             customPriceText: priceString,
             topLeftBadge: deleteBadge,
             topRightBadge: quantityBadge,

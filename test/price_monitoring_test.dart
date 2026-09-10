@@ -189,9 +189,16 @@ void main() {
       // Top title
       expect(find.text('Price Monitoring'), findsOneWidget);
 
-      // Collections selector chips
+      // Collections selector button and dropdown modal
+      expect(find.textContaining('Filter by Collection'), findsOneWidget);
+      await tester.tap(find.textContaining('Filter by Collection'));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
       expect(find.textContaining('All Collections'), findsOneWidget);
-      expect(find.text('Minhas Raras (1)'), findsOneWidget);
+      expect(find.text('Minhas Raras'), findsWidgets);
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
 
       // KPI card
       expect(find.byType(MonitoringKpiCard), findsOneWidget);

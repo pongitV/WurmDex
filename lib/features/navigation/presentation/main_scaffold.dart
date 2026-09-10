@@ -56,10 +56,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
   int get _mobileNavSelectedIndex {
     if (_currentIndex == 0) return 0;
     if (_currentIndex == 6) return 1;
-    return 2;
+    if (_currentIndex == 3) return 2;
+    return 3;
   }
 
-  bool _isMoreScreen(int index) => index != 0 && index != 6;
+  bool _isMoreScreen(int index) => index != 0 && index != 6 && index != 3;
 
   IconData _getMoreScreenIcon(int index) {
     switch (index) {
@@ -123,6 +124,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
       setState(() => _currentIndex = 0);
     } else if (barIndex == 1) {
       setState(() => _currentIndex = 6);
+    } else if (barIndex == 2) {
+      setState(() => _currentIndex = 3);
     } else {
       _showMoreBottomSheet(context);
     }
@@ -385,6 +388,11 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
               icon: const Icon(Icons.radar_outlined),
               selectedIcon: const Icon(Icons.radar),
               label: strings.navLigaRadar,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.folder_copy_outlined),
+              selectedIcon: const Icon(Icons.folder_copy),
+              label: strings.navCollections,
             ),
             NavigationDestination(
               icon: Icon(_isMoreScreen(_currentIndex)

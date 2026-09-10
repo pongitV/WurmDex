@@ -20,8 +20,10 @@ WurmDex is an open-source fan application and portfolio manager for the Pokemon 
 - **Collection & Folder Management**: Organize cards across custom binders and folders with condition tracking, finishes (Foil, Reverse, Regular), and purchase prices.
 - **Interactive 3x3 Virtual Binder**: Realistic pocket-page binder experience with smooth double-page spread animations.
 - **Market Price Reference**: Compare domestic (LigaPokémon, BRL) and international (TCGPlayer, USD) quotes with real-time currency conversion.
-- **Unified Navigation Dock**: Clean 3-button dock (Catalog, Radar, More Hub) identical on both Windows and Android with persistent themes and language across sessions.
-- **Portfolio & Analytics**: Monitor total collection valuation, cost basis, and price trends across multiple timeframes.
+- **Unified Navigation Dock**: Clean 4-button dock (Catalog, Liga Radar, Collections, and More) identical on both Windows and Android with persistent themes and language across sessions.
+- **Clicker Easter Egg Mini-Games**: Incremental clicker mini-games for various Pokémon (Wurmple, Lugia, Dark Lugia), featuring progression upgrades and an integrated shop to unlock exclusive visual themes using accumulated points.
+- **Multiple Visual Themes & Secret Easter Eggs**: Dark Mode, Antique Book Page Light Theme, Botanical Grass, Wurmple Coral, Oceanic Lugia (#249), Shiny Wurmple (★ #265), Shiny Lugia (★ #249), and Secret Dark Lugia (Shadow XD001, unlocked by creating a collection named "DarkLugia"). Dynamic menu icons adapt to the active theme. Includes an in-app extra theme manager in Settings protected by passcode "011" allowing unlocking and locking back themes on demand.
+- **Portfolio & Analytics**: Monitor total collection valuation, cost basis, searchable collection filtering, and price trends across multiple timeframes.
 - **WorldDex (Species Catalog)**: Complete species catalog across all 9 generations with official types and card release galleries.
 - **Sets & Expansions**: Browse releases from Base Set to the latest expansions with set completion statistics.
 - **Booster Pack Simulator**: Experience opening booster packs with realistic odds and card animations.

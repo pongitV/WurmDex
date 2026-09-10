@@ -29,10 +29,11 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Exactly 3 navigation destinations in mobile NavigationBar
-    expect(find.byType(NavigationDestination), findsNWidgets(3));
+    // Exactly 4 navigation destinations in mobile NavigationBar: Catalog - Liga Radar - Colecoes - Mais
+    expect(find.byType(NavigationDestination), findsNWidgets(4));
     expect(find.text('Catálogo'), findsOneWidget);
     expect(find.text('Radar Liga'), findsOneWidget);
+    expect(find.text('Coleções'), findsWidgets);
     expect(find.text('Mais'), findsOneWidget);
 
     // Tap "Radar Liga"
@@ -48,7 +49,6 @@ void main() {
     // Verify "Mais Opções" bottom sheet is visible with its items
     expect(find.text('Mais Opções'), findsOneWidget);
     expect(find.text('Coleções TCG'), findsOneWidget);
-    expect(find.text('Coleções'), findsOneWidget);
     expect(find.text('Wishlist'), findsOneWidget);
     expect(find.text('Ajustes'), findsOneWidget);
 
@@ -57,12 +57,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300)); // dismiss animation
 
-    // Verify Expansions screen is shown and 3rd tab label updated to reflect active screen
+    // Verify Expansions screen is shown and 4th tab label updated to reflect active screen
     expect(find.text('Expansões & Lançamentos TCG'), findsOneWidget);
-    expect(find.text('Coleções TCG'), findsOneWidget);
   });
 
-  testWidgets('Desktop/Windows size displays identical 3-button navigation dock and More sheet', (WidgetTester tester) async {
+  testWidgets('Desktop/Windows size displays identical 4-button navigation dock and More sheet', (WidgetTester tester) async {
     // Desktop 1280x720 window
     tester.view.physicalSize = const Size(1280, 720);
     tester.view.devicePixelRatio = 1.0;
@@ -81,10 +80,11 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Exactly 3 navigation destinations in NavigationBar on Desktop as well
-    expect(find.byType(NavigationDestination), findsNWidgets(3));
+    // Exactly 4 navigation destinations in NavigationBar on Desktop as well
+    expect(find.byType(NavigationDestination), findsNWidgets(4));
     expect(find.text('Catálogo'), findsOneWidget);
     expect(find.text('Radar Liga'), findsOneWidget);
+    expect(find.text('Coleções'), findsWidgets);
     expect(find.text('Mais'), findsOneWidget);
 
     // Tap "Mais" on desktop

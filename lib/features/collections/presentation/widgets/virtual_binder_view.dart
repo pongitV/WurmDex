@@ -260,16 +260,126 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  // Dual-page open binder layout (Left Sheet + Center Spine + Right Sheet)
-                  const targetRatio = AppConstants.binderSheetAspectRatio; // 0.755 (standard 3x3 sheet ratio)
+                  const targetRatio = AppConstants.binderSheetAspectRatio; // 0.755
+                  final bool isSinglePage = constraints.maxWidth < 650;
+
+                  if (isSinglePage) {
+                    // Mobile/Android Single Page Layout (1 página por vez, economiza espaço e maximiza bolsos)
+                    const double spineW = 20.0;
+                    const double paddingH = 16.0;
+                    const double paddingV = 20.0;
+
+                    final availableW = (constraints.maxWidth - paddingH) * cardScale;
+                    final availableH = (constraints.maxHeight - paddingV) * cardScale;
+
+                    double sheetW = availableW - spineW;
+                    double sheetH = sheetW / targetRatio;
+
+                    if (sheetH > availableH) {
+                      sheetH = availableH;
+                      sheetW = sheetH * targetRatio;
+                    }
+
+                    final binderW = sheetW + spineW + paddingH;
+                    final binderH = sheetH + paddingV;
+
+                    return Center(
+                      child: Container(
+                        width: binderW,
+                        height: binderH,
+                        padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: theme.brightness == Brightness.dark
+                                ? [
+                                    const Color(0xFF1E1E24),
+                                    const Color(0xFF141418),
+                                    const Color(0xFF0D0D10),
+                                  ]
+                                : [
+                                    const Color(0xFF3B2F2F),
+                                    const Color(0xFF2B2222),
+                                    const Color(0xFF1F1717),
+                                  ],
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: const Color(0xFFD4AF37).withValues(alpha: 0.28),
+                            width: 2.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.65),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            // 3D Volumetric Page Stack Depth - Right Outer Edge
+                            Positioned(
+                              right: 2,
+                              top: 10,
+                              bottom: 10,
+                              width: 5,
+                              child: _buildPageStackEdgeRight(),
+                            ),
+
+                            // Layer 1: Spine Rings on Left - Back Ring Segment
+                            Positioned(
+                              left: 2,
+                              top: 0,
+                              bottom: 0,
+                              width: 22,
+                              child: IgnorePointer(
+                                child: _buildSpineRings(theme, backOnly: true),
+                              ),
+                            ),
+
+                            // Layer 2: 3D Single Binder Page Spread
+                            Positioned.fill(
+                              left: spineW,
+                              top: 6,
+                              bottom: 6,
+                              right: 6,
+                              child: _buildSinglePageSpread(
+                                context: context,
+                                sheetW: sheetW,
+                                sheetH: sheetH,
+                                spineW: spineW,
+                                totalPages: totalPages,
+                              ),
+                            ),
+
+                            // Layer 3: Spine Rings on Left - Front Ring Arches
+                            Positioned(
+                              left: 2,
+                              top: 0,
+                              bottom: 0,
+                              width: 22,
+                              child: IgnorePointer(
+                                child: _buildSpineRings(theme, frontOnly: true),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  // Dual-page open binder layout (Desktop / Wide screen)
                   const double spineW = 28.0;
                   const double paddingH = 32.0;
-                  const double paddingV = AppConstants.binderLeatherMarginV; // 48.0 ensures zero vertical clipping
+                  const double paddingV = AppConstants.binderLeatherMarginV;
 
                   final availableW = (constraints.maxWidth - paddingH) * cardScale;
                   final availableH = (constraints.maxHeight - paddingV) * cardScale;
 
-                  // Dual sheets + central spine must fit in availableW
                   double sheetW = (availableW - spineW) / 2;
                   double sheetH = sheetW / targetRatio;
 
@@ -278,7 +388,6 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                     sheetW = sheetH * targetRatio;
                   }
 
-                  // Cap maximum sheet height for ultra-wide monitors
                   final maxSheetH = 680.0 * cardScale;
                   if (sheetH > maxSheetH) {
                     sheetH = maxSheetH;
@@ -294,7 +403,6 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                       height: binderH,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        // Authentic Open Binder Folio Leather Cover (Dual-page spread)
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -312,18 +420,16 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                         ),
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(
-                          color: const Color(0xFFD4AF37).withValues(alpha: 0.28), // Golden binder stitching
+                          color: const Color(0xFFD4AF37).withValues(alpha: 0.28),
                           width: 2.0,
                         ),
                         boxShadow: [
-                          // Deep 3D table occlusion shadow
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.65),
                             blurRadius: 28,
                             spreadRadius: 4,
                             offset: const Offset(0, 14),
                           ),
-                          // Subtle leather rim lighting
                           BoxShadow(
                             color: Colors.white.withValues(alpha: 0.08),
                             blurRadius: 8,
@@ -335,7 +441,6 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                       child: Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          // Central Spine Crease & Shadow running down the middle
                           Center(
                             child: Container(
                               width: spineW + 4,
@@ -355,8 +460,6 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                               ),
                             ),
                           ),
-
-                          // 3D Volumetric Page Stack Depth - Left Outer Edge
                           Positioned(
                             left: 2,
                             top: 14,
@@ -364,8 +467,6 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                             width: 6,
                             child: _buildPageStackEdgeLeft(),
                           ),
-
-                          // 3D Volumetric Page Stack Depth - Right Outer Edge
                           Positioned(
                             right: 2,
                             top: 14,
@@ -373,8 +474,6 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                             width: 6,
                             child: _buildPageStackEdgeRight(),
                           ),
-
-                          // Layer 1: Spine Rings - Back Ring Segment (Underneath pages)
                           Center(
                             child: SizedBox(
                               width: 24,
@@ -383,8 +482,6 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                               ),
                             ),
                           ),
-
-                          // Layer 2: 3D Binder Pages Spread (Left Page, Center Spine gap, Right Page & Turning Page)
                           Positioned.fill(
                             top: 12,
                             bottom: 12,
@@ -396,8 +493,6 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                               totalPages: totalPages,
                             ),
                           ),
-
-                          // Layer 3: 3D Front Ring Arches emerging over the sheets and passing through the page holes
                           Center(
                             child: SizedBox(
                               width: 24,
@@ -414,40 +509,49 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
               ),
             ),
 
-            // Binder Pagination and Action Bar
+            // Binder Pagination and Action Bar (Compact & Overflow-proof on Android)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.arrow_back),
+                    style: ElevatedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    icon: const Icon(Icons.arrow_back, size: 18),
                     label: Text(_strings.previous),
                     onPressed: _currentPage > 0 ? () => _goToPage(_currentPage - 1) : null,
                   ),
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: theme.dividerColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           _strings.pageOfTotal(_currentPage + 1, totalPages),
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       CardScaleButton(
                         target: CardScaleTarget.collection,
-                        iconSize: 20,
+                        iconSize: 18,
                         tooltip: '${_strings.adjustScale} (${(cardScale * 100).round()}%)',
                       ),
                     ],
                   ),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.arrow_forward),
+                    style: ElevatedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    icon: const Icon(Icons.arrow_forward, size: 18),
                     label: Text(_strings.next),
                     onPressed: _currentPage < totalPages - 1 ? () => _goToPage(_currentPage + 1) : null,
                   ),
@@ -679,6 +783,100 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Single-page 3D Binder Spread (Shows 1 page at a time on Android/Mobile screens)
+  Widget _buildSinglePageSpread({
+    required BuildContext context,
+    required double sheetW,
+    required double sheetH,
+    required double spineW,
+    required int totalPages,
+  }) {
+    final progress = _pageScrollProgress.clamp(0.0, (totalPages - 1).toDouble());
+    final floorPage = progress.floor();
+    final fraction = progress - floorPage;
+
+    return GestureDetector(
+      onHorizontalDragStart: _onHorizontalDragStart,
+      onHorizontalDragUpdate: (details) => _onHorizontalDragUpdate(details, sheetW),
+      onHorizontalDragEnd: (details) => _onHorizontalDragEnd(details, sheetW),
+      behavior: HitTestBehavior.translucent,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Underlying page (revealed as turning sheet flips forward)
+          if (fraction > 0.001 && floorPage + 1 < totalPages)
+            Positioned.fill(
+              child: _buildBinderSheet(
+                context: context,
+                pageIndex: floorPage + 1,
+                isRightPage: true,
+                sheetW: sheetW,
+                sheetH: sheetH,
+              ),
+            ),
+
+          // Current base sheet when idle
+          if (fraction < 0.001)
+            Positioned.fill(
+              child: _buildBinderSheet(
+                context: context,
+                pageIndex: floorPage,
+                isRightPage: true,
+                sheetW: sheetW,
+                sheetH: sheetH,
+              ),
+            ),
+
+          // Turning sheet (lifts from right, flips around left rings)
+          if (fraction >= 0.001)
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: _turnAnimationController.isAnimating,
+                child: _buildTurningPageSingle(
+                  context: context,
+                  pageIndex: floorPage,
+                  turnProgress: fraction,
+                  sheetW: sheetW,
+                  sheetH: sheetH,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Transforms and renders the turning page pivoting around left rings in single-page mode.
+  Widget _buildTurningPageSingle({
+    required BuildContext context,
+    required int pageIndex,
+    required double turnProgress,
+    required double sheetW,
+    required double sheetH,
+  }) {
+    final double turnAngle = -turnProgress * (math.pi * 0.55);
+    final matrix = Matrix4.identity()
+      ..setEntry(3, 2, 0.0012)
+      ..rotateY(turnAngle);
+
+    final double opacity = (1.0 - turnProgress * 1.15).clamp(0.0, 1.0);
+
+    return Opacity(
+      opacity: opacity,
+      child: Transform(
+        transform: matrix,
+        alignment: Alignment.centerLeft,
+        child: _buildBinderSheet(
+          context: context,
+          pageIndex: pageIndex,
+          isRightPage: true,
+          sheetW: sheetW,
+          sheetH: sheetH,
+        ),
       ),
     );
   }

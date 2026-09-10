@@ -130,4 +130,74 @@ class AppPreferencesService {
     _cache[_keyCollectionScale] = scale;
     _persist();
   }
+
+  // --- Wurmple Clicker Data ---
+  static const String _keyWurmpleClicker = 'wurmple_clicker_data';
+
+  static Map<String, dynamic>? getWurmpleClickerData() {
+    if (!_initialized) return null;
+    final val = _cache[_keyWurmpleClicker];
+    if (val is Map<String, dynamic>) return val;
+    return null;
+  }
+
+  static void saveWurmpleClickerData(Map<String, dynamic> data) {
+    if (!_initialized) return;
+    _cache[_keyWurmpleClicker] = data;
+    _persist();
+  }
+
+  // --- Lugia Clicker Data ---
+  static const String _keyLugiaClicker = 'lugia_clicker_data';
+
+  static Map<String, dynamic>? getLugiaClickerData() {
+    if (!_initialized) return null;
+    final val = _cache[_keyLugiaClicker];
+    if (val is Map<String, dynamic>) return val;
+    return null;
+  }
+
+  static void saveLugiaClickerData(Map<String, dynamic> data) {
+    if (!_initialized) return;
+    _cache[_keyLugiaClicker] = data;
+    _persist();
+  }
+
+  // --- Theme Unlocks ---
+  static const String _keyWurmpleShinyUnlocked = 'wurmple_shiny_unlocked';
+  static const String _keyLugiaShinyUnlocked = 'lugia_shiny_unlocked';
+  static const String _keyDarkLugiaUnlocked = 'dark_lugia_unlocked';
+
+  static bool isWurmpleShinyUnlocked() {
+    if (!_initialized) return false;
+    return _cache[_keyWurmpleShinyUnlocked] == true;
+  }
+
+  static void setWurmpleShinyUnlocked(bool unlocked) {
+    if (!_initialized) return;
+    _cache[_keyWurmpleShinyUnlocked] = unlocked;
+    _persist();
+  }
+
+  static bool isLugiaShinyUnlocked() {
+    if (!_initialized) return false;
+    return _cache[_keyLugiaShinyUnlocked] == true;
+  }
+
+  static void setLugiaShinyUnlocked(bool unlocked) {
+    if (!_initialized) return;
+    _cache[_keyLugiaShinyUnlocked] = unlocked;
+    _persist();
+  }
+
+  static bool isDarkLugiaUnlocked() {
+    if (!_initialized) return false;
+    return _cache[_keyDarkLugiaUnlocked] == true;
+  }
+
+  static void setDarkLugiaUnlocked(bool unlocked) {
+    if (!_initialized) return;
+    _cache[_keyDarkLugiaUnlocked] = unlocked;
+    _persist();
+  }
 }

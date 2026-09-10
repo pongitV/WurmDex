@@ -6,6 +6,9 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_provider.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/services/app_preferences_service.dart';
+import '../../../../core/theme/theme_constants.dart';
+import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/utils/folder_icon_helper.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/widgets/quick_currency_toggle.dart';
@@ -329,12 +332,13 @@ class CollectionsScreen extends ConsumerWidget {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  if (nameCtrl.text.trim().isEmpty) return;
+                  final folderName = nameCtrl.text.trim();
+                  if (folderName.isEmpty) return;
                   final db = ref.read(databaseProvider);
                   await db.insertFolder(
                     FoldersCompanion(
                       id: drift.Value(const Uuid().v4()),
-                      name: drift.Value(nameCtrl.text.trim()),
+                      name: drift.Value(folderName),
                       description: drift.Value(descCtrl.text.trim()),
                       colorTag: drift.Value(colorTag),
                       iconName: drift.Value(iconKey),
@@ -342,6 +346,40 @@ class CollectionsScreen extends ConsumerWidget {
                       createdAt: drift.Value(DateTime.now()),
                     ),
                   );
+
+                  // Easter Egg: If folder is named "DarkLugia", unlock & activate Dark Lugia theme!
+                  if (folderName.toLowerCase() == 'darklugia') {
+                    AppPreferencesService.setDarkLugiaUnlocked(true);
+                    ref.read(themeProvider.notifier).setTheme(AppThemeMode.darkLugia);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: const Color(0xFF150D24),
+                          content: Row(
+                            children: [
+                              Image.asset(
+                                'assets/images/characters/dark_lugia.png',
+                                width: 28,
+                                height: 28,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.nights_stay, color: Colors.purpleAccent),
+                              ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Text(
+                                  'Easter Egg! Tema Dark Lugia desbloqueado!',
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    }
+                  }
+
                   if (context.mounted) Navigator.pop(ctx);
                 },
                 child: Text(strings.btnCreate),

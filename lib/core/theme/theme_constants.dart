@@ -6,6 +6,10 @@ enum AppThemeMode {
   light,
   gramado,
   wurmple,
+  lugia,
+  wurmpleShiny,
+  lugiaShiny,
+  darkLugia,
 }
 
 class AppThemes {
@@ -158,5 +162,53 @@ class AppThemes {
         textPrimary: AppColors.wurmpleTextPrimary,
         textSecondary: AppColors.wurmpleTextSecondary,
         onSecondary: Colors.black,
+      );
+
+  static ThemeData get lugiaTheme => _buildTheme(
+        brightness: Brightness.dark,
+        primary: AppColors.lugiaPrimary,
+        secondary: AppColors.lugiaSecondary,
+        surface: AppColors.lugiaSurface,
+        background: AppColors.lugiaBackground,
+        border: AppColors.lugiaBorder,
+        textPrimary: AppColors.lugiaTextPrimary,
+        textSecondary: AppColors.lugiaTextSecondary,
+        onSecondary: Colors.white,
+      );
+
+  static ThemeData get wurmpleShinyTheme => _buildTheme(
+        brightness: Brightness.dark,
+        primary: AppColors.wurmpleShinyPrimary,
+        secondary: AppColors.wurmpleShinySecondary,
+        surface: AppColors.wurmpleShinySurface,
+        background: AppColors.wurmpleShinyBackground,
+        border: AppColors.wurmpleShinyBorder,
+        textPrimary: AppColors.wurmpleShinyTextPrimary,
+        textSecondary: AppColors.wurmpleShinyTextSecondary,
+        onSecondary: Colors.black,
+      );
+
+  static ThemeData get lugiaShinyTheme => _buildTheme(
+        brightness: Brightness.dark,
+        primary: AppColors.lugiaShinyPrimary,
+        secondary: AppColors.lugiaShinySecondary,
+        surface: AppColors.lugiaShinySurface,
+        background: AppColors.lugiaShinyBackground,
+        border: AppColors.lugiaShinyBorder,
+        textPrimary: AppColors.lugiaShinyTextPrimary,
+        textSecondary: AppColors.lugiaShinyTextSecondary,
+        onSecondary: Colors.white,
+      );
+
+  static ThemeData get darkLugiaTheme => _buildTheme(
+        brightness: Brightness.dark,
+        primary: AppColors.darkLugiaPrimary,
+        secondary: AppColors.darkLugiaSecondary,
+        surface: AppColors.darkLugiaSurface,
+        background: AppColors.darkLugiaBackground,
+        border: AppColors.darkLugiaBorder,
+        textPrimary: AppColors.darkLugiaTextPrimary,
+        textSecondary: AppColors.darkLugiaTextSecondary,
+        onSecondary: Colors.white,
       );
 }

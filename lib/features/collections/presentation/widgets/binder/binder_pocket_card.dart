@@ -13,6 +13,7 @@ import 'package:wurmdex/core/utils/semantic_search_helper.dart';
 import 'package:wurmdex/core/widgets/app_network_image.dart';
 import 'package:wurmdex/core/widgets/bottom_sheet_drag_handle.dart';
 import 'package:wurmdex/core/widgets/condition_badge.dart';
+import 'package:wurmdex/core/widgets/language_flag_badge.dart';
 import 'package:wurmdex/core/widgets/pokemon_card_image.dart';
 import 'package:wurmdex/features/catalog/models/pokemon_card_item.dart';
 
@@ -157,6 +158,11 @@ class BinderPocketCard extends ConsumerWidget {
                         children: [
                           ConditionBadge(
                             condition: card.condition,
+                            compact: true,
+                          ),
+                          const SizedBox(width: 3),
+                          LanguageFlagBadge(
+                            language: card.language,
                             compact: true,
                           ),
                           if (priceDisplay != null) ...[

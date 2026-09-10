@@ -116,9 +116,14 @@ Todas as cartas exibidas no aplicativo (catálogo, expansões, galeria da pokede
 - Atalho direto para abrir o anúncio no navegador padrão com um clique.
 
 ### 8. Navegação Unificada e Persistência de Sessão
-- Dock inferior unificado de 3 botões (Catálogo, Radar Liga e Menu Mais) idêntico no Windows e Android.
-- Menu "Mais Opções" estilizado para acesso imediato a WorldDex, Expansões TCG, Pastas de Coleções, Wishlist, Avaliador de Trocas e Ajustes.
-- Persistência total de preferências: tema escolhido, idioma ativo e escalas de zoom são restaurados automaticamente ao reabrir o app.
+- Dock inferior unificado de 4 botões (Catálogo, Radar Liga, Coleções e Menu Mais) idêntico no Windows e Android.
+- Menu "Mais Opções" estilizado para acesso imediato a WorldDex, Expansões TCG, Wishlist, Avaliador de Trocas e Ajustes.
+- Persistência total de preferências: tema escolhido (Escuro, Claro Livro Antigo, Gramado, Wurmple, Lugia, Wurmple Shiny, Lugia Shiny e Dark Lugia), idioma ativo e escalas de zoom são restaurados automaticamente ao reabrir o app.
+- Easter egg com minigame clicker para diversos Pokémon (Wurmple, Lugia, Dark Lugia), com sistema de melhorias e loja para temas usando pontos:
+  - **Wurmple Clicker**: minigame clicker em tela cheia com upgrades de Enxame, animações de partículas e loja para desbloqueio do tema Shiny Wurmple (★ #265) por pontos acumulados.
+  - **Lugia Clicker**: minigame temático acionado pelo mascote dinâmico do Lugia, com upgrades aerodinâmicos e loja para desbloqueio do tema Shiny Lugia (★ #249).
+  - **Dark Lugia Clicker**: minigame temático sombrio desbloqueado ao criar uma coleção nomeada "DarkLugia".
+  - **Gerenciador de Temas Extras nos Ajustes**: botão protegido pela senha "011" para desbloquear ou bloquear temas extras via dropdown a qualquer momento.
 
 ---
 
@@ -142,12 +147,13 @@ WurmDex/
 |   |   |-- navigation/              # Gerenciador centralizado de rotas
 |   |   |-- network/                 # Cliente Dio com cache em memória e repetição
 |   |   |-- providers/               # Notificadores de estado Riverpod
-|   |   |-- theme/                   # Motor de temas (Escuro, Claro Papel, Gramado, Wurmple)
+|   |   |-- theme/                   # Motor de temas (Escuro, Claro Papel, Gramado, Wurmple, Lugia)
 |   |   `-- widgets/                 # Componentes universais (CardGridItem, Badges)
 |   `-- features/                    # Módulos funcionais
 |       |-- card_details/            # Detalhes da carta, gráfico e modal de compras
 |       |-- catalog/                 # Mecanismo de busca e catálogo de cartas
 |       |-- collections/             # Fichários, pastas e dashboard financeiro
+|       |-- easter_egg/              # Minigame secreto Wurmple Clicker
 |       |-- home/                    # Painel inicial, notícias e alertas de preço
 |       |-- navigation/              # Estrutura de navegação e scaffold principal
 |       |-- pokedex/                 # Índice da pokedex e galeria de cartas

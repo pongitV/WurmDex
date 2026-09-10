@@ -8,6 +8,7 @@ import 'package:wurmdex/core/utils/semantic_search_helper.dart';
 import 'package:wurmdex/core/navigation/app_navigator.dart';
 import 'package:wurmdex/features/catalog/models/pokemon_card_item.dart';
 import '../../../../core/widgets/condition_badge.dart';
+import '../../../../core/widgets/language_flag_badge.dart';
 import '../../../../core/widgets/pokemon_card_image.dart';
 import 'card_quick_action_sheet.dart';
 
@@ -16,6 +17,7 @@ class CardGridItem extends ConsumerWidget {
   final double? exchangeRate;
   final bool isOwned;
   final String? condition;
+  final String? language;
   final Widget? topLeftBadge;
   final Widget? topRightBadge;
   final String? customPriceText;
@@ -28,6 +30,7 @@ class CardGridItem extends ConsumerWidget {
     this.exchangeRate,
     this.isOwned = false,
     this.condition,
+    this.language,
     this.topLeftBadge,
     this.topRightBadge,
     this.customPriceText,
@@ -51,6 +54,14 @@ class CardGridItem extends ConsumerWidget {
           exchangeRate: exchangeRate,
           currency: currency,
         );
+
+    final effectiveLanguage = language != null && language!.isNotEmpty
+        ? language!
+        : (card.setName.toLowerCase().contains('japanese') ||
+                card.setId.toLowerCase().contains('jp') ||
+                RegExp(r'[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]').hasMatch(card.name)
+            ? 'JP'
+            : (currency == AppCurrency.usd ? 'EN' : 'PT'));
 
     // Resolve top-left badge (custom or Master Set OK)
     Widget? effectiveTopLeft = topLeftBadge;
@@ -147,7 +158,7 @@ class CardGridItem extends ConsumerWidget {
             // Card Details 3-tier layout:
             // 1. Nome e número encima
             // 2. Coleção no meio
-            // 3. Qualidade e preço(médio) embaixo
+            // 3. Qualidade, bandeira do país e preço(médio) embaixo
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               color: theme.cardColor,
@@ -179,13 +190,23 @@ class CardGridItem extends ConsumerWidget {
                   ),
                   const SizedBox(height: 3),
 
-                  // Linha 3: Qualidade e preço(médio) embaixo
+                  // Linha 3: Qualidade, bandeira do país e preço(médio) embaixo
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      ConditionBadge(
-                        condition: condition ?? 'NM',
-                        compact: true,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ConditionBadge(
+                            condition: condition ?? 'NM',
+                            compact: true,
+                          ),
+                          const SizedBox(width: 4),
+                          LanguageFlagBadge(
+                            language: effectiveLanguage,
+                            compact: true,
+                          ),
+                        ],
                       ),
                       Flexible(
                         child: Text(

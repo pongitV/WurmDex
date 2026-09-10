@@ -1,11 +1,16 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../theme/theme_constants.dart';
+import '../theme/theme_provider.dart';
+import '../../features/easter_egg/presentation/wurmple_clicker_dialog.dart';
 
 /// An elegant, stylized modern menu icon with a playful 2-second wobble animation when tapped.
-class WobblyMenuIcon extends StatefulWidget {
+class WobblyMenuIcon extends ConsumerStatefulWidget {
   final Widget? child;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final double size;
   final String? tooltip;
 
@@ -13,15 +18,16 @@ class WobblyMenuIcon extends StatefulWidget {
     super.key,
     this.child,
     this.onTap,
+    this.onLongPress,
     this.size = 28,
     this.tooltip,
   });
 
   @override
-  State<WobblyMenuIcon> createState() => WobblyMenuIconState();
+  ConsumerState<WobblyMenuIcon> createState() => WobblyMenuIconState();
 }
 
-class WobblyMenuIconState extends State<WobblyMenuIcon>
+class WobblyMenuIconState extends ConsumerState<WobblyMenuIcon>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -46,12 +52,40 @@ class WobblyMenuIconState extends State<WobblyMenuIcon>
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = ref.watch(themeProvider);
+
+    String iconAsset;
+    ClickerCharacter character;
+
+    switch (themeMode) {
+      case AppThemeMode.lugia:
+        iconAsset = 'assets/images/characters/249.png';
+        character = ClickerCharacter.lugia;
+        break;
+      case AppThemeMode.lugiaShiny:
+        iconAsset = 'assets/images/characters/249_shiny.png';
+        character = ClickerCharacter.lugiaShiny;
+        break;
+      case AppThemeMode.darkLugia:
+        iconAsset = 'assets/images/characters/dark_lugia.png';
+        character = ClickerCharacter.darkLugia;
+        break;
+      case AppThemeMode.wurmpleShiny:
+        iconAsset = 'assets/images/menu/wurmple_shiny_menu.png';
+        character = ClickerCharacter.wurmpleShiny;
+        break;
+      default:
+        iconAsset = 'assets/images/menu/wurmple_menu.png';
+        character = ClickerCharacter.wurmple;
+        break;
+    }
+
     final defaultChild = widget.child ??
         SizedBox(
           width: widget.size > 36 ? 58 : widget.size * 1.4,
           height: widget.size,
           child: Image.asset(
-            'assets/images/wurmple_menu.png',
+            iconAsset,
             fit: BoxFit.contain,
             filterQuality: FilterQuality.medium,
             errorBuilder: (context, error, stackTrace) =>
@@ -102,6 +136,15 @@ class WobblyMenuIconState extends State<WobblyMenuIcon>
         HapticFeedback.lightImpact();
         triggerWobble();
         widget.onTap?.call();
+      },
+      onLongPress: () {
+        HapticFeedback.heavyImpact();
+        triggerWobble();
+        if (widget.onLongPress != null) {
+          widget.onLongPress!();
+        } else {
+          WurmpleClickerDialog.show(context, character: character);
+        }
       },
       child: MouseRegion(
         cursor: SystemMouseCursors.click,

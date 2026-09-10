@@ -57,7 +57,7 @@ flutter {
 android.applicationVariants.all {
     val variant = this
     val variantName = variant.name.replaceFirstChar { it.uppercase() }
-    val distDir = rootProject.projectDir.resolve("../../dist/android")
+    val distDir = rootProject.projectDir.resolve("../dist/android")
 
     val copyApkTask = tasks.register<Copy>("copy${variantName}ApkToDist") {
         description = "Copies generated APK to dist/android/"

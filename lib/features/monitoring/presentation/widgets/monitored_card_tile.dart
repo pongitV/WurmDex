@@ -7,6 +7,7 @@ import '../../../../core/utils/marketplace_url_helper.dart';
 import '../../../../core/utils/semantic_search_helper.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/widgets/condition_badge.dart';
+import '../../../../core/widgets/language_flag_badge.dart';
 import '../../../../core/widgets/pokemon_card_image.dart';
 import '../../../catalog/models/pokemon_card_item.dart';
 import '../../models/monitored_card_item.dart';
@@ -143,6 +144,11 @@ class MonitoredCardTile extends StatelessWidget {
                       children: [
                         ConditionBadge(
                           condition: card.condition,
+                          compact: true,
+                        ),
+                        const SizedBox(width: 4),
+                        LanguageFlagBadge(
+                          language: card.language,
                           compact: true,
                         ),
                         if (card.quantity > 1) ...[

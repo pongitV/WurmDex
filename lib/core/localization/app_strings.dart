@@ -142,6 +142,38 @@ class AppStrings {
   String get themeWurmpleSub => isEn
       ? "Wurmple's icon colors: Coral pink body, horn yellow, cream belly and dark espresso outline"
       : 'Cores do ícone do Wurmple: Corpo coral/carmesim, chifres amarelos, ventre creme e contorno café';
+  String get themeLugiaTitle => isEn ? 'Lugia Theme (#249)' : 'Tema Lugia (#249)';
+  String get themeLugiaSub => isEn
+      ? 'Oceanic deep navy and aerilate blue inspired by Lugia (#249)'
+      : 'Azul marinho abissal e tons oceânicos inspirados no Lugia (#249)';
+  String get themeWurmpleShinyTitle => isEn ? 'Shiny Wurmple Theme (★ #265)' : 'Tema Wurmple Shiny (★ #265)';
+  String get themeWurmpleShinySub => isEn
+      ? 'Cosmic violet body with gold horns and radiant night hues'
+      : 'Corpo violeta cósmico, chifres dourados e fundo ametista radiante';
+  String get themeLugiaShinyTitle => isEn ? 'Shiny Lugia Theme (★ #249)' : 'Tema Lugia Shiny (★ #249)';
+  String get themeLugiaShinySub => isEn
+      ? 'Crimson-rose belly and silver wings on midnight oceanic canvas'
+      : 'Ventre carmesim-rosa e asas prateadas sobre tela oceânica da meia-noite';
+  String get themeDarkLugiaTitle => isEn ? 'Dark Lugia Theme (Shadow XD001)' : 'Tema Dark Lugia (Shadow XD001)';
+  String get themeDarkLugiaSub => isEn
+      ? 'Abyssal shadow corruption with spectral purple and crimson eye'
+      : 'Sombra abissal corrompida com roxo espectral e olho carmesim';
+
+  // Extra Themes Unlock Dialog
+  String get btnUnlockExtraThemes => isEn ? 'Unlock Extra Themes' : 'Desbloquear Temas Extras';
+  String get manageExtraThemesTitle => isEn ? 'Manage Extra Themes' : 'Gerenciar Temas Extras';
+  String get passwordPromptTitle => isEn ? 'Access Password' : 'Senha de Acesso';
+  String get passwordPromptSubtitle => isEn ? 'Enter the passcode to manage extra themes:' : 'Digite a senha para gerenciar temas extras:';
+  String get passwordHint => isEn ? 'Enter passcode...' : 'Digite a senha...';
+  String get incorrectPasswordMsg => isEn ? 'Incorrect password!' : 'Senha incorreta!';
+  String get selectThemeDropdownLabel => isEn ? 'Choose Theme to Configure' : 'Escolha o Tema para Alterar';
+  String get themeUnlockedLabel => isEn ? 'Unlocked' : 'Desbloqueado';
+  String get themeLockedLabel => isEn ? 'Locked' : 'Bloqueado';
+  String get btnLock => isEn ? 'Lock Theme' : 'Bloquear Tema';
+  String get btnUnlock => isEn ? 'Unlock Theme' : 'Desbloquear Tema';
+  String get allThemesOption => isEn ? 'All Extra Themes' : 'Todos os Temas Extras';
+  String get btnUnlockAll => isEn ? 'Unlock All' : 'Desbloquear Todos';
+  String get btnLockAll => isEn ? 'Lock All' : 'Bloquear Todos';
 
   String get sectionCardScale => isEn
       ? 'CARD VISUAL SCALE (MENU & COLLECTION)'

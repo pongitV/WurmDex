@@ -41,6 +41,9 @@ class CardPricesResult {
   final double exchangeRate;
   final Map<PriceTimeRange, List<PricePoint>> historyByRange;
   final List<CardSaleRecord> recentSales;
+  final int? tcgProductId;
+  final String? tcgProductUrl;
+  final String? ligaProductUrl;
 
   CardPricesResult({
     this.ligaMinBrl,
@@ -52,6 +55,9 @@ class CardPricesResult {
     Map<PriceTimeRange, List<PricePoint>>? historyByRange,
     List<PricePoint>? historyPoints,
     this.recentSales = const [],
+    this.tcgProductId,
+    this.tcgProductUrl,
+    this.ligaProductUrl,
   }) : historyByRange = historyByRange ?? {
           PriceTimeRange.month1m: historyPoints ?? [],
         };
@@ -89,12 +95,15 @@ class PricingService {
     required String cardName,
     required String cardNumber,
     String? cardId,
+    String? setName,
     double? initialTcgMarketUsd,
   }) async {
     final exchangeRate = await CurrencyService.getUsdToBrlRate();
     double? tcgUsd = initialTcgMarketUsd;
 
     Map<String, dynamic>? cardmarketData;
+    int? tcgProductId;
+    String? tcgProductUrl;
 
     // Fetch live quote and sales history from TCGdex if cardId is provided
     if (cardId != null && cardId.isNotEmpty) {
@@ -107,6 +116,30 @@ class PricingService {
           final pricing = resp.data['pricing'] as Map<String, dynamic>?;
           tcgUsd = TcgPricingParser.extractMarketPriceUsd(pricing);
           cardmarketData = pricing?['cardmarket'] as Map<String, dynamic>?;
+
+          // Extract direct TCGPlayer productId
+          if (pricing != null && pricing['tcgplayer'] is Map) {
+            final tcgMap = pricing['tcgplayer'] as Map<String, dynamic>;
+            for (final v in [
+              'normal',
+              'holofoil',
+              'reverse-holofoil',
+              'reverseHolofoil',
+              '1stEditionNormal',
+              '1stEditionHolofoil'
+            ]) {
+              if (tcgMap[v] is Map && tcgMap[v]['productId'] != null) {
+                tcgProductId = (tcgMap[v]['productId'] as num).toInt();
+                break;
+              }
+            }
+            if (tcgProductId == null && tcgMap['productId'] != null) {
+              tcgProductId = (tcgMap['productId'] as num).toInt();
+            }
+          }
+          if (tcgProductId != null && tcgProductId > 0) {
+            tcgProductUrl = 'https://www.tcgplayer.com/product/$tcgProductId';
+          }
         }
       } catch (e) {
         debugPrint('TCGdex single card price lookup error: $e');
@@ -115,16 +148,27 @@ class PricingService {
 
     final tcgBrl = tcgUsd != null ? (tcgUsd * exchangeRate) : null;
 
+    // Direct card tab on LigaPokemon:
+    // When ed and num are specified, LigaPokemon directly opens that specific card's page tab
+    final cleanName = Uri.encodeComponent(cardName.trim());
+    final cleanNum = cardNumber.trim();
+    final cleanSet = setName?.trim();
+    String ligaDirectUrl;
+    if (cleanNum.isNotEmpty && cleanSet != null && cleanSet.isNotEmpty) {
+      ligaDirectUrl = 'https://www.ligapokemon.com.br/?view=cards/card&card=$cleanName&ed=${Uri.encodeComponent(cleanSet)}&num=${Uri.encodeComponent(cleanNum)}';
+    } else if (cleanNum.isNotEmpty) {
+      ligaDirectUrl = 'https://www.ligapokemon.com.br/?view=cards/card&card=$cleanName&num=${Uri.encodeComponent(cleanNum)}';
+    } else {
+      ligaDirectUrl = 'https://www.ligapokemon.com.br/?view=cards/card&card=$cleanName';
+    }
+
     // Fetch or estimate LigaPokemon prices
     double? ligaMin;
     double? ligaAvg;
     double? ligaMax;
 
     try {
-      final cleanName = Uri.encodeComponent(cardName);
-      final url = 'https://www.ligapokemon.com.br/?view=cards/card&card=$cleanName';
-
-      final response = await DioClient.instance.get(url);
+      final response = await DioClient.instance.get(ligaDirectUrl);
       if (response.statusCode == 200 && response.data != null) {
         final html = response.data.toString();
         // Parse prices from LigaPokemon HTML if available
@@ -187,6 +231,9 @@ class PricingService {
       exchangeRate: exchangeRate,
       historyByRange: historyByRange,
       recentSales: recentSales,
+      tcgProductId: tcgProductId,
+      tcgProductUrl: tcgProductUrl,
+      ligaProductUrl: ligaDirectUrl,
     );
   }
 

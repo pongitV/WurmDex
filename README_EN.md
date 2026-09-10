@@ -116,9 +116,14 @@ Every Pokemon card across the catalog, sets, pokedex gallery, and custom collect
 - Direct quick-action button to open the product page in the default web browser.
 
 ### 8. Unified Navigation & Session Persistence
-- Clean, ergonomic 3-button bottom dock (Catalog, Liga Radar, and More Hub) identical across Windows Desktop and Android.
-- Stylized "More Features" modal sheet for rapid 1-tap jumping to WorldDex, Expansions, Collections, Wishlist, Trades, and Settings.
-- Complete session persistence: selected theme (Dark, Light, Gramado, Wurmple), active language, and card zoom levels automatically restored upon restart.
+- Clean, ergonomic 4-button bottom dock (Catalog, Liga Radar, Collections, and More) identical across Windows Desktop and Android.
+- Stylized "More Features" modal sheet for rapid 1-tap jumping to WorldDex, Expansions, Wishlist, Trades, and Settings.
+- Complete session persistence: selected theme (Dark, Antique Book Page Light, Gramado, Wurmple, Lugia, Shiny Wurmple, Shiny Lugia, and Dark Lugia), active language, and card zoom levels automatically restored upon restart.
+- Easter egg incremental clicker mini-games for multiple Pokémon (Wurmple, Lugia, Dark Lugia), featuring upgrade progression and a points shop to unlock exclusive visual themes:
+  - **Wurmple Clicker**: Full-screen clicker with Swarm upgrades, milestone particle animations, and a points shop to unlock the Shiny Wurmple Theme (★ #265).
+  - **Lugia Clicker**: Themed clicker activated by the dynamic Lugia mascot icon, featuring aerodynamic upgrades and points shop for the Shiny Lugia Theme (★ #249).
+  - **Dark Lugia Clicker**: Secret shadow-themed clicker unlocked by creating a collection named "DarkLugia".
+  - **Extra Themes Manager in Settings**: Passcode "011" protected panel to unlock or lock back extra themes via dropdown anytime.
 
 ---
 
@@ -142,12 +147,13 @@ WurmDex/
 |   |   |-- navigation/              # Centralized route orchestration
 |   |   |-- network/                 # Dio client with caching and retry policies
 |   |   |-- providers/               # Riverpod state notifiers
-|   |   |-- theme/                   # Theme engine (Dark, Light, Grass, Wurmple)
+|   |   |-- theme/                   # Theme engine (Dark, Light, Grass, Wurmple, Lugia)
 |   |   `-- widgets/                 # Universal UI components (CardGridItem, Badges)
 |   `-- features/                    # Feature modules
 |       |-- card_details/            # Single card viewer, pricing chart, sales modal
 |       |-- catalog/                 # Search engine and card models
 |       |-- collections/             # Folders, virtual binder, portfolio dashboard
+|       |-- easter_egg/              # Secret Wurmple Clicker mini-game
 |       |-- home/                    # Dashboard, news feed, price watch
 |       |-- navigation/              # Main scaffold and bottom navigation bar
 |       |-- pokedex/                 # Pokedex index and card gallery

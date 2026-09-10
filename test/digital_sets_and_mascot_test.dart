@@ -100,7 +100,7 @@ void main() {
     });
 
     test('Wurmple mascot menu asset exists', () {
-      final file = File('assets/images/wurmple_menu.png');
+      final file = File('assets/images/menu/wurmple_menu.png');
       expect(file.existsSync(), isTrue);
       expect(file.lengthSync(), greaterThan(100));
     });

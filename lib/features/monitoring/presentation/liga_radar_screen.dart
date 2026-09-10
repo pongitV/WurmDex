@@ -191,34 +191,10 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    strings.ligaRadarTitle,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.deepPurple, width: 0.8),
-                  ),
-                  child: const Text(
-                    'PRÉ-VENDA & OFERTAS',
-                    style: TextStyle(
-                      color: Colors.deepPurple,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 9,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ],
+            Text(
+              strings.ligaRadarTitle,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              overflow: TextOverflow.ellipsis,
             ),
             Text(
               strings.ligaRadarSubtitle,
@@ -262,12 +238,6 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                       icon: Icons.radar,
                       title: strings.emptyRadarTitle,
                       message: strings.emptyRadarSubtitle,
-                    ),
-                    const SizedBox(height: 20),
-                    FilledButton.icon(
-                      icon: const Icon(Icons.add),
-                      label: Text(strings.btnAddAlert),
-                      onPressed: _openAddDialog,
                     ),
                   ],
                 ),
@@ -331,7 +301,7 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                         theme: theme,
                         label: strings.kpiPreSaleTotal,
                         value: '$totalPreSale',
-                        icon: Icons.bolt,
+                        icon: Icons.calendar_today_outlined,
                         color: Colors.deepPurple,
                       ),
                     ),
@@ -383,7 +353,6 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                     ),
                     const SizedBox(width: 8),
                     FilterChip(
-                      avatar: const Icon(Icons.bolt, size: 16, color: Colors.deepPurple),
                       label: Text(strings.filterPreSaleAlerts),
                       selected: _filterType == LigaFilterType.preSale,
                       onSelected: (_) => setState(() => _filterType = LigaFilterType.preSale),
@@ -422,11 +391,6 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Erro: $err')),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.add_alert),
-        label: Text(strings.btnAddAlert),
-        onPressed: _openAddDialog,
       ),
     );
   }
@@ -551,13 +515,20 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                         right: 2,
                         bottom: 2,
                         child: Container(
-                          padding: const EdgeInsets.all(2),
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.deepPurple,
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(4),
                             border: Border.all(color: Colors.white, width: 1.5),
                           ),
-                          child: const Icon(Icons.bolt, color: Colors.white, size: 10),
+                          child: Text(
+                            strings.statusPreSale.toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                   ],
@@ -602,20 +573,13 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                                 color: Colors.deepPurple,
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.bolt, color: Colors.white, size: 12),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    strings.statusPreSale.toUpperCase(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                strings.statusPreSale.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
                               ),
                             ),
 
@@ -666,102 +630,118 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
               ),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      // Lowest Price Column
-                      Expanded(
-                        flex: 5,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.price_check,
-                                  size: 14,
-                                  color: alert.isAvailableInRange ? Colors.green.shade700 : theme.colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  strings.currentLowestPriceHeader,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.4,
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Lowest Price Column
+                        Expanded(
+                          flex: 5,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.price_check,
+                                    size: 14,
                                     color: alert.isAvailableInRange ? Colors.green.shade700 : theme.colorScheme.onSurfaceVariant,
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              priceText,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 17,
-                                color: alert.isAvailableInRange
-                                    ? Colors.green.shade700
-                                    : (price != null && price > 0 ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      strings.currentLowestPriceHeader,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.4,
+                                        color: alert.isAvailableInRange ? Colors.green.shade700 : theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        height: 36,
-                        width: 1,
-                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                      // Store Name Column
-                      Expanded(
-                        flex: 6,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.storefront_outlined,
-                                  size: 14,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  strings.storeSellerHeader,
+                              const SizedBox(height: 3),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  priceText,
                                   style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.4,
-                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 17,
+                                    color: alert.isAvailableInRange
+                                        ? Colors.green.shade700
+                                        : (price != null && price > 0 ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant),
                                   ),
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 3),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.surface.withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
-                                ),
                               ),
-                              child: Text(
-                                storeName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        Container(
+                          width: 1,
+                          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        ),
+                        // Store Name Column
+                        Expanded(
+                          flex: 6,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.storefront_outlined,
+                                    size: 14,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      strings.storeSellerHeader,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.4,
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 3),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surface.withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                child: Text(
+                                  storeName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   // Target range footer

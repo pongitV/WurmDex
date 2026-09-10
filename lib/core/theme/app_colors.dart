@@ -48,6 +48,46 @@ class AppColors {
   static const wurmpleTextPrimary = Color(0xFFF3EDE9); // Marfim claro de destaque do ícone (#F3EDE9)
   static const wurmpleTextSecondary = Color(0xFFD2CAB8); // Creme suave para textos secundários
 
+  // Lugia Theme (#249 - Deep Oceanic Silver-Blue & Aerilate Indigo)
+  // Cores extraídas diretamente da arte do Lugia (#249): Tons de azul marinho profundo sem fundo branco
+  static const lugiaBackground = Color(0xFF09111E); // Azul marinho abissal profundo
+  static const lugiaSurface = Color(0xFF101F35); // Superfície oceânica aerilate
+  static const lugiaSurfaceLight = Color(0xFF182D4B); // Superfície intermediária
+  static const lugiaBorder = Color(0xFF223E63); // Borda azul aço/escamas
+  static const lugiaPrimary = Color(0xFF3B82F6); // Azul royal do ventre e olho do Lugia
+  static const lugiaPrimaryHover = Color(0xFF2563EB);
+  static const lugiaSecondary = Color(0xFF60A5FA); // Azul cerúleo das nadadeiras e crista
+  static const lugiaAccent = Color(0xFF93C5FD); // Destaque prata-azulado
+  static const lugiaTextPrimary = Color(0xFFF0F6FC); // Branco prateado de alto contraste
+  static const lugiaTextSecondary = Color(0xFF94A3B8); // Ardósia suave para subtítulos
+
+  // Wurmple Shiny Theme (#265 Shiny - Violeta Cósmico com Chifres Dourados)
+  static const wurmpleShinyBackground = Color(0xFF130722); // Roxo escuro profundo
+  static const wurmpleShinySurface = Color(0xFF210E3B); // Superfície ametista escura
+  static const wurmpleShinyBorder = Color(0xFF452077); // Borda violeta radiante
+  static const wurmpleShinyPrimary = Color(0xFFA855F7); // Roxo vibrante do corpo do Wurmple Shiny
+  static const wurmpleShinySecondary = Color(0xFFFACC15); // Amarelo dourado dos chifres
+  static const wurmpleShinyTextPrimary = Color(0xFFFAF5FF); // Branco lilás de alto contraste
+  static const wurmpleShinyTextSecondary = Color(0xFFC084FC); // Lavanda suave
+
+  // Lugia Shiny Theme (#249 Shiny - Ventre Carmesim/Rosa com Asas Prateadas)
+  static const lugiaShinyBackground = Color(0xFF0C0E1E); // Noite oceânica profunda
+  static const lugiaShinySurface = Color(0xFF181B34); // Superfície anil
+  static const lugiaShinyBorder = Color(0xFF383C66); // Borda prata-azulada
+  static const lugiaShinyPrimary = Color(0xFFE11D48); // Vermelho carmesim do ventre e crista do Lugia Shiny
+  static const lugiaShinySecondary = Color(0xFFFB7185); // Rosa do ventre
+  static const lugiaShinyTextPrimary = Color(0xFFFFF1F2); // Branco rosa de alto contraste
+  static const lugiaShinyTextSecondary = Color(0xFFFDA4AF); // Rosa suave
+
+  // Dark Lugia Theme (Shadow Lugia XD001 - Corrupção Abissal com Olho Carmesim)
+  static const darkLugiaBackground = Color(0xFF090512); // Preto sombra abissal
+  static const darkLugiaSurface = Color(0xFF150D24); // Superfície sombra escura
+  static const darkLugiaBorder = Color(0xFF3D1E63); // Borda púrpura corrompida
+  static const darkLugiaPrimary = Color(0xFF9333EA); // Roxo espectral do Dark Lugia
+  static const darkLugiaSecondary = Color(0xFFEF4444); // Vermelho vivo do olho sinistro
+  static const darkLugiaTextPrimary = Color(0xFFF5F3FF); // Branco espectral
+  static const darkLugiaTextSecondary = Color(0xFFA855F7); // Violeta sombra
+
   // Status & Financial Indicators
   static const profitGreen = Color(0xFF10B981);
   static const lossRed = Color(0xFFEF4444);

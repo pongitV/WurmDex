@@ -12,6 +12,8 @@ import 'package:wurmdex/core/utils/currency_formatter.dart';
 import 'package:wurmdex/core/utils/marketplace_url_helper.dart';
 import 'package:wurmdex/core/utils/semantic_search_helper.dart';
 import 'package:wurmdex/core/widgets/bottom_sheet_drag_handle.dart';
+import 'package:wurmdex/core/widgets/condition_badge.dart';
+import 'package:wurmdex/core/widgets/language_flag_badge.dart';
 import 'package:wurmdex/core/widgets/pokemon_card_image.dart';
 import 'package:wurmdex/features/catalog/models/pokemon_card_item.dart';
 
@@ -127,7 +129,12 @@ class CardQuickActionSheet extends ConsumerWidget {
             subtitle: Text(strings.viewOffersBrazil),
             onTap: () {
               Navigator.pop(context);
-              MarketplaceUrlHelper.openLigaPokemon(context, cardName: card.name);
+              MarketplaceUrlHelper.openLigaPokemon(
+                context,
+                cardName: card.name,
+                cardNumber: card.number,
+                setName: card.setName,
+              );
             },
           ),
           ListTile(
@@ -136,7 +143,12 @@ class CardQuickActionSheet extends ConsumerWidget {
             subtitle: Text(strings.viewMarketplaceInternational),
             onTap: () {
               Navigator.pop(context);
-              MarketplaceUrlHelper.openTcgPlayer(context, cardName: card.name, cardNumber: card.number);
+              MarketplaceUrlHelper.openTcgPlayer(
+                context,
+                cardName: card.name,
+                cardNumber: card.number,
+                setName: card.setName,
+              );
             },
           ),
           ListTile(
@@ -228,9 +240,39 @@ class CardQuickActionSheet extends ConsumerWidget {
                           decoration: InputDecoration(labelText: strings.labelLanguage),
                           initialValue: language,
                           items: [
-                            const DropdownMenuItem(value: 'PT', child: Text('PT-BR')),
-                            DropdownMenuItem(value: 'EN', child: Text(strings.isEn ? 'English' : 'Inglês')),
-                            DropdownMenuItem(value: 'JP', child: Text(strings.isEn ? 'Japanese' : 'Japonês')),
+                            const DropdownMenuItem(
+                              value: 'PT',
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('🇧🇷', style: TextStyle(fontSize: 14)),
+                                  SizedBox(width: 6),
+                                  Text('PT-BR'),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'EN',
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('🇺🇸', style: TextStyle(fontSize: 14)),
+                                  const SizedBox(width: 6),
+                                  Text(strings.isEn ? 'English' : 'Inglês'),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'JP',
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('🇯🇵', style: TextStyle(fontSize: 14)),
+                                  const SizedBox(width: 6),
+                                  Text(strings.isEn ? 'Japanese' : 'Japonês'),
+                                ],
+                              ),
+                            ),
                           ],
                           onChanged: (val) => setState(() => language = val!),
                         ),
@@ -250,6 +292,34 @@ class CardQuickActionSheet extends ConsumerWidget {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Visual Preview: Quality & Country Flag Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          strings.isEn ? 'Card Badge Preview:' : 'Prévia dos Selos:',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const Spacer(),
+                        ConditionBadge(condition: condition, compact: true),
+                        const SizedBox(width: 6),
+                        LanguageFlagBadge(language: language, compact: true, showCode: true),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 12),
                   // Price Paid & Quantity

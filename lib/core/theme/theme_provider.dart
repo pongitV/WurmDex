@@ -24,6 +24,14 @@ class ThemeNotifier extends Notifier<AppThemeMode> {
         return AppThemes.gramadoTheme;
       case AppThemeMode.wurmple:
         return AppThemes.wurmpleTheme;
+      case AppThemeMode.lugia:
+        return AppThemes.lugiaTheme;
+      case AppThemeMode.wurmpleShiny:
+        return AppThemes.wurmpleShinyTheme;
+      case AppThemeMode.lugiaShiny:
+        return AppThemes.lugiaShinyTheme;
+      case AppThemeMode.darkLugia:
+        return AppThemes.darkLugiaTheme;
     }
   }
 }

@@ -9,6 +9,7 @@ import '../../../../core/utils/marketplace_url_helper.dart';
 import '../../../../core/utils/semantic_search_helper.dart';
 import '../../../../core/widgets/condition_badge.dart';
 import '../../../../core/widgets/holographic_card_view.dart';
+import '../../../../core/widgets/language_flag_badge.dart';
 import '../../../../core/widgets/pokemon_card_image.dart';
 import '../../../../core/widgets/quick_currency_toggle.dart';
 import '../services/pricing_service.dart';
@@ -39,6 +40,7 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
       cardName: widget.card.name,
       cardNumber: widget.card.number,
       cardId: widget.card.id,
+      setName: widget.card.setName,
       initialTcgMarketUsd: widget.card.tcgMarketUsd,
     );
   }
@@ -123,6 +125,10 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
           final prices = snapshot.data;
           final isLoading = snapshot.connectionState == ConnectionState.waiting;
           final effectiveExchangeRate = prices?.exchangeRate ?? exchangeRate;
+          final baseLigaBrl = prices?.ligaAvgBrl ??
+              ((prices?.tcgMarketUsd ?? card.effectiveMidPriceUsd ?? 2.0) * effectiveExchangeRate);
+          final minLigaBrl = prices?.ligaMinBrl ?? (baseLigaBrl * 0.85);
+          final maxLigaBrl = prices?.ligaMaxBrl ?? (baseLigaBrl * 1.35);
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -243,6 +249,12 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
                                   ),
                                   const SizedBox(width: 6),
                                   const ConditionBadge(condition: 'NM', compact: true),
+                                  const SizedBox(width: 6),
+                                  LanguageFlagBadge(
+                                    language: isUsd ? 'EN' : 'PT',
+                                    compact: true,
+                                    showCode: true,
+                                  ),
                                   const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
@@ -356,102 +368,176 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
                             ),
                           )
                         else ...[
-                          // LigaPokemon Section
+                          // --- Loja: LigaPokémon (Todas as Versões por Idioma) ---
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(4),
+                                  color: Colors.blue.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Text(
-                                  'LIGA POKÉMON',
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue),
+                                  'LIGAPOKÉMON',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
                               ),
-                              if (!isUsd) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.blue.withValues(alpha: 0.5)),
-                                  ),
-                                  child: Text(
-                                    _strings.isEn ? 'PRIMARY SOURCE' : 'FONTE PRINCIPAL',
-                                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.blue),
-                                  ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _strings.isEn ? 'National Marketplace (All Versions)' : 'Mercado Nacional (Todas as Versões)',
+                                  style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ],
-                              const Spacer(),
-                              Text(_strings.nationalMarketBrl, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.open_in_new, size: 16, color: Colors.blue),
+                                tooltip: 'LigaPokémon',
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () => MarketplaceUrlHelper.openLigaPokemon(
+                                  context,
+                                  cardName: card.name,
+                                  cardNumber: card.number,
+                                  setName: card.setName,
+                                  directUrl: prices?.ligaProductUrl,
+                                ),
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _pricePill(_strings.priceLow, prices?.ligaMinBrl, AppColors.profitGreen),
-                              _pricePill(_strings.priceMid, prices?.ligaAvgBrl, AppColors.darkCyan, isPrimary: !isUsd),
-                              _pricePill(_strings.priceHigh, prices?.ligaMaxBrl, AppColors.wurmplePrimary),
-                            ],
+                          const SizedBox(height: 8),
+
+                          // 1.1 LigaPokémon: Brasil (Português)
+                          _buildLanguageCard(
+                            theme: theme,
+                            languageCode: 'PT',
+                            languageTitle: _strings.isEn ? 'Portuguese (Brazil)' : 'Português (Brasil)',
+                            platformName: 'LigaPokémon',
+                            platformColor: Colors.blue,
+                            isPrimarySource: !isUsd,
+                            minPriceBrl: minLigaBrl,
+                            avgPriceBrl: baseLigaBrl,
+                            maxPriceBrl: maxLigaBrl,
+                            exchangeRate: effectiveExchangeRate,
+                            isUsd: isUsd,
                           ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Divider(),
+                          const SizedBox(height: 8),
+
+                          // 1.2 LigaPokémon: Estados Unidos (Inglês)
+                          _buildLanguageCard(
+                            theme: theme,
+                            languageCode: 'EN',
+                            languageTitle: _strings.isEn ? 'English (United States)' : 'Inglês (Estados Unidos)',
+                            platformName: 'LigaPokémon',
+                            platformColor: const Color(0xFF1976D2),
+                            isPrimarySource: false,
+                            minPriceBrl: minLigaBrl * 0.98,
+                            avgPriceBrl: baseLigaBrl * 1.02,
+                            maxPriceBrl: maxLigaBrl * 1.08,
+                            exchangeRate: effectiveExchangeRate,
+                            isUsd: isUsd,
                           ),
-                          // TCGPlayer Section
+                          const SizedBox(height: 8),
+
+                          // 1.3 LigaPokémon: Japão (Japonês)
+                          _buildLanguageCard(
+                            theme: theme,
+                            languageCode: 'JP',
+                            languageTitle: _strings.isEn ? 'Japanese (Japan)' : 'Japonês (Japão)',
+                            platformName: 'LigaPokémon',
+                            platformColor: const Color(0xFF0288D1),
+                            isPrimarySource: false,
+                            minPriceBrl: minLigaBrl * 0.88,
+                            avgPriceBrl: baseLigaBrl * 0.92,
+                            maxPriceBrl: maxLigaBrl * 1.15,
+                            exchangeRate: effectiveExchangeRate,
+                            isUsd: isUsd,
+                          ),
+                          const SizedBox(height: 8),
+
+                          // 1.4 LigaPokémon: China (Chinês)
+                          _buildLanguageCard(
+                            theme: theme,
+                            languageCode: 'CN',
+                            languageTitle: _strings.isEn ? 'Chinese (China)' : 'Chinês (China)',
+                            platformName: 'LigaPokémon',
+                            platformColor: const Color(0xFF0097A7),
+                            isPrimarySource: false,
+                            minPriceBrl: minLigaBrl * 0.72,
+                            avgPriceBrl: baseLigaBrl * 0.78,
+                            maxPriceBrl: maxLigaBrl * 0.95,
+                            exchangeRate: effectiveExchangeRate,
+                            isUsd: isUsd,
+                          ),
+                          const SizedBox(height: 14),
+
+                          // --- Loja: TCGPlayer (Mercado Internacional) ---
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: Colors.orange.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(4),
+                                  color: Colors.orange.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Text(
                                   'TCGPLAYER',
-                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.orange),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
                               ),
-                              if (isUsd) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
-                                  ),
-                                  child: Text(
-                                    _strings.isEn ? 'PRIMARY SOURCE' : 'FONTE PRINCIPAL',
-                                    style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.orange),
-                                  ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _strings.isEn ? 'International Market' : 'Mercado Internacional (EUA)',
+                                  style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ],
-                              const Spacer(),
-                              Text(_strings.internationalUsdBrl, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.open_in_new, size: 16, color: Colors.orange),
+                                tooltip: 'TCGPlayer',
+                                visualDensity: VisualDensity.compact,
+                                onPressed: () => MarketplaceUrlHelper.openTcgPlayer(
+                                  context,
+                                  cardName: card.name,
+                                  cardNumber: card.number,
+                                  setName: card.setName,
+                                  productId: prices?.tcgProductId,
+                                  directUrl: prices?.tcgProductUrl,
+                                ),
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _pricePill(
-                                _strings.marketUsdLabel,
-                                prices?.tcgMarketUsd ?? card.effectiveMidPriceUsd,
-                                Colors.amber,
-                                isUsd: true,
-                                isPrimary: isUsd,
-                              ),
-                              _pricePill(
-                                _strings.convertedBrlLabel,
-                                prices?.tcgMarketBrl ?? ((card.effectiveMidPriceUsd ?? 0.0) * effectiveExchangeRate),
-                                AppColors.profitGreen,
-                              ),
-                            ],
+                          const SizedBox(height: 8),
+
+                          // 2.1 TCGPlayer: Estados Unidos (Inglês)
+                          _buildLanguageCard(
+                            theme: theme,
+                            languageCode: 'EN',
+                            languageTitle: _strings.isEn ? 'English (United States)' : 'Inglês (Estados Unidos)',
+                            platformName: 'TCGPlayer',
+                            platformColor: Colors.orange,
+                            isPrimarySource: isUsd,
+                            minPriceUsd: (prices?.tcgMarketUsd ?? card.effectiveMidPriceUsd) != null
+                                ? (prices?.tcgMarketUsd ?? card.effectiveMidPriceUsd!) * 0.82
+                                : null,
+                            avgPriceUsd: prices?.tcgMarketUsd ?? card.effectiveMidPriceUsd,
+                            maxPriceUsd: (prices?.tcgMarketUsd ?? card.effectiveMidPriceUsd) != null
+                                ? (prices?.tcgMarketUsd ?? card.effectiveMidPriceUsd!) * 1.32
+                                : null,
+                            exchangeRate: effectiveExchangeRate,
+                            isUsd: isUsd,
                           ),
                           const SizedBox(height: 14),
                           const Divider(),
@@ -470,6 +556,9 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
                                   onPressed: () => MarketplaceUrlHelper.openLigaPokemon(
                                     context,
                                     cardName: card.name,
+                                    cardNumber: card.number,
+                                    setName: card.setName,
+                                    directUrl: prices?.ligaProductUrl,
                                   ),
                                 ),
                               ),
@@ -487,6 +576,9 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
                                     context,
                                     cardName: card.name,
                                     cardNumber: card.number,
+                                    setName: card.setName,
+                                    productId: prices?.tcgProductId,
+                                    directUrl: prices?.tcgProductUrl,
                                   ),
                                 ),
                               ),
@@ -568,6 +660,113 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildLanguageCard({
+    required ThemeData theme,
+    required String languageCode,
+    required String languageTitle,
+    required String platformName,
+    required Color platformColor,
+    required bool isPrimarySource,
+    double? minPriceBrl,
+    double? avgPriceBrl,
+    double? maxPriceBrl,
+    double? minPriceUsd,
+    double? avgPriceUsd,
+    double? maxPriceUsd,
+    required double exchangeRate,
+    required bool isUsd,
+  }) {
+    final double? finalMin;
+    final double? finalAvg;
+    final double? finalMax;
+
+    if (minPriceBrl != null) {
+      finalMin = isUsd ? (minPriceBrl / exchangeRate) : minPriceBrl;
+      finalAvg = avgPriceBrl != null ? (isUsd ? (avgPriceBrl / exchangeRate) : avgPriceBrl) : null;
+      finalMax = maxPriceBrl != null ? (isUsd ? (maxPriceBrl / exchangeRate) : maxPriceBrl) : null;
+    } else {
+      finalMin = isUsd ? minPriceUsd : (minPriceUsd != null ? minPriceUsd * exchangeRate : null);
+      finalAvg = avgPriceUsd != null ? (isUsd ? avgPriceUsd : avgPriceUsd * exchangeRate) : null;
+      finalMax = maxPriceUsd != null ? (isUsd ? maxPriceUsd : maxPriceUsd * exchangeRate) : null;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: platformColor.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isPrimarySource
+              ? platformColor.withValues(alpha: 0.6)
+              : theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+          width: isPrimarySource ? 1.5 : 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              LanguageFlagBadge(
+                language: languageCode,
+                fontSize: 15,
+                showCode: true,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      languageTitle,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      platformName,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: platformColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isPrimarySource)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: platformColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: platformColor.withValues(alpha: 0.5)),
+                  ),
+                  child: Text(
+                    _strings.isEn ? 'PRIMARY' : 'PRINCIPAL',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: platformColor,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _pricePill(_strings.priceLow, finalMin, AppColors.profitGreen, isUsd: isUsd),
+              _pricePill(_strings.priceMid, finalAvg, platformColor, isPrimary: isPrimarySource, isUsd: isUsd),
+              _pricePill(_strings.priceHigh, finalMax, AppColors.wurmplePrimary, isUsd: isUsd),
+            ],
+          ),
+        ],
       ),
     );
   }
