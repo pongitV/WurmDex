@@ -193,21 +193,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const Divider(height: 1),
                   RadioListTile<AppThemeMode>(
-                    title: Row(
-                      children: [
-                        Text(strings.themeWurmpleShinyTitle),
-                        const SizedBox(width: 6),
-                        if (!AppPreferencesService.isWurmpleShinyUnlocked())
-                          const Icon(Icons.lock_outline, size: 16, color: Colors.amber),
-                      ],
-                    ),
+                    title: Text(strings.themeWurmpleShinyTitle),
                     subtitle: Text(
                       AppPreferencesService.isWurmpleShinyUnlocked()
                           ? strings.themeWurmpleShinySub
                           : (strings.isEn ? 'Unlock with 1,000,000 pts in Wurmple Clicker' : 'Desbloqueie com 1.000.000 pts no Wurmple Clicker'),
                     ),
-                    secondary: CircleAvatar(
+                    secondary: _buildThemeAvatar(
                       backgroundColor: AppColors.wurmpleShinySurface,
+                      isLocked: !AppPreferencesService.isWurmpleShinyUnlocked(),
                       child: ClipOval(
                         child: Image.asset(
                           'assets/images/menu/wurmple_shiny_menu.png',
@@ -226,21 +220,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const Divider(height: 1),
                   RadioListTile<AppThemeMode>(
-                    title: Row(
-                      children: [
-                        Text(strings.themeLugiaShinyTitle),
-                        const SizedBox(width: 6),
-                        if (!AppPreferencesService.isLugiaShinyUnlocked())
-                          const Icon(Icons.lock_outline, size: 16, color: Colors.amber),
-                      ],
-                    ),
+                    title: Text(strings.themeLugiaShinyTitle),
                     subtitle: Text(
                       AppPreferencesService.isLugiaShinyUnlocked()
                           ? strings.themeLugiaShinySub
                           : (strings.isEn ? 'Unlock with 1,000,000 pts in Lugia Clicker' : 'Desbloqueie com 1.000.000 pts no Lugia Clicker'),
                     ),
-                    secondary: CircleAvatar(
+                    secondary: _buildThemeAvatar(
                       backgroundColor: AppColors.lugiaShinySurface,
+                      isLocked: !AppPreferencesService.isLugiaShinyUnlocked(),
                       child: ClipOval(
                         child: Image.asset(
                           'assets/images/characters/249_shiny.png',
@@ -259,21 +247,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const Divider(height: 1),
                   RadioListTile<AppThemeMode>(
-                    title: Row(
-                      children: [
-                        Text(strings.themeDarkLugiaTitle),
-                        const SizedBox(width: 6),
-                        if (!AppPreferencesService.isDarkLugiaUnlocked())
-                          const Icon(Icons.lock_outline, size: 16, color: Colors.amber),
-                      ],
-                    ),
+                    title: Text(strings.themeDarkLugiaTitle),
                     subtitle: Text(
                       AppPreferencesService.isDarkLugiaUnlocked()
                           ? strings.themeDarkLugiaSub
                           : (strings.isEn ? 'Secret: Create a collection named "DarkLugia"' : 'Segredo: Crie uma coleção chamada "DarkLugia"'),
                     ),
-                    secondary: CircleAvatar(
+                    secondary: _buildThemeAvatar(
                       backgroundColor: AppColors.darkLugiaSurface,
+                      isLocked: !AppPreferencesService.isDarkLugiaUnlocked(),
                       child: ClipOval(
                         child: Image.asset(
                           'assets/images/characters/dark_lugia.png',
@@ -534,6 +516,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildThemeAvatar({
+    required Widget child,
+    required Color backgroundColor,
+    bool isLocked = false,
+  }) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        CircleAvatar(
+          backgroundColor: backgroundColor,
+          child: child,
+        ),
+        if (isLocked)
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.65),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.amber.withValues(alpha: 0.8),
+                width: 1.5,
+              ),
+            ),
+            child: const Icon(
+              Icons.lock_rounded,
+              size: 20,
+              color: Colors.amber,
+            ),
+          ),
+      ],
     );
   }
 
