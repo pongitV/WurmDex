@@ -117,7 +117,7 @@ void main() {
   group('Localization and AppStrings Tests', () {
     test('Default en-US strings are accurate', () {
       final strings = getStrings(AppLanguage.enUs);
-      expect(strings.appTitle, 'WurmDex Catalog');
+      expect(strings.appTitle, 'WurmDex');
       expect(strings.btnSearchCards, 'Search Cards');
       expect(strings.btnViewCollection, 'View Collection');
       expect(strings.sectionTrending, 'TRENDING CARDS RIGHT NOW');
@@ -129,7 +129,7 @@ void main() {
 
     test('pt-BR localized strings are accurate', () {
       final strings = getStrings(AppLanguage.ptBr);
-      expect(strings.appTitle, 'WurmDex Catálogo');
+      expect(strings.appTitle, 'WurmDex');
       expect(strings.btnSearchCards, 'Pesquisar Cartas');
       expect(strings.btnViewCollection, 'Ver Coleção');
       expect(strings.sectionTrending, 'CARTAS MAIS PROCURADAS NO MOMENTO');

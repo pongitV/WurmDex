@@ -883,72 +883,6 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
 
             const Divider(height: 1),
 
-            // Shiny Unlock Banner (1 Million Points Unlock)
-            if (!isShinyUnlocked)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.purple.shade900.withValues(alpha: 0.7),
-                      Colors.indigo.shade900.withValues(alpha: 0.7),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: canBuyShiny ? Colors.amber : Colors.purple.shade400,
-                    width: canBuyShiny ? 2 : 1,
-                  ),
-                  boxShadow: canBuyShiny
-                      ? [
-                          BoxShadow(
-                            color: Colors.amber.withValues(alpha: 0.4),
-                            blurRadius: 10,
-                            spreadRadius: 1,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.stars, color: Colors.amber, size: 28),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _isLugiaFamily ? strings.clickerUnlockShinyLugia : strings.clickerUnlockShinyWurmple,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            strings.clickerShinyUnlockCostDesc,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: canBuyShiny ? Colors.amber : Colors.white24,
-                        foregroundColor: canBuyShiny ? Colors.black : Colors.white60,
-                      ),
-                      onPressed: canBuyShiny ? () => _buyShinyTheme(strings) : null,
-                      child: const Text('1.000.000', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-              ),
-
             // Upgrades Header (WITHOUT "Compre melhorias com seus wurmples")
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
@@ -971,9 +905,17 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
               flex: 5,
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                itemCount: _upgrades.length,
+                itemCount: _upgrades.length + (!isShinyUnlocked ? 1 : 0),
                 separatorBuilder: (context, index) => const SizedBox(height: 6),
                 itemBuilder: (context, index) {
+                  if (index >= _upgrades.length) {
+                    return _buildShinyUnlockCard(
+                      context,
+                      theme,
+                      strings,
+                      canBuyShiny,
+                    );
+                  }
                   final up = _upgrades[index];
                   final canAfford = _totalPoints >= up.cost;
 
@@ -1084,6 +1026,77 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildShinyUnlockCard(
+    BuildContext context,
+    ThemeData theme,
+    AppStrings strings,
+    bool canBuyShiny,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(top: 6, bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.purple.shade900.withValues(alpha: 0.7),
+            Colors.indigo.shade900.withValues(alpha: 0.7),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: canBuyShiny ? Colors.amber : Colors.purple.shade400,
+          width: canBuyShiny ? 2 : 1,
+        ),
+        boxShadow: canBuyShiny
+            ? [
+                BoxShadow(
+                  color: Colors.amber.withValues(alpha: 0.4),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.stars, color: Colors.amber, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isLugiaFamily ? strings.clickerUnlockShinyLugia : strings.clickerUnlockShinyWurmple,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  strings.clickerShinyUnlockCostDesc,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: canBuyShiny ? Colors.amber : Colors.white24,
+              foregroundColor: canBuyShiny ? Colors.black : Colors.white60,
+            ),
+            onPressed: canBuyShiny ? () => _buyShinyTheme(strings) : null,
+            child: const Text('1.000.000', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }

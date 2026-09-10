@@ -15,7 +15,7 @@ void main() {
     );
 
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('WurmDex Catalog'), findsOneWidget);
+    expect(find.text('WurmDex'), findsOneWidget);
     await tester.pump(const Duration(seconds: 2));
   });
 

@@ -15,7 +15,7 @@ class AppStrings {
   String get save => isEn ? 'Save' : 'Salvar';
 
   // General App
-  String get appTitle => isEn ? 'WurmDex Catalog' : 'WurmDex Catálogo';
+  String get appTitle => 'WurmDex';
   String get appName => 'WurmDex';
 
   // Navigation
