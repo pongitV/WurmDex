@@ -55,6 +55,7 @@ class AppStrings {
   String get tabUpcomingReleases => isEn ? 'Upcoming Releases' : 'Futuros Lançamentos';
   String get tabSetProducts => isEn ? 'Set Products' : 'Produtos da Coleção';
   String get tabSetGallery => isEn ? 'Card Gallery' : 'Galeria de Cartas';
+  String setsCount(int count) => isEn ? '$count ${count == 1 ? "set" : "sets"}' : '$count ${count == 1 ? "coleção" : "coleções"}';
   String get txtAllYears => isEn ? 'All' : 'Todos';
   String get txtMSRP => isEn ? 'MSRP' : 'Preço Sugerido';
   String get txtEstimatedPrice => isEn ? 'Est. Price' : 'Preço Estimado';
@@ -70,6 +71,11 @@ class AppStrings {
   String get btnTryAgain => isEn ? 'Try Again' : 'Tentar Novamente';
   String get loadingCatalog => isEn ? 'Loading...' : 'Carregando...';
   String get errorLoadingNews => isEn ? 'Error loading data.' : 'Erro ao carregar dados.';
+
+  // Catalog Screen
+  String get selectCard => isEn ? 'Select Card' : 'Selecionar Carta';
+  String get labelFolder => isEn ? 'Folder' : 'Pasta';
+  String tapCardToAddToFolder(String name) => isEn ? 'Tap any card to add it to "$name"' : 'Toque em qualquer carta para adicioná-la em "$name"';
 
   // Home Dashboard
   String get btnSearchCards => isEn ? 'Search Cards' : 'Pesquisar Cartas';
@@ -223,6 +229,18 @@ class AppStrings {
       ? 'Congratulations! Shiny Wurmple Theme unlocked and applied!'
       : 'Parabéns! Tema Shiny Wurmple desbloqueado e ativado!';
 
+  String get sectionEasterEgg => isEn ? 'MINIGAME & CLICKER' : 'MINIGAME & CLICKER';
+  String get pauseAutoclickersTitle => isEn ? 'Pause Automatic Clicks' : 'Pausar Cliques Automáticos';
+  String get pauseAutoclickersSub => isEn
+      ? 'Pauses passive generation from autoclicker helpers'
+      : 'Pausa a geração passiva dos ajudantes autoclickers';
+  String get clickerAutoclickerPaused => isEn ? 'PAUSED' : 'PAUSADO';
+  String get clickerPauseTooltip => isEn ? 'Pause automatic clicks' : 'Pausar cliques automáticos';
+  String get clickerResumeTooltip => isEn ? 'Resume automatic clicks' : 'Retomar cliques automáticos';
+  String get firstReleaseDateLabel => isEn ? 'Initial Release' : 'Primeiro Lançamento';
+  String get reprintDatesLabel => isEn ? 'Reprint Dates' : 'Datas de Reimpressão';
+  String get soonInExpectedMonth => isEn ? 'Soon in (expected month)' : 'Em breve (mês esperado)';
+
   String get sectionCardScale => isEn
       ? 'CARD VISUAL SCALE (MENU & COLLECTION)'
       : 'ESCALA VISUAL DAS CARTAS (MENU & COLEÇÃO)';
@@ -278,6 +296,7 @@ class AppStrings {
   String get btnCreateFolder => isEn ? 'New Folder' : 'Novo Fichário';
   String get btnCreateFolderAction => isEn ? 'Create Folder' : 'Criar Pasta';
   String get generalCollectionTitle => isEn ? 'General Collection' : 'Coleção Geral';
+  String get easterEggDarkLugiaUnlocked => isEn ? 'Easter Egg! Dark Lugia Theme unlocked!' : 'Easter Egg! Tema Dark Lugia desbloqueado!';
   String get generalCollectionSubtitle => isEn ? 'Loose cards without a specific folder' : 'Cartas avulsas sem fichário específico';
   String cardsCount(int count) => isEn ? '$count cards' : '$count cartas';
   String get tooltipDeleteFolder => isEn ? 'Delete Folder' : 'Excluir Pasta';
@@ -311,6 +330,7 @@ class AppStrings {
   String get modePrefix => isEn ? 'Mode: ' : 'Modo: ';
   String get modeBinder => isEn ? 'Virtual Binder' : 'Fichário Virtual';
   String get modeGrid => isEn ? 'Grid' : 'Grade';
+  String get searchCardInFolderHint => isEn ? 'Search card in folder by name or #...' : 'Buscar carta na pasta por nome ou #...';
   String cardRemovedFromFolder(String name) => isEn ? '$name removed from folder.' : '$name removida do fichário.';
   String cardRemovedFromCollection(String name) => isEn ? '$name removed from collection.' : '$name removida da coleção.';
   String cardAddedToCollection(String name) => isEn ? '$name added to collection!' : '$name adicionado à coleção!';
@@ -360,6 +380,8 @@ class AppStrings {
   String get btnSalesHistory => isEn ? 'Purchase History (Liga & TCGPlayer)' : 'Histórico de Compras (Liga & TCGPlayer)';
   String get salesHistoryTitle => isEn ? 'Completed Purchases History' : 'Histórico de Compras Concluídas';
   String get salesHistorySubtitle => isEn ? 'Real prices paid by buyers (not asking price)' : 'Preços reais pagos por compradores (não apenas anúncio)';
+  String get noPurchasesRecorded => isEn ? 'No purchases recorded.' : 'Nenhuma compra registrada.';
+  String get conditionPrefix => isEn ? 'Condition: ' : 'Estado: ';
   String get salesAveragePaid => isEn ? 'Average Paid' : 'Média Paga';
   String get salesLowestPaid => isEn ? 'Lowest Paid' : 'Menor Pago';
   String get salesHighestPaid => isEn ? 'Highest Paid' : 'Maior Pago';
@@ -702,6 +724,92 @@ class AppStrings {
   String get alertTitleRequired => isEn
       ? 'Please provide a display name for the product'
       : 'Informe o nome para o produto';
+  String get adjustGridOption => isEn ? 'Adjust Grid (2x2, 3x3, etc.)' : 'Ajustar Grade (2x2, 3x3, etc.)';
+  String get viewAsList => isEn ? 'View as List' : 'Exibir em Lista';
+  String get switchToBrl => isEn ? 'Switch to BRL (R\$)' : 'Mudar para Real (R\$)';
+  String get switchToUsd => isEn ? 'Switch to USD (\$)' : 'Mudar para Dólar (\$)';
+  String get priceMonitor => isEn ? 'Price Monitor' : 'Monitor de Preços';
+  String get totalValue => isEn ? 'Total Value' : 'Preço Total';
+  String get mostCommon => isEn ? 'Most Common' : 'Mais Comum';
+  String get avgCondition => isEn ? 'Avg Condition' : 'Qualidade Média';
+  String get collectionStats => isEn ? 'Collection Stats' : 'Resumo do Fichário';
+  String get searchCardInSetHint => isEn ? 'Search card in set...' : 'Buscar carta na coleção...';
+  String get comingSoon => isEn ? 'Coming soon' : 'Em breve';
+  String get comingSoonExpected => isEn ? 'Coming soon (expected date)' : 'Em breve (data prevista)';
+  String get noSealedProductsListed => isEn ? 'No sealed products listed' : 'Nenhum produto selado disponível';
+
+  // Liga Radar background monitoring settings
+  String get radarBackgroundSettings => isEn ? 'Background Monitoring' : 'Verificação em Segundo Plano';
+  String get radarBackgroundSettingsTooltip => isEn
+      ? 'Background monitoring options'
+      : 'Opções de verificação em segundo plano';
+  String get radarBackgroundEnabledLabel => isEn ? 'Monitor in background' : 'Monitorar em segundo plano';
+  String get radarBackgroundEnabledDesc => isEn
+      ? 'Checks the prices of active monitored products periodically, even while the app runs in background.'
+      : 'Verifica periodicamente os preços dos produtos ativos no monitoramento, mesmo quando o app está em segundo plano.';
+  String get radarBackgroundIntervalLabel => isEn ? 'Check interval' : 'Intervalo de verificação';
+  String get radarBackgroundIntervalDesc => isEn
+      ? 'Only products activated in monitoring are checked.'
+      : 'Somente os produtos ativados no monitoramento são verificados.';
+  String get radarBackgroundIntervalTypeHint => isEn
+      ? 'Type the interval in minutes (minimum 5).'
+      : 'Digite o intervalo em minutos (mínimo 5).';
+  String get radarBackgroundNote => isEn
+      ? 'The app needs to be running on the device for checks to happen.'
+      : 'O app precisa estar em execução no dispositivo para que as verificações ocorram.';
+
+  // Monitoring / portfolio strings (Bug fix: Portuguese leaked into English mode)
+  String monitorSurging(int count) => isEn ? '▲ $count surging' : '▲ $count em alta';
+  String monitorDropping(int count) => isEn ? '▼ $count dropping' : '▼ $count em baixa';
+  String get noPricePaid => isEn ? 'No price paid' : 'Sem valor pago';
+  String errorMessage(String err) => isEn ? 'Error: $err' : 'Erro: $err';
+  String get profitText => isEn ? '+ profit' : '+ lucro';
+  String get lossText => isEn ? '- loss' : '- perda';
+  String get tradeLeftLabel => isEn ? '[LEFT]' : '[ESQUERDA]';
+  String get tradeRightLabel => isEn ? '[RIGHT]' : '[DIREITA]';
+
+  // Graded card badge label (PT 'Graduada' leaked into English mode)
+  String get gradedShortLabel => isEn ? 'Graded' : 'Graduada';
+
+  // Folder icon picker tooltips
+  String folderIconLabel(String key) {
+    final labels = isEn
+        ? {
+            'folder': 'Folder',
+            'star': 'Favorites',
+            'local_fire_department': 'Fire',
+            'water_drop': 'Water',
+            'bolt': 'Lightning',
+            'grass': 'Grass',
+            'psychology': 'Psychic',
+            'shield': 'Steel',
+            'military_tech': 'Competitive',
+            'pest_control': 'Wurmple',
+            'emoji_events': 'Trophy',
+            'diamond': 'Rare',
+            'inventory_2': 'Vault',
+            'sell': 'Trades',
+            'bookmark': 'Highlights',
+          }
+        : {
+            'folder': 'Pasta',
+            'star': 'Favoritas',
+            'local_fire_department': 'Fogo',
+            'water_drop': 'Agua',
+            'bolt': 'Eletrico',
+            'grass': 'Planta',
+            'psychology': 'Psiquico',
+            'shield': 'Aco',
+            'military_tech': 'Competitivo',
+            'pest_control': 'Wurmple',
+            'emoji_events': 'Trofeu',
+            'diamond': 'Raras',
+            'inventory_2': 'Cofre',
+            'sell': 'Trocas',
+            'bookmark': 'Destaques',
+          };
+    return labels[key] ?? labels['folder']!;
+  }
 }
 
 AppStrings getStrings(AppLanguage language) => AppStrings(language);

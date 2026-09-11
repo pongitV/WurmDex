@@ -70,7 +70,7 @@ class _EditPurchasePriceDialogState extends ConsumerState<EditPurchasePriceDialo
     final parsed = CurrencyFormatter.parseCurrency(_controller.text);
 
     if (parsed == null || parsed < 0) {
-      setState(() => _errorText = 'Informe um valor numérico válido.');
+      setState(() => _errorText = widget.strings.isEn ? 'Enter a valid numeric value.' : 'Informe um valor numérico válido.');
       return;
     }
 

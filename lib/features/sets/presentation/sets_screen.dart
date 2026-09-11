@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/database/database_provider.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../core/providers/card_scale_provider.dart';
+import '../../../core/providers/grid_composition_provider.dart';
+import '../../../core/widgets/app_overflow_menu.dart';
 import '../../../core/widgets/app_search_bar.dart';
-import '../../../core/widgets/quick_currency_toggle.dart';
 import '../models/tcg_set_item.dart';
 import '../services/set_completion_helper.dart';
 import '../services/tcg_sets_service.dart';
@@ -107,15 +109,6 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
     return years;
   }
 
-  int _calculateSetGridColumns(double width) {
-    return width > 1100
-        ? 5
-        : width > 800
-            ? 4
-            : width > 550
-                ? 3
-                : 2;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +117,10 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
     final currentLanguage = ref.watch(languageProvider);
     final strings = getStrings(currentLanguage);
     final userCards = ref.watch(userCardsStreamProvider).asData?.value ?? [];
+
+    // Watch during build so the grids respond to scale/grid changes.
+    final menuCardScale = ref.watch(menuCardScaleProvider);
+    ref.watch(gridCompositionProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -145,14 +142,13 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
           ],
         ),
         actions: [
-          // Quick Currency Switcher (USD / BRL)
-          const QuickCurrencyToggle(),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: strings.btnTryAgain,
-            onPressed: _loadSets,
+          AppOverflowMenu(
+            scaleTarget: CardScaleTarget.menu,
+            showCurrency: true,
+            showRefresh: true,
+            onRefresh: _loadSets,
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: _isLoading
@@ -192,10 +188,10 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
                   controller: _tabController,
                   children: [
                     // Tab 1: Released sets separated by year
-                    _buildReleasedTab(theme, colorScheme, strings, userCards),
+                    _buildReleasedTab(theme, colorScheme, strings, userCards, menuCardScale),
 
                     // Tab 2: Upcoming releases
-                    _buildUpcomingTab(theme, colorScheme, strings, userCards),
+                    _buildUpcomingTab(theme, colorScheme, strings, userCards, menuCardScale),
                   ],
                 ),
     );
@@ -206,6 +202,7 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
     ColorScheme colorScheme,
     AppStrings strings,
     List<UserCard> userCards,
+    double menuCardScale,
   ) {
     final releasedSets = _getFilteredReleasedSets();
     final groupedByYear = _groupByYear(releasedSets);
@@ -305,7 +302,7 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                '${setsForYear.length} ${setsForYear.length == 1 ? "coleção" : "coleções"}',
+                                strings.setsCount(setsForYear.length),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: colorScheme.onSurfaceVariant,
                                   fontWeight: FontWeight.w600,
@@ -325,7 +322,12 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
                       // Responsive Grid of Sets for this year
                       SliverLayoutBuilder(
                         builder: (context, constraints) {
-                          final crossAxisCount = _calculateSetGridColumns(constraints.crossAxisExtent);
+                          final crossAxisCount = resolveCardGridCrossAxisCount(
+                            context: context,
+                            ref: ref,
+                            availableWidth: constraints.crossAxisExtent,
+                            cardScale: menuCardScale,
+                          );
 
                           return SliverGrid(
                             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -364,42 +366,11 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
     ColorScheme colorScheme,
     AppStrings strings,
     List<UserCard> userCards,
+    double menuCardScale,
   ) {
     final upcomingSets = _getFilteredUpcomingSets();
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colorScheme.secondaryContainer.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: colorScheme.secondary.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.event_available, color: colorScheme.secondary, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Futuros Lançamentos Oficiais Pokémon TCG (2025 - 2026)',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSecondaryContainer,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        Expanded(
-          child: upcomingSets.isEmpty
+    return upcomingSets.isEmpty
               ? Center(
                   child: Text(
                     strings.noCardsFound,
@@ -408,7 +379,12 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
                 )
               : LayoutBuilder(
                   builder: (context, constraints) {
-                    final crossAxisCount = _calculateSetGridColumns(constraints.maxWidth);
+                    final crossAxisCount = resolveCardGridCrossAxisCount(
+                      context: context,
+                      ref: ref,
+                      availableWidth: constraints.maxWidth,
+                      cardScale: menuCardScale,
+                    );
 
                     return GridView.builder(
                       padding: const EdgeInsets.all(16),
@@ -431,9 +407,6 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
                       },
                     );
                   },
-                ),
-        ),
-      ],
-    );
+                );
   }
 }

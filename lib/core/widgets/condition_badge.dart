@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../localization/app_strings.dart';
 import '../utils/card_condition_helper.dart';
 
-class ConditionBadge extends StatelessWidget {
+class ConditionBadge extends ConsumerWidget {
   final String condition;
   final bool compact;
   final VoidCallback? onTap;
@@ -14,10 +16,12 @@ class ConditionBadge extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final short = CardConditionHelper.getShortCondition(condition);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final language = ref.watch(languageProvider);
+    final strings = getStrings(language);
+    final short = CardConditionHelper.getShortCondition(condition, gradedShortLabel: strings.gradedShortLabel);
     final color = CardConditionHelper.getConditionColor(short);
-    final isGraded = short.toUpperCase().contains('GRADUADA');
+    final isGraded = CardConditionHelper.isGradedCondition(condition);
 
     final badgeWidget = Container(
       padding: EdgeInsets.symmetric(

@@ -11,7 +11,7 @@ import '../../../../core/widgets/condition_badge.dart';
 import '../../../../core/widgets/holographic_card_view.dart';
 import '../../../../core/widgets/language_flag_badge.dart';
 import '../../../../core/widgets/pokemon_card_image.dart';
-import '../../../../core/widgets/quick_currency_toggle.dart';
+import '../../../../core/widgets/app_overflow_menu.dart';
 import '../services/pricing_service.dart';
 import '../../catalog/models/pokemon_card_item.dart';
 import '../../catalog/presentation/widgets/card_quick_action_sheet.dart';
@@ -114,8 +114,7 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
             tooltip: _strings.quickActionsTooltip,
             onPressed: () => CardQuickActionSheet.show(context, card),
           ),
-          const SizedBox(width: 4),
-          const QuickCurrencyToggle(),
+          const AppOverflowMenu(showCurrency: true),
           const SizedBox(width: 8),
         ],
       ),

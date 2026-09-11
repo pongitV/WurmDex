@@ -200,4 +200,77 @@ class AppPreferencesService {
     _cache[_keyDarkLugiaUnlocked] = unlocked;
     _persist();
   }
+
+  // --- Autoclicker Preferences ---
+  static const String _keyAutoclickerPaused = 'autoclicker_paused';
+
+  static bool isAutoclickerPaused() {
+    if (!_initialized) return false;
+    return _cache[_keyAutoclickerPaused] == true;
+  }
+
+  static void setAutoclickerPaused(bool paused) {
+    if (!_initialized) return;
+    _cache[_keyAutoclickerPaused] = paused;
+    _persist();
+  }
+
+  // --- Grid Composition Preferences ---
+  static const String _keyGridComposition = 'grid_composition';
+
+  static String? getSavedGridComposition() {
+    if (!_initialized) return null;
+    final val = _cache[_keyGridComposition];
+    return val is String ? val : null;
+  }
+
+  static void saveGridComposition(String comp) {
+    if (!_initialized) return;
+    _cache[_keyGridComposition] = comp;
+    _persist();
+  }
+
+  // --- Card View Mode (grid / list) Preferences ---
+  static const String _keyViewMode = 'card_view_mode';
+
+  static String? getSavedViewMode() {
+    if (!_initialized) return null;
+    final val = _cache[_keyViewMode];
+    return val is String ? val : null;
+  }
+
+  static void saveViewMode(String mode) {
+    if (!_initialized) return;
+    _cache[_keyViewMode] = mode;
+    _persist();
+  }
+
+  // --- Liga Radar Background Monitoring Preferences ---
+  static const String _keyLigaBackgroundEnabled = 'liga_radar_background_enabled';
+  static const String _keyLigaBackgroundInterval = 'liga_radar_background_interval_minutes';
+
+  static bool isBackgroundLigaMonitoringEnabled() {
+    if (!_initialized) return false;
+    return _cache[_keyLigaBackgroundEnabled] == true;
+  }
+
+  static void setBackgroundLigaMonitoringEnabled(bool enabled) {
+    if (!_initialized) return;
+    _cache[_keyLigaBackgroundEnabled] = enabled;
+    _persist();
+  }
+
+  static int getLigaMonitoringIntervalMinutes() {
+    if (!_initialized) return 60;
+    final val = _cache[_keyLigaBackgroundInterval];
+    if (val is num) return val.toInt();
+    return 60;
+  }
+
+  static void setLigaMonitoringIntervalMinutes(int minutes) {
+    if (!_initialized) return;
+    _cache[_keyLigaBackgroundInterval] = minutes;
+    _persist();
+  }
 }
+

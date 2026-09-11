@@ -539,4 +539,145 @@ class TcgSetsData {
     if (imageUrlLarge != null && (imageUrlLarge.contains('/tcgp/') || imageUrlLarge.contains('/pocket/'))) return true;
     return false;
   }
+
+  /// Known initial release dates for official sets (YYYY-MM-DD)
+  static const Map<String, String> initialReleaseDates = {
+    // 2025 Scarlet & Violet
+    'sv08.5': '2025-01-17',
+    'sv09': '2025-03-28',
+    'sv10': '2025-05-30',
+    // 2024 Scarlet & Violet
+    'sv08': '2024-11-08',
+    'sv07': '2024-09-13',
+    'sv06.5': '2024-08-02',
+    'sv06': '2024-05-24',
+    'sv05': '2024-03-22',
+    'sv04.5': '2024-01-26',
+    // 2023 Scarlet & Violet
+    'sv04': '2023-11-03',
+    'sv03.5': '2023-09-22',
+    'sv03': '2023-08-11',
+    'sv02': '2023-06-09',
+    'sv01': '2023-03-31',
+    // Sword & Shield
+    'swsh12.5': '2023-01-20',
+    'swsh12': '2022-11-11',
+    'swsh11': '2022-09-09',
+    'swsh10': '2022-05-27',
+    'swsh9': '2022-02-25',
+    'swsh8': '2021-11-12',
+    'cel25': '2021-10-08',
+    'swsh7': '2021-08-27',
+    'swsh6': '2021-06-18',
+    'swsh5': '2021-03-19',
+    'swsh4.5': '2021-02-19',
+    'swsh4': '2020-11-13',
+    'swsh3.5': '2020-09-25',
+    'swsh3': '2020-08-14',
+    'swsh2': '2020-05-01',
+    'swsh1': '2020-02-07',
+    // Sun & Moon
+    'sm12': '2019-11-01',
+    'sm115': '2019-08-23',
+    'sm11': '2019-08-02',
+    'sm10': '2019-05-03',
+    'sm9': '2019-02-01',
+    'sm8': '2018-11-02',
+    'sm7.5': '2018-09-07',
+    'sm7': '2018-08-03',
+    'sm6': '2018-05-04',
+    'sm5': '2018-02-02',
+    'sm4': '2017-11-03',
+    'sm3.5': '2017-10-06',
+    'sm3': '2017-08-04',
+    'sm2': '2017-05-05',
+    'sm1': '2017-02-03',
+    // Vintage
+    'base1': '1999-01-09',
+    'base2': '1999-02-24',
+    'base3': '1999-10-10',
+    'base4': '2000-04-24',
+    'base5': '2000-02-29',
+    'gym1': '2000-08-14',
+    'gym2': '2000-10-16',
+    'neo1': '2000-12-16',
+  };
+
+  /// Known reprint waves / restock dates for expansions (YYYY-MM-DD)
+  static const Map<String, List<String>> reprintDatesMap = {
+    'sv08.5': ['2025-02-07', '2025-03-07', '2025-04-25'],
+    'sv08': ['2025-02-14', '2025-03-21'],
+    'sv07': ['2024-11-15', '2025-01-10'],
+    'sv06.5': ['2024-09-06', '2024-10-18'],
+    'sv06': ['2024-08-23', '2024-11-08'],
+    'sv05': ['2024-07-12', '2024-09-20'],
+    'sv04.5': ['2024-02-09', '2024-08-23', '2024-10-18'],
+    'sv04': ['2024-04-05'],
+    'sv03.5': ['2023-12-15', '2024-10-25', '2024-12-13'],
+    'sv03': ['2023-10-20'],
+    'sv02': ['2023-09-15'],
+    'sv01': ['2023-06-16'],
+    'swsh12.5': ['2023-05-05', '2024-04-12'],
+    'swsh12': ['2023-02-10', '2023-06-02'],
+    'swsh11': ['2022-11-18', '2023-04-14'],
+    'swsh10': ['2022-08-12'],
+    'swsh9': ['2022-05-20', '2022-10-14'],
+    'swsh8': ['2022-04-08'],
+    'cel25': ['2021-11-19', '2021-12-10'],
+    'swsh7': ['2021-12-10', '2022-05-13', '2022-08-26'],
+    'swsh6': ['2021-09-10'],
+    'swsh5': ['2021-07-09'],
+    'swsh4.5': ['2021-04-23', '2021-06-25'],
+    'swsh4': ['2021-03-05'],
+    'swsh3.5': ['2020-11-13'],
+    'swsh3': ['2020-12-04'],
+    'swsh2': ['2020-08-21'],
+    'swsh1': ['2020-05-29'],
+    'sm115': ['2019-10-18', '2020-09-15', '2021-01-08'],
+  };
+
+  /// Returns the initial release date display string for a set
+  static String getInitialReleaseDate(String setId, {String? apiReleaseDate, int? year, required bool isEn}) {
+    final explicit = initialReleaseDates[setId];
+    if (explicit != null && explicit.isNotEmpty) {
+      return formatDateString(explicit, isEn: isEn);
+    }
+    if (apiReleaseDate != null && apiReleaseDate.isNotEmpty) {
+      return formatDateString(apiReleaseDate, isEn: isEn);
+    }
+    if (year != null && year > 0) {
+      return '$year';
+    }
+    return isEn ? 'Coming soon' : 'Em breve';
+  }
+
+  /// Returns the reprint dates or "Coming soon" if unknown
+  static List<String> getReprintDates(String setId, {required bool isEn}) {
+    final list = reprintDatesMap[setId];
+    if (list != null && list.isNotEmpty) {
+      return list.map((d) => formatDateString(d, isEn: isEn)).toList();
+    }
+    return [isEn ? 'Coming soon' : 'Em breve'];
+  }
+
+  /// Formats YYYY-MM-DD to localized date (DD/MM/YYYY for PT or Month DD, YYYY for EN)
+  static String formatDateString(String raw, {required bool isEn}) {
+    final parts = raw.split('-');
+    if (parts.length == 3) {
+      final y = parts[0];
+      final m = parts[1];
+      final d = parts[2];
+      if (isEn) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        final mIdx = int.tryParse(m);
+        if (mIdx != null && mIdx >= 1 && mIdx <= 12) {
+          return '${months[mIdx - 1]} $d, $y';
+        }
+      } else {
+        return '$d/$m/$y';
+      }
+    }
+    return raw;
+  }
 }
+

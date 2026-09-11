@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/widgets/bottom_sheet_drag_handle.dart';
 import '../../models/catalog_filter_state.dart';
 
@@ -6,6 +7,7 @@ void showCatalogFilterBottomSheet(
   BuildContext context, {
   required CatalogFilterState currentState,
   required ValueChanged<CatalogFilterState> onApply,
+  required AppStrings strings,
 }) {
   showAppModalBottomSheet(
     context: context,
@@ -14,6 +16,7 @@ void showCatalogFilterBottomSheet(
     builder: (ctx) => CatalogFilterBottomSheet(
       initialState: currentState,
       onApply: onApply,
+      strings: strings,
     ),
   );
 }
@@ -21,11 +24,13 @@ void showCatalogFilterBottomSheet(
 class CatalogFilterBottomSheet extends StatefulWidget {
   final CatalogFilterState initialState;
   final ValueChanged<CatalogFilterState> onApply;
+  final AppStrings strings;
 
   const CatalogFilterBottomSheet({
     super.key,
     required this.initialState,
     required this.onApply,
+    required this.strings,
   });
 
   @override
@@ -35,29 +40,29 @@ class CatalogFilterBottomSheet extends StatefulWidget {
 class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
   late CatalogFilterState _state;
 
-  static const List<Map<String, String>> _types = [
-    {'label': 'Grama', 'value': 'Grass'},
-    {'label': 'Fogo', 'value': 'Fire'},
-    {'label': 'Água', 'value': 'Water'},
-    {'label': 'Elétrico', 'value': 'Lightning'},
-    {'label': 'Psíquico', 'value': 'Psychic'},
-    {'label': 'Luta', 'value': 'Fighting'},
-    {'label': 'Escuridão', 'value': 'Darkness'},
-    {'label': 'Metal', 'value': 'Metal'},
-    {'label': 'Dragão', 'value': 'Dragon'},
-    {'label': 'Incolor', 'value': 'Colorless'},
-    {'label': 'Treinador', 'value': 'Trainer'},
-    {'label': 'Energia', 'value': 'Energy'},
+  List<Map<String, String>> _getTypes(bool isEn) => [
+    {'label': isEn ? 'Grass' : 'Grama', 'value': 'Grass'},
+    {'label': isEn ? 'Fire' : 'Fogo', 'value': 'Fire'},
+    {'label': isEn ? 'Water' : 'Água', 'value': 'Water'},
+    {'label': isEn ? 'Lightning' : 'Elétrico', 'value': 'Lightning'},
+    {'label': isEn ? 'Psychic' : 'Psíquico', 'value': 'Psychic'},
+    {'label': isEn ? 'Fighting' : 'Luta', 'value': 'Fighting'},
+    {'label': isEn ? 'Darkness' : 'Escuridão', 'value': 'Darkness'},
+    {'label': isEn ? 'Metal' : 'Metal', 'value': 'Metal'},
+    {'label': isEn ? 'Dragon' : 'Dragão', 'value': 'Dragon'},
+    {'label': isEn ? 'Colorless' : 'Incolor', 'value': 'Colorless'},
+    {'label': isEn ? 'Trainer' : 'Treinador', 'value': 'Trainer'},
+    {'label': isEn ? 'Energy' : 'Energia', 'value': 'Energy'},
   ];
 
-  static const List<Map<String, String>> _rarities = [
-    {'label': 'Comum', 'value': 'Common'},
-    {'label': 'Incomum', 'value': 'Uncommon'},
-    {'label': 'Rara', 'value': 'Rare'},
-    {'label': 'Rara Holo', 'value': 'Rare Holo'},
-    {'label': 'Ultra Rara (ex/V)', 'value': 'Ultra Rare'},
-    {'label': 'Ilustração Rara', 'value': 'Illustration Rare'},
-    {'label': 'Secreta Dourada', 'value': 'Secret Rare'},
+  List<Map<String, String>> _getRarities(bool isEn) => [
+    {'label': isEn ? 'Common' : 'Comum', 'value': 'Common'},
+    {'label': isEn ? 'Uncommon' : 'Incomum', 'value': 'Uncommon'},
+    {'label': isEn ? 'Rare' : 'Rara', 'value': 'Rare'},
+    {'label': isEn ? 'Rare Holo' : 'Rara Holo', 'value': 'Rare Holo'},
+    {'label': isEn ? 'Ultra Rare (ex/V)' : 'Ultra Rara (ex/V)', 'value': 'Ultra Rare'},
+    {'label': isEn ? 'Illustration Rare' : 'Ilustração Rara', 'value': 'Illustration Rare'},
+    {'label': isEn ? 'Secret Rare' : 'Secreta Dourada', 'value': 'Secret Rare'},
   ];
 
   @override
@@ -69,6 +74,10 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final strings = widget.strings;
+    final isEn = strings.isEn;
+    final types = _getTypes(isEn);
+    final rarities = _getRarities(isEn);
 
     return SafeArea(
       child: Container(
@@ -86,7 +95,7 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Filtros e Ordenação',
+                  strings.filtersAndMore,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -97,7 +106,7 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
                       _state = const CatalogFilterState();
                     });
                   },
-                  child: const Text('Limpar Tudo'),
+                  child: Text(isEn ? 'Clear All' : 'Limpar Tudo'),
                 ),
               ],
             ),
@@ -108,33 +117,7 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
                 children: [
                   // Section: Ordenação
                   Text(
-                    'ORDENAR POR',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildSortChip('Maior Preço', CatalogSortOption.priceDesc),
-                        _buildSortChip('Menor Preço', CatalogSortOption.priceAsc),
-                        _buildSortChip('Mais Vendidas', CatalogSortOption.popularityDesc),
-                        _buildSortChip('Lançamento (Recentes)', CatalogSortOption.releaseDateDesc),
-                        _buildSortChip('Lançamento (Antigas)', CatalogSortOption.releaseDateAsc),
-                        _buildSortChip('Nome (A-Z)', CatalogSortOption.nameAsc),
-                        _buildSortChip('Nome (Z-A)', CatalogSortOption.nameDesc),
-                        _buildSortChip('Número (#)', CatalogSortOption.numberAsc),
-                      ],
-                    ),
-                  const SizedBox(height: 20),
-
-                  // Section: Tipo de Energia / Supertipo
-                  Text(
-                    'TIPO DE ENERGIA / CATEGORIA',
+                    isEn ? 'SORT BY' : 'ORDENAR POR',
                     style: theme.textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.0,
@@ -145,7 +128,33 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _types.map((t) {
+                    children: [
+                      _buildSortChip(isEn ? 'Highest Price' : 'Maior Preço', CatalogSortOption.priceDesc),
+                      _buildSortChip(isEn ? 'Lowest Price' : 'Menor Preço', CatalogSortOption.priceAsc),
+                      _buildSortChip(isEn ? 'Most Popular' : 'Mais Vendidas', CatalogSortOption.popularityDesc),
+                      _buildSortChip(isEn ? 'Release (Newest)' : 'Lançamento (Recentes)', CatalogSortOption.releaseDateDesc),
+                      _buildSortChip(isEn ? 'Release (Oldest)' : 'Lançamento (Antigas)', CatalogSortOption.releaseDateAsc),
+                      _buildSortChip(isEn ? 'Name (A-Z)' : 'Nome (A-Z)', CatalogSortOption.nameAsc),
+                      _buildSortChip(isEn ? 'Name (Z-A)' : 'Nome (Z-A)', CatalogSortOption.nameDesc),
+                      _buildSortChip(isEn ? 'Card Number (#)' : 'Número (#)', CatalogSortOption.numberAsc),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Section: Tipo de Energia / Supertipo
+                  Text(
+                    isEn ? 'ENERGY TYPE / CATEGORY' : 'TIPO DE ENERGIA / CATEGORIA',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: types.map((t) {
                       final isSelected = _state.selectedType == t['value'];
                       return FilterChip(
                         label: Text(t['label']!),
@@ -165,7 +174,7 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
 
                   // Section: Raridade
                   Text(
-                    'RARIDADE',
+                    isEn ? 'RARITY' : 'RARIDADE',
                     style: theme.textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.0,
@@ -176,7 +185,7 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _rarities.map((r) {
+                    children: rarities.map((r) {
                       final isSelected = _state.selectedRarity == r['value'];
                       return FilterChip(
                         label: Text(r['label']!),
@@ -203,7 +212,7 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancelar'),
+                    child: Text(strings.cancel),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -213,7 +222,7 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
                       widget.onApply(_state);
                       Navigator.pop(context);
                     },
-                    child: const Text('Aplicar Filtros'),
+                    child: Text(isEn ? 'Apply Filters' : 'Aplicar Filtros'),
                   ),
                 ),
               ],

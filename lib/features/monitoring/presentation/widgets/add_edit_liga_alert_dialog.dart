@@ -255,11 +255,15 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isEditing ? 'Editar Monitoramento' : widget.strings.btnAddAlert,
+                              isEditing
+                                  ? (widget.strings.isEn ? 'Edit Monitored Item' : 'Editar Monitoramento')
+                                  : widget.strings.btnAddAlert,
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                             ),
                             Text(
-                              'LigaPokémon • Preços e Pré-Venda',
+                              widget.strings.isEn
+                                  ? 'LigaPokémon • Prices & Pre-Orders'
+                                  : 'LigaPokémon • Preços e Pré-Venda',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: theme.colorScheme.onSurfaceVariant,
@@ -320,8 +324,8 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
                   TextFormField(
                     controller: _titleController,
                     decoration: InputDecoration(
-                      labelText: 'Nome de Exibição / Título',
-                      hintText: 'Ex: Charizard ex, Box 151...',
+                      labelText: widget.strings.isEn ? 'Display Name / Title' : 'Nome de Exibição / Título',
+                      hintText: widget.strings.isEn ? 'e.g. Charizard ex, 151 Box...' : 'Ex: Charizard ex, Box 151...',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       prefixIcon: const Icon(Icons.label_outline),
                     ),
@@ -385,7 +389,7 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
                                         ),
                                       ),
                                     Text(
-                                      'Preço na Liga: ${_previewLowestPrice != null ? CurrencyFormatter.toBrl(_previewLowestPrice) : (widget.strings.isEn ? 'Unavailable' : 'Indisponível')}',
+                                      '${widget.strings.isEn ? 'Price on Liga: ' : 'Preço na Liga: '}${_previewLowestPrice != null ? CurrencyFormatter.toBrl(_previewLowestPrice) : (widget.strings.isEn ? 'Unavailable' : 'Indisponível')}',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
@@ -402,7 +406,7 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
                                        const SizedBox(width: 4),
                                        Flexible(
                                          child: Text(
-                                           'Loja: $_previewStoreName',
+                                           '${widget.strings.isEn ? 'Store: ' : 'Loja: '}$_previewStoreName',
                                            maxLines: 1,
                                            overflow: TextOverflow.ellipsis,
                                            style: TextStyle(
@@ -438,7 +442,9 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
                     controller: _currentPriceController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(
-                      labelText: 'Preço Atual na Liga (R\$) (Preenchido ou Ajustável)',
+                      labelText: widget.strings.isEn
+                          ? 'Current Price on Liga (BRL) (Pre-filled or Custom)'
+                          : 'Preço Atual na Liga (R\$) (Preenchido ou Ajustável)',
                       hintText: 'Ex: 119,00',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       prefixText: 'R\$ ',
@@ -468,9 +474,12 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
                           ),
                         ),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8),
-                        child: Text('até', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          widget.strings.isEn ? 'to' : 'até',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                       Expanded(
                         child: TextFormField(
@@ -484,11 +493,11 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
                           ),
                           validator: (val) {
                             if (val == null || val.trim().isEmpty) {
-                              return 'Defina o teto';
+                              return widget.strings.isEn ? 'Set max price' : 'Defina o teto';
                             }
                             final num = _parseInputPrice(val);
                             if (num <= 0) {
-                              return 'Valor > 0';
+                              return widget.strings.isEn ? 'Value > 0' : 'Valor > 0';
                             }
                             return null;
                           },

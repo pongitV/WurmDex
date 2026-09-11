@@ -15,12 +15,18 @@ class CardScaleButton extends ConsumerWidget {
   final double iconSize;
   final Color? color;
 
+  /// When true (default), the scale sheet also shows the Grid Layout section
+  /// (2x2, 3x3, 4x4, etc.). Set to false for the 3D binder view, which must
+  /// remain at fixed 3x3 pocket sheets and should not expose grid options.
+  final bool showGridComposition;
+
   const CardScaleButton({
     super.key,
     this.target = CardScaleTarget.menu,
     this.tooltip,
     this.iconSize = 24.0,
     this.color,
+    this.showGridComposition = true,
   });
 
   @override
@@ -31,7 +37,11 @@ class CardScaleButton extends ConsumerWidget {
     return IconButton(
       icon: Icon(Icons.aspect_ratio, size: iconSize, color: color),
       tooltip: tooltip ?? strings.scaleTooltip,
-      onPressed: () => showCardScaleBottomSheet(context, initialTarget: target),
+      onPressed: () => showCardScaleBottomSheet(
+        context,
+        initialTarget: target,
+        showGridComposition: showGridComposition,
+      ),
     );
   }
 }

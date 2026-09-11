@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../localization/app_strings.dart';
 import '../providers/card_scale_provider.dart';
+import '../providers/card_view_mode_provider.dart';
+import '../providers/grid_composition_provider.dart';
 import 'bottom_sheet_drag_handle.dart';
 
 void showCardScaleBottomSheet(
   BuildContext context, {
   CardScaleTarget initialTarget = CardScaleTarget.menu,
+  bool showGridComposition = true,
 }) {
   showAppModalBottomSheet(
     context: context,
-    backgroundColor: Theme.of(context).cardColor,
+    backgroundColor: Theme.of(context).colorScheme.surface,
     isScrollControlled: true,
-    builder: (ctx) => CardScaleSheetContent(initialTarget: initialTarget),
+    builder: (ctx) => CardScaleSheetContent(
+      initialTarget: initialTarget,
+      showGridComposition: showGridComposition,
+    ),
   );
 }
 
 class CardScaleSheetContent extends ConsumerStatefulWidget {
   final CardScaleTarget initialTarget;
+  final bool showGridComposition;
 
   const CardScaleSheetContent({
     super.key,
     this.initialTarget = CardScaleTarget.menu,
+    this.showGridComposition = true,
   });
 
   @override
@@ -187,7 +196,7 @@ class _CardScaleSheetContentState extends ConsumerState<CardScaleSheetContent> {
             ),
             const SizedBox(height: 16),
 
-            // Reset button
+            // Reset button (belongs to the Scale section, not the Grid section)
             OutlinedButton(
               onPressed: () {
                 if (isMenu) {
@@ -202,6 +211,9 @@ class _CardScaleSheetContentState extends ConsumerState<CardScaleSheetContent> {
                     : strings.btnResetCollectionScale,
               ),
             ),
+
+            // ── Grid Columns section (only for grid views, not binder) ──────────
+            if (widget.showGridComposition) ..._buildGridCompositionSection(context, theme, strings, ref),
           ],
         ),
       ),
@@ -227,5 +239,99 @@ class _CardScaleSheetContentState extends ConsumerState<CardScaleSheetContent> {
         }
       },
     );
+  }
+
+  List<Widget> _buildGridCompositionSection(
+    BuildContext context,
+    ThemeData theme,
+    AppStrings strings,
+    WidgetRef ref,
+  ) {
+    final currentComp = ref.watch(gridCompositionProvider);
+    final viewMode = ref.watch(cardViewModeProvider);
+    final isList = viewMode == CardViewMode.list;
+
+    final options = [
+      (GridComposition.auto, strings.gridCompAuto, Icons.auto_awesome_mosaic_outlined),
+      (GridComposition.two, '2×2', Icons.filter_2),
+      (GridComposition.three, '3×3', Icons.filter_3),
+      (GridComposition.four, '4×4', Icons.filter_4),
+      (GridComposition.five, '5×5', Icons.filter_5),
+      (GridComposition.six, '6×6', Icons.filter_6),
+    ];
+
+    return [
+      const SizedBox(height: 20),
+      Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4), height: 1),
+      const SizedBox(height: 16),
+      Row(
+        children: [
+          Icon(Icons.grid_view_rounded, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            strings.isEn ? 'Grid Layout' : 'Layout da Grade',
+            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              isList ? strings.viewAsList : _compLabel(currentComp),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          // View as List toggle
+          ChoiceChip(
+            avatar: Icon(Icons.view_list, size: 14),
+            label: Text(strings.viewAsList, style: const TextStyle(fontSize: 12)),
+            selected: isList,
+            onSelected: (_) {
+              HapticFeedback.selectionClick();
+              ref.read(cardViewModeProvider.notifier).setMode(CardViewMode.list);
+            },
+          ),
+          ...options.map((entry) {
+            final (comp, label, icon) = entry;
+            final isSelected = !isList && currentComp == comp;
+            return ChoiceChip(
+              avatar: Icon(icon, size: 14),
+              label: Text(label, style: const TextStyle(fontSize: 12)),
+              selected: isSelected,
+              onSelected: (_) {
+                HapticFeedback.selectionClick();
+                ref.read(cardViewModeProvider.notifier).setMode(CardViewMode.grid);
+                ref.read(gridCompositionProvider.notifier).setComposition(comp);
+              },
+            );
+          }),
+        ],
+      ),
+    ];
+  }
+
+  String _compLabel(GridComposition comp) {
+    switch (comp) {
+      case GridComposition.two: return '2×2';
+      case GridComposition.three: return '3×3';
+      case GridComposition.four: return '4×4';
+      case GridComposition.five: return '5×5';
+      case GridComposition.six: return '6×6';
+      case GridComposition.auto: return 'Auto';
+    }
   }
 }

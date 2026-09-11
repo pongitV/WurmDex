@@ -70,7 +70,9 @@ class WishlistCardTile extends StatelessWidget {
       displayPriority = strings.priorityLow;
     }
 
-    final folderBadge = item.folderName.isNotEmpty ? item.folderName : 'Geral';
+    final folderBadge = item.folderName.isNotEmpty
+        ? (item.folderName == 'Geral' ? strings.wishlistFolderDefault : item.folderName)
+        : strings.wishlistFolderDefault;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),

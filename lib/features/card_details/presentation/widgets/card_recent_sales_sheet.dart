@@ -5,6 +5,7 @@ import 'package:wurmdex/core/localization/app_strings.dart';
 import 'package:wurmdex/core/theme/app_colors.dart';
 import 'package:wurmdex/core/utils/marketplace_url_helper.dart';
 import 'package:wurmdex/core/widgets/bottom_sheet_drag_handle.dart';
+import 'package:wurmdex/core/widgets/language_flag_badge.dart';
 import 'package:wurmdex/features/catalog/models/pokemon_card_item.dart';
 import 'package:wurmdex/features/card_details/services/pricing_service.dart';
 
@@ -21,8 +22,9 @@ class CardRecentSalesSheet {
     showAppModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       builder: (modalContext) {
-        String selectedPlatform = isUsd ? 'TCGPlayer' : 'LigaPokémon';
+        String selectedPlatform = 'LigaPokémon';
 
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -42,6 +44,10 @@ class CardRecentSalesSheet {
             return Container(
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.82,
+              ),
+              decoration: BoxDecoration(
+                color: Theme.of(modalContext).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
@@ -148,13 +154,10 @@ class CardRecentSalesSheet {
                   // Completed sales records list
                   Flexible(
                     child: filteredSales.isEmpty
-                        ? const Padding(
-                            padding: EdgeInsets.all(24.0),
-                            child: Center(
-                              child: Text(
-                                'Nenhuma compra registrada.',
-                                style: TextStyle(color: Colors.grey),
-                              ),
+                        ? Center(
+                            child: Text(
+                              strings.noPurchasesRecorded,
+                              style: const TextStyle(color: Colors.grey),
                             ),
                           )
                         : ListView.separated(
@@ -196,11 +199,19 @@ class CardRecentSalesSheet {
                                         style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
                                       ),
                                     ),
+                                    const SizedBox(width: 8),
+                                    LanguageFlagBadge(
+                                      language: item.language,
+                                      compact: true,
+                                    ),
                                   ],
                                 ),
                                 subtitle: Row(
                                   children: [
-                                    const Text('Estado: ', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                    Text(
+                                      strings.conditionPrefix,
+                                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                    ),
                                     Text(
                                       item.condition,
                                       style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),

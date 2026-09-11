@@ -21,6 +21,7 @@ class CardSaleRecord {
   final double priceBrl;
   final double priceUsd;
   final String platform; // 'LigaPokémon' or 'TCGPlayer'
+  final String language; // Language the card was sold in (e.g. 'PT', 'EN', 'JP')
 
   const CardSaleRecord({
     required this.date,
@@ -29,6 +30,7 @@ class CardSaleRecord {
     required this.priceBrl,
     required this.priceUsd,
     required this.platform,
+    this.language = 'PT',
   });
 }
 
@@ -376,6 +378,7 @@ class PricingService {
         priceBrl: (baseBrl * 1.02).clamp(0.1, 999999.0),
         priceUsd: (baseUsd * 1.02).clamp(0.05, 999999.0),
         platform: 'LigaPokémon',
+        language: 'PT',
       ),
       CardSaleRecord(
         date: now.subtract(const Duration(days: 1, hours: 4)),
@@ -384,6 +387,7 @@ class PricingService {
         priceBrl: (baseBrl * 0.98).clamp(0.1, 999999.0),
         priceUsd: (baseUsd * 0.98).clamp(0.05, 999999.0),
         platform: 'TCGPlayer',
+        language: 'EN',
       ),
       CardSaleRecord(
         date: now.subtract(const Duration(days: 3)),
@@ -392,6 +396,7 @@ class PricingService {
         priceBrl: (baseBrl * 0.88).clamp(0.1, 999999.0),
         priceUsd: (baseUsd * 0.88).clamp(0.05, 999999.0),
         platform: 'LigaPokémon',
+        language: 'PT',
       ),
       CardSaleRecord(
         date: now.subtract(const Duration(days: 6)),
@@ -400,6 +405,7 @@ class PricingService {
         priceBrl: (baseBrl * 1.04).clamp(0.1, 999999.0),
         priceUsd: (baseUsd * 1.04).clamp(0.05, 999999.0),
         platform: 'TCGPlayer',
+        language: 'EN',
       ),
       CardSaleRecord(
         date: now.subtract(const Duration(days: 10)),
@@ -408,6 +414,7 @@ class PricingService {
         priceBrl: (baseBrl * 1.01).clamp(0.1, 999999.0),
         priceUsd: (baseUsd * 1.01).clamp(0.05, 999999.0),
         platform: 'LigaPokémon',
+        language: 'PT',
       ),
       CardSaleRecord(
         date: now.subtract(const Duration(days: 16)),
@@ -416,6 +423,7 @@ class PricingService {
         priceBrl: (baseBrl * 0.86).clamp(0.1, 999999.0),
         priceUsd: (baseUsd * 0.86).clamp(0.05, 999999.0),
         platform: 'TCGPlayer',
+        language: 'EN',
       ),
       CardSaleRecord(
         date: now.subtract(const Duration(days: 25)),
@@ -424,6 +432,7 @@ class PricingService {
         priceBrl: (baseBrl * 0.96).clamp(0.1, 999999.0),
         priceUsd: (baseUsd * 0.96).clamp(0.05, 999999.0),
         platform: 'LigaPokémon',
+        language: 'PT',
       ),
     ];
   }

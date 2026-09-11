@@ -542,6 +542,7 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                       CardScaleButton(
                         target: CardScaleTarget.collection,
                         iconSize: 18,
+                        showGridComposition: false,
                         tooltip: '${_strings.adjustScale} (${(cardScale * 100).round()}%)',
                       ),
                     ],
@@ -1164,7 +1165,7 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              '${widget.cards.length} cartas',
+                              _strings.cardsCount(widget.cards.length),
                               style: const TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
@@ -1182,7 +1183,7 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                       _buildContracapaStatRow(
                         icon: Icons.payments_outlined,
                         iconColor: AppColors.profitGreen,
-                        label: 'Preço Total',
+                        label: _strings.totalValue,
                         value: formattedTotal,
                         valueColor: AppColors.profitGreen,
                       ),
@@ -1192,7 +1193,7 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                       _buildContracapaStatRow(
                         icon: Icons.style_outlined,
                         iconColor: const Color(0xFFD4AF37),
-                        label: 'Mais Comum',
+                        label: _strings.mostCommon,
                         value: mostCommonSet,
                       ),
                       const SizedBox(height: 6),
@@ -1201,7 +1202,7 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                       _buildContracapaStatRow(
                         icon: Icons.verified_outlined,
                         iconColor: Colors.blueAccent,
-                        label: 'Qualidade Média',
+                        label: _strings.avgCondition,
                         value: avgConditionLabel,
                       ),
                     ],

@@ -11,7 +11,7 @@ import '../../../../core/theme/theme_constants.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/utils/folder_icon_helper.dart';
 import '../../../../core/navigation/app_navigator.dart';
-import '../../../../core/widgets/quick_currency_toggle.dart';
+import '../../../../core/widgets/app_overflow_menu.dart';
 import 'widgets/collection_dashboard_widget.dart';
 
 class CollectionsScreen extends ConsumerWidget {
@@ -29,7 +29,7 @@ class CollectionsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(strings.collectionsTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
-          const QuickCurrencyToggle(),
+          const AppOverflowMenu(showCurrency: true),
           const SizedBox(width: 8),
         ],
       ),
@@ -294,7 +294,7 @@ class CollectionsScreen extends ConsumerWidget {
                         final item = FolderIconHelper.availableIcons[i];
                         final isSelected = iconKey == item.key;
                         return Tooltip(
-                          message: item.label,
+                          message: strings.folderIconLabel(item.key),
                           child: InkWell(
                             onTap: () => setState(() => iconKey = item.key),
                             borderRadius: BorderRadius.circular(10),
@@ -366,10 +366,10 @@ class CollectionsScreen extends ConsumerWidget {
                                     const Icon(Icons.nights_stay, color: Colors.purpleAccent),
                               ),
                               const SizedBox(width: 10),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
-                                  'Easter Egg! Tema Dark Lugia desbloqueado!',
-                                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                                  strings.easterEggDarkLugiaUnlocked,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                                 ),
                               ),
                             ],

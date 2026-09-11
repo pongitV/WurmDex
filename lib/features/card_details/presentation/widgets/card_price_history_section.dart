@@ -6,6 +6,9 @@ import 'package:wurmdex/core/localization/app_strings.dart';
 import 'package:wurmdex/core/theme/app_colors.dart';
 import 'package:wurmdex/features/card_details/services/pricing_service.dart';
 
+/// Which marketplace the chart is displaying.
+enum CardChartSource { liga, tcg }
+
 class CardPriceHistorySection extends StatefulWidget {
   final CardPricesResult? prices;
   final bool isUsd;
@@ -24,12 +27,23 @@ class CardPriceHistorySection extends StatefulWidget {
 
 class _CardPriceHistorySectionState extends State<CardPriceHistorySection> {
   PriceTimeRange _selectedRange = PriceTimeRange.month1m;
+  late CardChartSource _source;
+
+  @override
+  void initState() {
+    super.initState();
+    _source = widget.isUsd ? CardChartSource.tcg : CardChartSource.liga;
+  }
+
+  Color _sourceColor(ThemeData theme) {
+    return _source == CardChartSource.liga ? theme.colorScheme.primary : Colors.orange;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isUsd = widget.isUsd;
     final strings = widget.strings;
+    final isLiga = _source == CardChartSource.liga;
 
     final historyMap = widget.prices?.historyByRange ?? {};
     final currentPoints = historyMap[_selectedRange] ?? widget.prices?.historyPoints ?? [];
@@ -38,7 +52,8 @@ class _CardPriceHistorySectionState extends State<CardPriceHistorySection> {
       return const SizedBox.shrink();
     }
 
-    final pricesList = currentPoints.map((p) => isUsd ? p.priceUsd : p.priceBrl).toList();
+    final pricesList =
+        currentPoints.map((p) => isLiga ? p.priceBrl : p.priceUsd).toList();
     final double rawMin = pricesList.reduce((a, b) => a < b ? a : b);
     final double rawMax = pricesList.reduce((a, b) => a > b ? a : b);
     final double chartMinY = (rawMin * 0.92).clamp(0.0, 999999.0);
@@ -49,6 +64,9 @@ class _CardPriceHistorySectionState extends State<CardPriceHistorySection> {
       spots.add(FlSpot(i.toDouble(), pricesList[i]));
     }
 
+    final accent = _sourceColor(theme);
+    final currencySymbol = isLiga ? 'R\$' : '\$';
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -56,68 +74,87 @@ class _CardPriceHistorySectionState extends State<CardPriceHistorySection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.show_chart,
-                      size: 18,
-                      color: isUsd ? Colors.amberAccent : AppColors.profitGreen,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      strings.priceHistory30Days,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        letterSpacing: 0.8,
-                        fontWeight: FontWeight.bold,
-                        color: isUsd ? Colors.orange : null,
-                      ),
-                    ),
-                  ],
+                Icon(
+                  Icons.show_chart,
+                  size: 18,
+                  color: isLiga ? AppColors.profitGreen : Colors.amberAccent,
                 ),
-                Text(
-                  isUsd ? 'TCGPlayer (USD)' : 'LigaPokémon (BRL)',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: isUsd ? Colors.orange : theme.colorScheme.primary,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    strings.priceHistory30Days,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      letterSpacing: 0.8,
+                      fontWeight: FontWeight.bold,
+                      color: isLiga ? null : Colors.orange,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Time range dropdown (compact, never overflows the screen)
+                DropdownButtonHideUnderline(
+                  child: DropdownButton<PriceTimeRange>(
+                    value: _selectedRange,
+                    borderRadius: BorderRadius.circular(10),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: PriceTimeRange.week1w,
+                        child: Text(strings.timeRangeWeek),
+                      ),
+                      DropdownMenuItem(
+                        value: PriceTimeRange.month1m,
+                        child: Text(strings.timeRangeMonth),
+                      ),
+                      DropdownMenuItem(
+                        value: PriceTimeRange.year1y,
+                        child: Text(strings.timeRangeYear),
+                      ),
+                      DropdownMenuItem(
+                        value: PriceTimeRange.allTime,
+                        child: Text(strings.timeRangeAll),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _selectedRange = value);
+                      }
+                    },
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
 
-            // Time Range Selector
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SegmentedButton<PriceTimeRange>(
-                segments: [
+            // Platform toggle: LigaPokémon (BRL) vs TCGPlayer (USD)
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<CardChartSource>(
+                segments: const [
                   ButtonSegment(
-                    value: PriceTimeRange.week1w,
-                    label: Text(strings.timeRangeWeek, style: const TextStyle(fontSize: 11)),
+                    value: CardChartSource.liga,
+                    label: Text('LigaPokémon', style: TextStyle(fontSize: 12)),
+                    icon: Icon(Icons.storefront, size: 16),
                   ),
                   ButtonSegment(
-                    value: PriceTimeRange.month1m,
-                    label: Text(strings.timeRangeMonth, style: const TextStyle(fontSize: 11)),
-                  ),
-                  ButtonSegment(
-                    value: PriceTimeRange.year1y,
-                    label: Text(strings.timeRangeYear, style: const TextStyle(fontSize: 11)),
-                  ),
-                  ButtonSegment(
-                    value: PriceTimeRange.allTime,
-                    label: Text(strings.timeRangeAll, style: const TextStyle(fontSize: 11)),
+                    value: CardChartSource.tcg,
+                    label: Text('TCGPlayer', style: TextStyle(fontSize: 12)),
+                    icon: Icon(Icons.store, size: 16),
                   ),
                 ],
-                selected: {_selectedRange},
+                selected: {_source},
+                showSelectedIcon: false,
                 onSelectionChanged: (selection) {
-                  setState(() {
-                    _selectedRange = selection.first;
-                  });
+                  setState(() => _source = selection.first);
                 },
                 style: SegmentedButton.styleFrom(
                   visualDensity: VisualDensity.compact,
+                  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -163,9 +200,8 @@ class _CardPriceHistorySectionState extends State<CardPriceHistorySection> {
                               touchTooltipData: LineTouchTooltipData(
                                 getTooltipItems: (List<LineBarSpot> touchedSpots) {
                                   return touchedSpots.map((spot) {
-                                    final formattedPrice = isUsd
-                                        ? '\$ ${spot.y.toStringAsFixed(2).replaceAll('.', ',')}'
-                                        : 'R\$ ${spot.y.toStringAsFixed(2).replaceAll('.', ',')}';
+                                    final formattedPrice =
+                                        '$currencySymbol ${spot.y.toStringAsFixed(2).replaceAll('.', ',')}';
                                     final dateIndex = spot.x.toInt();
                                     String dateText = '';
                                     if (dateIndex >= 0 && dateIndex < currentPoints.length) {
@@ -209,7 +245,7 @@ class _CardPriceHistorySectionState extends State<CardPriceHistorySection> {
                                       meta: meta,
                                       space: 6,
                                       child: Text(
-                                        isUsd ? '\$$formatted' : 'R\$$formatted',
+                                        '$currencySymbol$formatted',
                                         style: const TextStyle(fontSize: 10, color: Colors.grey),
                                       ),
                                     );
@@ -251,18 +287,18 @@ class _CardPriceHistorySectionState extends State<CardPriceHistorySection> {
                                 spots: spots,
                                 isCurved: true,
                                 preventCurveOverShooting: true,
-                                color: isUsd ? Colors.orange : theme.colorScheme.primary,
+                                color: accent,
                                 barWidth: 3,
                                 isStrokeCapRound: true,
                                 belowBarData: BarAreaData(
                                   show: true,
-                                  color: (isUsd ? Colors.orange : theme.colorScheme.primary).withValues(alpha: 0.15),
+                                  color: accent.withValues(alpha: 0.15),
                                 ),
                                 dotData: FlDotData(
                                   show: true,
                                   getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
                                     radius: 3,
-                                    color: isUsd ? Colors.orange : theme.colorScheme.primary,
+                                    color: accent,
                                     strokeWidth: 1.5,
                                     strokeColor: theme.cardColor,
                                   ),

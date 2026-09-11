@@ -13,22 +13,15 @@ class CardConditionHelper {
   /// - 'Graduada (10)' -> 'Graduada (10)'
   /// - 'BGS 9.5' -> 'Graduada (BGS 9.5)'
   /// Defaults to 'NM' (industry market reference standard) if empty or null.
-  static String getShortCondition(String? condition) {
+  static String getShortCondition(String? condition, {String gradedShortLabel = 'Graduada'}) {
     if (condition == null || condition.trim().isEmpty) return 'NM';
     final raw = condition.trim();
     final lower = raw.toLowerCase();
 
     // Graded cards (PSA, BGS, CGC, ACE, or explicitly Graduada)
-    if (lower.contains('psa') ||
-        lower.contains('bgs') ||
-        lower.contains('cgc') ||
-        lower.contains('ace') ||
-        lower.contains('gradua') ||
-        lower.contains('graded')) {
-      if (raw.toLowerCase().startsWith('graduada')) {
-        return raw;
-      }
-      return 'Graduada ($raw)';
+    if (isGradedCondition(raw)) {
+      if (lower.startsWith('gradua')) return raw;
+      return '$gradedShortLabel ($raw)';
     }
 
     if (lower == 'near mint' || lower == 'nm' || lower == 'near_mint') {
@@ -61,10 +54,22 @@ class CardConditionHelper {
     return raw;
   }
 
+  /// True when the condition is a graded / slabbed card (PSA, BGS, CGC, etc.).
+  static bool isGradedCondition(String? condition) {
+    if (condition == null || condition.trim().isEmpty) return false;
+    final lower = condition.toLowerCase();
+    return lower.contains('psa') ||
+        lower.contains('bgs') ||
+        lower.contains('cgc') ||
+        lower.contains('ace') ||
+        lower.contains('gradua') ||
+        lower.contains('graded');
+  }
+
   /// Price multiplier relative to Near Mint (NM standard reference = 1.0)
   static double getConditionMultiplier(String? condition) {
     final short = getShortCondition(condition).toUpperCase();
-    if (short.contains('GRADUADA')) {
+    if (short.contains('GRADUADA') || short.contains('GRADED')) {
       if (short.contains('10')) return 3.5;
       if (short.contains('9.5')) return 2.2;
       if (short.contains('9')) return 1.8;
@@ -92,7 +97,7 @@ class CardConditionHelper {
   /// Distinctive collector accent color for each condition badge
   static Color getConditionColor(String shortCondition) {
     final s = shortCondition.toUpperCase();
-    if (s.contains('GRADUADA') || s.contains('PSA') || s.contains('BGS') || s.contains('CGC')) {
+    if (s.contains('GRADUADA') || s.contains('GRADED') || s.contains('PSA') || s.contains('BGS') || s.contains('CGC')) {
       return const Color(0xFFFFB300); // Collector Gold
     }
     switch (s) {

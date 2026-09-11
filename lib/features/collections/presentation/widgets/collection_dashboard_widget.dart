@@ -60,7 +60,6 @@ class CollectionDashboardWidget extends ConsumerWidget {
     }
 
     final double profitLossBrl = estimatedCurrentValueBrl - totalInvestedBrl;
-    final double profitLossPct = totalInvestedBrl > 0 ? ((profitLossBrl / totalInvestedBrl) * 100) : 0.0;
     final bool isProfit = profitLossBrl >= 0;
 
     // Dual currency calculations
@@ -102,107 +101,83 @@ class CollectionDashboardWidget extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Top Section Header
+            // Top Section Header
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.account_balance_wallet_outlined, size: 18, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      strings.sectionPortfolioMetrics,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.0,
+                Icon(Icons.account_balance_wallet_outlined, size: 20, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  strings.sectionPortfolioMetrics,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                if (totalCount > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      strings.cardsCount(totalCount),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Price Monitor Action Button below title
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => AppNavigator.toPriceMonitoring(context),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.analytics_outlined,
+                        size: 16,
                         color: theme.colorScheme.primary,
                       ),
-                    ),
-                    if (totalCount > 0) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Text(
-                        '($totalCount ${strings.isEn ? "cards" : "cartas"})',
+                        strings.priceMonitor,
                         style: TextStyle(
-                          fontSize: 11,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
                         ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 16,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.7),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: (isProfit ? AppColors.profitGreen : AppColors.lossRed).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: (isProfit ? AppColors.profitGreen : AppColors.lossRed).withValues(alpha: 0.5),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isProfit ? Icons.arrow_upward : Icons.arrow_downward,
-                            size: 12,
-                            color: isProfit ? AppColors.profitGreen : AppColors.lossRed,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${isProfit ? "+" : "-"}${profitLossPct.toStringAsFixed(1)}%',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: isProfit ? AppColors.profitGreen : AppColors.lossRed,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => AppNavigator.toPriceMonitoring(context),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: theme.colorScheme.primary.withValues(alpha: 0.7),
-                              width: 1.2,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.analytics_outlined,
-                                size: 16,
-                                color: theme.colorScheme.primary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                strings.isEn ? 'Price Monitor' : 'Monitor de Preços',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -233,7 +208,7 @@ class CollectionDashboardWidget extends ConsumerWidget {
                   child: _MetricCard(
                     title: strings.labelProfitLoss,
                     value: '${isProfit ? "+" : "-"}$profitLossPrimary',
-                    subtitle: isProfit ? '+ lucro' : '- perda',
+                    subtitle: isProfit ? strings.profitText : strings.lossText,
                     icon: isProfit ? Icons.arrow_upward : Icons.arrow_downward,
                     iconColor: isProfit ? AppColors.profitGreen : AppColors.lossRed,
                     textColor: isProfit ? AppColors.profitGreen : AppColors.lossRed,
@@ -265,7 +240,7 @@ class CollectionDashboardWidget extends ConsumerWidget {
                     ],
                   ),
                   Text(
-                    '${topCards.length} ${strings.isEn ? "cards" : "cartas"}',
+                    strings.cardsCount(topCards.length),
                     style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 ],

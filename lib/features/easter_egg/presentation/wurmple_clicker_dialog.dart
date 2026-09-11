@@ -7,6 +7,7 @@ import '../../../../core/localization/app_strings.dart';
 import '../../../../core/services/app_preferences_service.dart';
 import '../../../../core/theme/theme_constants.dart';
 import '../../../../core/theme/theme_provider.dart';
+import '../../../../core/providers/autoclicker_provider.dart';
 
 enum ClickerCharacter {
   wurmple,
@@ -232,7 +233,8 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
       final dt = now.difference(_lastTick).inMilliseconds / 1000.0;
       _lastTick = now;
 
-      if (_pointsPerSecond > 0 && mounted) {
+      final isPaused = ref.read(autoclickerPausedProvider);
+      if (!isPaused && _pointsPerSecond > 0 && mounted) {
         setState(() {
           _totalPoints += _pointsPerSecond * dt;
         });
@@ -648,6 +650,20 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                     ),
                   ),
                   IconButton(
+                    icon: Icon(
+                      ref.watch(autoclickerPausedProvider)
+                          ? Icons.play_arrow_rounded
+                          : Icons.pause_rounded,
+                      color: ref.watch(autoclickerPausedProvider) ? Colors.amber : null,
+                    ),
+                    tooltip: ref.watch(autoclickerPausedProvider)
+                        ? strings.clickerResumeTooltip
+                        : strings.clickerPauseTooltip,
+                    onPressed: () {
+                      ref.read(autoclickerPausedProvider.notifier).toggle();
+                    },
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.refresh_rounded),
                     tooltip: strings.clickerResetTooltip,
                     onPressed: () => _resetProgress(strings),
@@ -692,11 +708,13 @@ class _WurmpleClickerDialogState extends ConsumerState<WurmpleClickerDialog>
                   Column(
                     children: [
                       Text(
-                        '+${_pointsPerSecond.toStringAsFixed(1)}/s',
-                        style: const TextStyle(
-                          fontSize: 18,
+                        ref.watch(autoclickerPausedProvider)
+                            ? '(${strings.clickerAutoclickerPaused})'
+                            : '+${_pointsPerSecond.toStringAsFixed(1)}/s',
+                        style: TextStyle(
+                          fontSize: ref.watch(autoclickerPausedProvider) ? 14 : 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.amber,
+                          color: ref.watch(autoclickerPausedProvider) ? Colors.amber : Colors.amber,
                         ),
                       ),
                       Text(

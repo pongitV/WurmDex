@@ -10,6 +10,7 @@ import '../../../../core/services/app_preferences_service.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/file_storage_helper.dart';
 import '../../../../core/widgets/card_scale_dialog.dart';
+import '../../../../core/providers/autoclicker_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -287,6 +288,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Section: Minigame & Autoclickers
+          Text(
+            strings.sectionEasterEgg,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.0,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Card(
+            child: SwitchListTile(
+              secondary: const Icon(Icons.touch_app_outlined, color: AppColors.wurmplePrimary),
+              title: Text(strings.pauseAutoclickersTitle),
+              subtitle: Text(strings.pauseAutoclickersSub),
+              value: ref.watch(autoclickerPausedProvider),
+              onChanged: (val) => ref.read(autoclickerPausedProvider.notifier).setPaused(val),
             ),
           ),
           const SizedBox(height: 24),

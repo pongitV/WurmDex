@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../features/booster_simulator/presentation/booster_opening_screen.dart';
 import '../../features/card_details/presentation/card_details_screen.dart';
 import '../../features/catalog/models/pokemon_card_item.dart';
+import '../../features/catalog/presentation/catalog_screen.dart';
 import '../../features/collections/presentation/folder_detail_screen.dart';
 import '../../features/monitoring/presentation/price_monitoring_screen.dart';
 import '../../features/pokedex/models/pokedex_entry.dart';
@@ -95,4 +96,20 @@ class AppNavigator {
       const PriceMonitoringScreen(),
     );
   }
+
+  /// Navigates to the Catalog screen (optionally targeting a folder for adding cards).
+  static Future<void> toCatalog(
+    BuildContext context, {
+    Folder? targetFolder,
+    bool autoFocusSearch = false,
+  }) {
+    return push(
+      context,
+      CatalogScreen(
+        targetFolder: targetFolder,
+        autoFocusSearch: autoFocusSearch,
+      ),
+    );
+  }
 }
+

@@ -137,7 +137,7 @@ class SetProductCard extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'MSRP / Preço Sugerido',
+                  isEn ? 'MSRP' : 'Preço Sugerido (MSRP)',
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),

@@ -8,10 +8,9 @@ import '../../../core/providers/grid_composition_provider.dart';
 import '../../../core/utils/card_sorting_helper.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_network_image.dart';
+import '../../../core/widgets/app_overflow_menu.dart';
 import '../../../core/widgets/card_grid_skeleton.dart';
 import '../../../core/widgets/card_sort_button.dart';
-import '../../../core/widgets/grid_composition_button.dart';
-import '../../../core/widgets/quick_currency_toggle.dart';
 import '../../catalog/models/catalog_filter_state.dart';
 import '../../catalog/models/pokemon_card_item.dart';
 import '../../catalog/presentation/widgets/card_grid_item.dart';
@@ -84,37 +83,20 @@ class _PokemonCardsGalleryScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Hero(
-              tag: 'pokemon_art_${widget.pokemon.id}',
-              child: AppNetworkImage(
-                imageUrl: widget.pokemon.artworkUrl,
-                fallbackImageUrl: widget.pokemon.spriteUrl,
-                width: 32,
-                height: 32,
-                fit: BoxFit.contain,
-                fallbackIcon: Icons.catching_pokemon,
-                fallbackIconSize: 24,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                '${widget.pokemon.formattedNumber} ${widget.pokemon.name}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
+        title: const SizedBox.shrink(),
         actions: [
-          const QuickCurrencyToggle(),
-          GridCompositionButton(scaleTarget: CardScaleTarget.menu),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: strings.btnTryAgain,
-            onPressed: _loadData,
+          CardSortButton(
+            currentOption: _sortOption,
+            isEn: strings.isEn,
+            onSelected: (newOption) {
+              setState(() => _sortOption = newOption);
+            },
+          ),
+          AppOverflowMenu(
+            scaleTarget: CardScaleTarget.menu,
+            showCurrency: true,
+            showRefresh: true,
+            onRefresh: _loadData,
           ),
         ],
       ),
@@ -128,10 +110,15 @@ class _PokemonCardsGalleryScreenState
     AppStrings strings,
     double exchangeRate,
   ) {
+    // Watch during build so the grid responds to scale/grid changes.
+    final cardScale = ref.watch(menuCardScaleProvider);
+    ref.watch(gridCompositionProvider);
+
     if (_isLoading) {
       final crossAxisCount = resolveCardGridCrossAxisCount(
         context: context,
         ref: ref,
+        cardScale: cardScale,
       );
       return CardGridSkeleton(
         crossAxisCount: crossAxisCount,
@@ -158,7 +145,6 @@ class _PokemonCardsGalleryScreenState
       );
     }
 
-    final isEn = strings.isEn;
     final sortedCards = CardSortingHelper.sort(_cards, _sortOption);
 
     return RefreshIndicator(
@@ -168,7 +154,7 @@ class _PokemonCardsGalleryScreenState
           SliverToBoxAdapter(
             child: Container(
               margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
                 color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
@@ -176,30 +162,54 @@ class _PokemonCardsGalleryScreenState
                   color: colorScheme.outlineVariant.withValues(alpha: 0.3),
                 ),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  Icon(
-                    Icons.filter_vintage,
-                    size: 18,
-                    color: colorScheme.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${strings.pokedexCardsFor(widget.pokemon.name)} (${_cards.length})',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
+                  // Bigger artwork, centered above the name
+                  Hero(
+                    tag: 'pokemon_art_${widget.pokemon.id}',
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+                        ),
                       ),
-                      overflow: TextOverflow.ellipsis,
+                      child: AppNetworkImage(
+                        imageUrl: widget.pokemon.artworkUrl,
+                        fallbackImageUrl: widget.pokemon.spriteUrl,
+                        width: 88,
+                        height: 88,
+                        fit: BoxFit.contain,
+                        fallbackIcon: Icons.catching_pokemon,
+                        fallbackIconSize: 40,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  CardSortButton(
-                    currentOption: _sortOption,
-                    isEn: isEn,
-                    onSelected: (newOption) {
-                      setState(() => _sortOption = newOption);
-                    },
+                  const SizedBox(height: 10),
+                  Text(
+                    '${widget.pokemon.formattedNumber} ${widget.pokemon.name}',
+                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.filter_vintage,
+                        size: 14,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        strings.cardsCount(_cards.length),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -213,6 +223,7 @@ class _PokemonCardsGalleryScreenState
                   context: context,
                   ref: ref,
                   availableWidth: constraints.crossAxisExtent,
+                  cardScale: cardScale,
                 );
 
                 return SliverGrid(

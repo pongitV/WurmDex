@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../core/providers/card_scale_provider.dart';
+import '../../../core/providers/card_view_mode_provider.dart';
+import '../../../core/providers/grid_composition_provider.dart';
+import '../../../core/widgets/app_overflow_menu.dart';
 import '../../../core/widgets/app_search_bar.dart';
-import '../../../core/widgets/quick_currency_toggle.dart';
 import '../../../core/navigation/app_navigator.dart';
 import '../data/pokedex_data.dart';
 import '../models/pokedex_entry.dart';
 import 'widgets/pokemon_grid_card.dart';
+import 'widgets/pokemon_list_item.dart';
 
 class PokedexScreen extends ConsumerStatefulWidget {
   const PokedexScreen({super.key});
@@ -56,15 +60,20 @@ class _PokedexScreenState extends ConsumerState<PokedexScreen> {
 
     final filteredEntries = _getFilteredEntries();
 
+    // Watch providers during build so the grid responds to scale/grid changes.
+    final cardScale = ref.watch(menuCardScaleProvider);
+    ref.watch(gridCompositionProvider);
+    final viewMode = ref.watch(cardViewModeProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           strings.pokedexTitle,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        actions: const [
-          QuickCurrencyToggle(),
-          SizedBox(width: 8),
+        actions: [
+          const AppOverflowMenu(showCurrency: true, scaleTarget: CardScaleTarget.menu),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
@@ -131,23 +140,38 @@ class _PokedexScreenState extends ConsumerState<PokedexScreen> {
                       ),
                     ),
                   )
-                : LayoutBuilder(
+                : viewMode == CardViewMode.list
+                    ? ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        itemCount: filteredEntries.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final pokemon = filteredEntries[index];
+                          return PokemonListItem(
+                            pokemon: pokemon,
+                            onTap: () => AppNavigator.toPokemonGallery(context, pokemon: pokemon),
+                          );
+                        },
+                      )
+                    : LayoutBuilder(
                     builder: (context, constraints) {
-                      final width = constraints.maxWidth;
-                      // Enforce 3x3 layout on standard mobile/narrow displays
-                      final crossAxisCount = width > 1100
-                          ? 7
-                          : width > 800
-                              ? 5
-                              : width > 550
-                                  ? 4
-                                  : 3;
+                      final crossAxisCount = resolveCardGridCrossAxisCount(
+                        context: context,
+                        ref: ref,
+                        availableWidth: constraints.maxWidth,
+                      );
+
+                      // Scale grows the whole tile (photo + text) by increasing
+                      // the card's height; the content fills the tile naturally,
+                      // so nothing overflows or gets clipped.
+                      final adjustedAspect =
+                          (0.85 * (1.15 / cardScale)).clamp(0.6, 1.4).toDouble();
 
                       return GridView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
-                          childAspectRatio: 0.85,
+                          childAspectRatio: adjustedAspect,
                           crossAxisSpacing: 10,
                           mainAxisSpacing: 10,
                         ),

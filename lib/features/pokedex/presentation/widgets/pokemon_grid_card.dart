@@ -35,46 +35,46 @@ class PokemonGridCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Top row: #Number
-              Align(
-                alignment: Alignment.topRight,
-                child: Text(
-                  pokemon.formattedNumber,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.bold,
+                  // Top row: #Number
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Text(
+                      pokemon.formattedNumber,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 2),
-              // Pokémon Artwork with sprite fallback
-              Expanded(
-                child: Hero(
-                  tag: 'pokemon_art_${pokemon.id}',
-                  child: AppNetworkImage(
-                    imageUrl: pokemon.artworkUrl,
-                    fallbackImageUrl: pokemon.spriteUrl,
-                    fit: BoxFit.contain,
-                    fallbackIcon: Icons.catching_pokemon,
-                    fallbackIconSize: 40,
+                  const SizedBox(height: 2),
+                  // Pokémon Artwork with sprite fallback
+                  Expanded(
+                    child: Hero(
+                      tag: 'pokemon_art_${pokemon.id}',
+                      child: AppNetworkImage(
+                        imageUrl: pokemon.artworkUrl,
+                        fallbackImageUrl: pokemon.spriteUrl,
+                        fit: BoxFit.contain,
+                        fallbackIcon: Icons.catching_pokemon,
+                        fallbackIconSize: 40,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              // Pokémon Name
-              Text(
-                pokemon.name,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+                  const SizedBox(height: 6),
+                  // Pokémon Name
+                  Text(
+                    pokemon.name,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+            ),
           ),
         ),
-      ),
     );
   }
 }

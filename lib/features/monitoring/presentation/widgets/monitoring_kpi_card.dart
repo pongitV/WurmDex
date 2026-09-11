@@ -183,7 +183,7 @@ class MonitoringKpiCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '▲ $surgingCount em alta',
+                        strings.monitorSurging(surgingCount),
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -199,7 +199,7 @@ class MonitoringKpiCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '▼ $droppingCount em baixa',
+                        strings.monitorDropping(droppingCount),
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,

@@ -209,7 +209,7 @@ class MonitoredCardTile extends StatelessWidget {
                   Text(
                     paidFormatted != null
                         ? '${strings.paidPricePrefix}$paidFormatted'
-                        : 'Sem valor pago',
+                        : strings.noPricePaid,
                     style: TextStyle(
                       fontSize: 10,
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),

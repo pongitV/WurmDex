@@ -173,6 +173,17 @@ class CardQuickActionSheet extends ConsumerWidget {
   }
 
   void _showAddToFolderDialog(BuildContext context, WidgetRef ref, AppStrings strings) {
+    showAddToFolderDialog(context: context, ref: ref, card: card);
+  }
+
+  static void showAddToFolderDialog({
+    required BuildContext context,
+    required WidgetRef ref,
+    required PokemonCardItem card,
+    String? preselectedFolderId,
+  }) {
+    final appLang = ref.read(languageProvider);
+    final strings = getStrings(appLang);
     final foldersAsync = ref.read(foldersStreamProvider);
     final db = ref.read(databaseProvider);
 
@@ -181,7 +192,7 @@ class CardQuickActionSheet extends ConsumerWidget {
     String finish = 'Regular';
     int quantity = 1;
     double purchasePrice = 0.0;
-    String? selectedFolderId;
+    String? selectedFolderId = preselectedFolderId;
 
     showDialog(
       context: context,
@@ -223,11 +234,11 @@ class CardQuickActionSheet extends ConsumerWidget {
                       const DropdownMenuItem(value: 'Moderately Played', child: Text('Moderately Played (MP)')),
                       const DropdownMenuItem(value: 'Heavily Played', child: Text('Heavily Played (HP)')),
                       DropdownMenuItem(value: 'Damaged', child: Text(strings.isEn ? 'Damaged (DMG)' : 'Danificada (DMG)')),
-                      const DropdownMenuItem(value: 'Graduada (PSA 10)', child: Text('Graduada (PSA 10)')),
-                      const DropdownMenuItem(value: 'Graduada (PSA 9)', child: Text('Graduada (PSA 9)')),
-                      const DropdownMenuItem(value: 'Graduada (BGS 9.5)', child: Text('Graduada (BGS 9.5)')),
-                      const DropdownMenuItem(value: 'Graduada (CGC 10)', child: Text('Graduada (CGC 10)')),
-                      const DropdownMenuItem(value: 'Graduada', child: Text('Graduada (Outra)')),
+                      DropdownMenuItem(value: 'Graduada (PSA 10)', child: Text(strings.isEn ? 'Graded (PSA 10)' : 'Graduada (PSA 10)')),
+                      DropdownMenuItem(value: 'Graduada (PSA 9)', child: Text(strings.isEn ? 'Graded (PSA 9)' : 'Graduada (PSA 9)')),
+                      DropdownMenuItem(value: 'Graduada (BGS 9.5)', child: Text(strings.isEn ? 'Graded (BGS 9.5)' : 'Graduada (BGS 9.5)')),
+                      DropdownMenuItem(value: 'Graduada (CGC 10)', child: Text(strings.isEn ? 'Graded (CGC 10)' : 'Graduada (CGC 10)')),
+                      DropdownMenuItem(value: 'Graduada', child: Text(strings.isEn ? 'Graded (Other)' : 'Graduada (Outra)')),
                     ],
                     onChanged: (val) => setState(() => condition = val!),
                   ),

@@ -58,10 +58,19 @@ class _WishlistEditDialogState extends State<WishlistEditDialog> {
     _priceController = TextEditingController(
       text: initialPrice > 0 ? initialPrice.toStringAsFixed(2) : '',
     );
-    _folderController = TextEditingController(
-      text: widget.item.folderName.isNotEmpty ? widget.item.folderName : 'Geral',
-    );
-    _priority = widget.item.priority;
+    final initialFolder = widget.item.folderName.isNotEmpty
+        ? (widget.item.folderName == 'Geral' ? widget.strings.wishlistFolderDefault : widget.item.folderName)
+        : widget.strings.wishlistFolderDefault;
+    _folderController = TextEditingController(text: initialFolder);
+
+    final rawP = widget.item.priority;
+    if (rawP == 'Alta' || rawP == 'High') {
+      _priority = widget.strings.priorityHigh;
+    } else if (rawP == 'Baixa' || rawP == 'Low') {
+      _priority = widget.strings.priorityLow;
+    } else {
+      _priority = widget.strings.priorityMedium;
+    }
   }
 
   @override
@@ -134,12 +143,24 @@ class _WishlistEditDialogState extends State<WishlistEditDialog> {
           onPressed: () async {
             final inputVal = CurrencyFormatter.parseCurrencyOrDefault(_priceController.text);
             final targetBrl = widget.isUsd ? (inputVal * widget.exchangeRate) : inputVal;
-            final updatedFolder = _folderController.text.trim().isEmpty ? 'Geral' : _folderController.text.trim();
+            final trimmedFolder = _folderController.text.trim().isEmpty
+                ? 'Geral'
+                : _folderController.text.trim();
+            // Keep canonical (PT) values in the DB so folder chips and sorting
+            // behave the same regardless of the display language.
+            final updatedFolder = trimmedFolder == strings.wishlistFolderDefault
+                ? 'Geral'
+                : trimmedFolder;
+            String canonicalPriority(String display) {
+              if (display == strings.priorityHigh) return 'Alta';
+              if (display == strings.priorityLow) return 'Baixa';
+              return 'Média';
+            }
 
             await (widget.db.update(widget.db.wishlistItems)..where((t) => t.id.equals(item.id))).write(
               WishlistItemsCompanion(
                 targetPriceBrl: drift.Value(targetBrl),
-                priority: drift.Value(_priority),
+                priority: drift.Value(canonicalPriority(_priority)),
                 folderName: drift.Value(updatedFolder),
               ),
             );

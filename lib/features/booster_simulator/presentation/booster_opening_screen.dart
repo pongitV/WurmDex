@@ -6,7 +6,7 @@ import '../../../core/providers/currency_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/widgets/holographic_card_view.dart';
-import '../../../core/widgets/quick_currency_toggle.dart';
+import '../../../core/widgets/app_overflow_menu.dart';
 import '../../catalog/models/pokemon_card_item.dart';
 import '../../sets/models/tcg_set_item.dart';
 import '../models/booster_pack_config.dart';
@@ -127,7 +127,7 @@ class _BoosterOpeningScreenState extends ConsumerState<BoosterOpeningScreen>
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: const [
-          QuickCurrencyToggle(),
+          AppOverflowMenu(showCurrency: true),
           SizedBox(width: 8),
         ],
       ),

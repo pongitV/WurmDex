@@ -10,14 +10,14 @@ import '../../../core/providers/grid_composition_provider.dart';
 import '../../../core/utils/card_sorting_helper.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_network_image.dart';
+import '../../../core/widgets/app_overflow_menu.dart';
 import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/card_grid_skeleton.dart';
 import '../../../core/widgets/card_sort_button.dart';
-import '../../../core/widgets/grid_composition_button.dart';
-import '../../../core/widgets/quick_currency_toggle.dart';
 import '../../catalog/models/catalog_filter_state.dart';
 import '../../catalog/models/pokemon_card_item.dart';
 import '../../catalog/presentation/widgets/card_grid_item.dart';
+import '../data/tcg_sets_data.dart';
 import '../models/set_product_item.dart';
 import '../models/tcg_set_item.dart';
 import '../services/set_completion_helper.dart';
@@ -124,12 +124,11 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
               overflow: TextOverflow.ellipsis,
             ),
             actions: [
-              const QuickCurrencyToggle(),
-              GridCompositionButton(scaleTarget: CardScaleTarget.menu),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: strings.btnTryAgain,
-                onPressed: _loadData,
+              AppOverflowMenu(
+                scaleTarget: CardScaleTarget.menu,
+                showCurrency: true,
+                showRefresh: true,
+                onRefresh: _loadData,
               ),
             ],
             bottom: TabBar(
@@ -198,6 +197,13 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
     bool isEn,
   ) {
     final filteredCards = _getFilteredAndSortedCards();
+    final initialReleaseDate = TcgSetsData.getInitialReleaseDate(
+      widget.set.id,
+      apiReleaseDate: widget.set.releaseDate,
+      year: widget.set.year,
+      isEn: isEn,
+    );
+    final reprintDates = TcgSetsData.getReprintDates(widget.set.id, isEn: isEn);
 
     return Column(
       children: [
@@ -255,6 +261,92 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
                   valueColor: AlwaysStoppedAnimation<Color>(
                     ratio >= 1.0 ? Colors.green : colorScheme.primary,
                   ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Dates section: Initial Release & Reprints
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.25),
+                    width: 0.8,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Initial Release Row
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today_outlined, size: 13, color: colorScheme.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${strings.firstReleaseDateLabel}: ',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            initialReleaseDate,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: colorScheme.primary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Reprints Row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.repeat_rounded, size: 14, color: Colors.orange.shade700),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${strings.reprintDatesLabel}: ',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        Expanded(
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: reprintDates.map((rDate) {
+                              final isSoon = rDate.toLowerCase().contains('soon');
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: (isSoon ? Colors.amber : Colors.orange).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: (isSoon ? Colors.amber : Colors.orange).withValues(alpha: 0.4),
+                                    width: 0.6,
+                                  ),
+                                ),
+                                child: Text(
+                                  rDate,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSoon ? Colors.amber.shade800 : Colors.orange.shade800,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],

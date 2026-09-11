@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_provider.dart';
 import '../../../../core/localization/app_strings.dart';
+import '../../../../core/providers/card_scale_provider.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_empty_state.dart';
+import '../../../../core/widgets/app_overflow_menu.dart';
 import '../../../../core/widgets/app_search_bar.dart';
 import '../../../../core/widgets/app_sort_button.dart';
-import '../../../../core/widgets/quick_currency_toggle.dart';
 import '../models/monitored_card_item.dart';
 import '../services/price_monitoring_service.dart';
 import 'widgets/monitored_card_tile.dart';
@@ -127,7 +128,10 @@ class _PriceMonitoringScreenState extends ConsumerState<PriceMonitoringScreen> {
               ),
             ],
           ),
-          const QuickCurrencyToggle(),
+          AppOverflowMenu(
+            scaleTarget: CardScaleTarget.collection,
+            showCurrency: true,
+          ),
           const SizedBox(width: 8),
         ],
       ),

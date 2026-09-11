@@ -6,7 +6,7 @@ import '../../../../core/localization/app_strings.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../../core/widgets/quick_currency_toggle.dart';
+import '../../../../core/widgets/app_overflow_menu.dart';
 import 'widgets/trade_card_selector_dialog.dart';
 
 class TradeEvaluatorScreen extends ConsumerStatefulWidget {
@@ -42,7 +42,7 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
     final buffer = StringBuffer();
     final header = strings.tradeEvaluationHeader;
     buffer.writeln('=== $header (WurmDex) ===');
-    buffer.writeln('\n[ESQUERDA] ${strings.tradeYouSend} (${strings.cardsCount(_yourCards.length)}):');
+    buffer.writeln('\n${strings.tradeLeftLabel} ${strings.tradeYouSend} (${strings.cardsCount(_yourCards.length)}):');
     for (final c in _yourCards) {
       final priceStr = isUsd
           ? CurrencyFormatter.toUsd(c.valueBrl / exchangeRate)
@@ -54,7 +54,7 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
         : CurrencyFormatter.toBrl(_yourTotal);
     buffer.writeln('${strings.totalSent}: $yourTotalStr');
 
-    buffer.writeln('\n[DIREITA] ${strings.tradeYouReceive} (${strings.cardsCount(_theirCards.length)}):');
+    buffer.writeln('\n${strings.tradeRightLabel} ${strings.tradeYouReceive} (${strings.cardsCount(_theirCards.length)}):');
     for (final c in _theirCards) {
       final priceStr = isUsd
           ? CurrencyFormatter.toUsd(c.valueBrl / exchangeRate)
@@ -124,7 +124,7 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
       appBar: AppBar(
         title: Text(strings.tradesTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
-          const QuickCurrencyToggle(),
+          const AppOverflowMenu(showCurrency: true),
           const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.copy_all_outlined),

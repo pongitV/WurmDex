@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/catalog/models/catalog_filter_state.dart';
 import '../providers/card_scale_provider.dart';
+import 'card_scale_button.dart';
 import 'card_sort_button.dart';
-import 'grid_composition_button.dart';
 import 'quick_currency_toggle.dart';
 
 /// Universal Card Controls component (DRY).
@@ -61,7 +61,7 @@ class UniversalCardControls extends ConsumerWidget {
     return [
       if (showCurrency) const QuickCurrencyToggle(),
       if (showGridComposition)
-        GridCompositionButton(scaleTarget: scaleTarget),
+        CardScaleButton(target: scaleTarget),
       if (currentSort != null && onSortChanged != null)
         CardSortButton(
           currentOption: currentSort,
@@ -82,9 +82,8 @@ class UniversalCardControls extends ConsumerWidget {
           const SizedBox(width: 4),
         ],
         if (showGridComposition) ...[
-          GridCompositionButton(
-            showLabel: isToolbar,
-            scaleTarget: scaleTarget,
+          CardScaleButton(
+            target: scaleTarget,
           ),
           const SizedBox(width: 4),
         ],

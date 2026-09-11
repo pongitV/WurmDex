@@ -8,23 +8,26 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_provider.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/providers/card_scale_provider.dart';
+import '../../../../core/providers/card_view_mode_provider.dart';
+import '../../../../core/providers/grid_composition_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/card_sorting_helper.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/utils/folder_icon_helper.dart';
 import '../../../../core/utils/marketplace_url_helper.dart';
 import '../../../../core/utils/semantic_search_helper.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_network_image.dart';
+import '../../../../core/widgets/app_overflow_menu.dart';
 import '../../../../core/widgets/app_search_bar.dart';
 import '../../../../core/widgets/bottom_sheet_drag_handle.dart';
 import '../../../../core/widgets/card_grid_skeleton.dart';
-import '../../../../core/widgets/card_scale_button.dart';
-import '../../../../core/widgets/card_scale_dialog.dart';
 import '../../../../core/widgets/card_shimmer_glow.dart';
 import '../../../../core/widgets/card_sort_button.dart';
-import '../../../../core/widgets/quick_currency_toggle.dart';
+import '../../../../core/widgets/condition_badge.dart';
+import '../../../../core/widgets/language_flag_badge.dart';
 import '../../catalog/models/catalog_filter_state.dart';
 import '../../catalog/models/pokemon_card_item.dart';
 import '../../catalog/presentation/widgets/card_grid_item.dart';
@@ -131,8 +134,10 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
       if (index >= 0 && _gridScrollController.hasClients) {
         final cardScale = ref.read(collectionCardScaleProvider);
         final baseWidth = (210.0 * cardScale).clamp(130.0, 380.0);
-        final crossAxisCount = calculateScaledCrossAxisCount(
-          width: MediaQuery.of(context).size.width,
+        final crossAxisCount = resolveCardGridCrossAxisCount(
+          context: context,
+          ref: ref,
+          availableWidth: MediaQuery.of(context).size.width,
           cardScale: cardScale,
         );
         final row = index ~/ crossAxisCount;
@@ -160,122 +165,68 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
     final strings = getStrings(language);
     final currency = ref.watch(currencyProvider);
     final exchangeRate = ref.watch(exchangeRateProvider);
+    final viewMode = ref.watch(cardViewModeProvider);
     final folderId = widget.folder?.id;
     final folderName = widget.folder?.name ?? strings.generalCollectionTitle;
     final cardsAsync = ref.watch(folderCardsProvider(folderId));
-
-    final isCompact = MediaQuery.of(context).size.width < 650 ||
-        Theme.of(context).platform == TargetPlatform.android;
+    final cards = cardsAsync.asData?.value ?? const <UserCard>[];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          folderName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        actions: isCompact
-            ? [
-                // 1. Alternar entre Fichário e Grid
-                IconButton(
-                  icon: Icon(_displayMode == 'grid' ? Icons.book : Icons.grid_view),
-                  tooltip: _displayMode == 'grid' ? strings.viewAsBinder : strings.viewAsGrid,
-                  onPressed: _toggleDisplayMode,
+        title: const SizedBox.shrink(),
+        actions: [
+          // Sorta always stays visible (never hidden in menus), plus the
+          // always-present "three dots" overflow with all secondary actions.
+          CardSortButton(
+            currentOption: _sortOption,
+            isEn: strings.isEn,
+            onSelected: (option) {
+              setState(() {
+                _sortOption = option;
+              });
+            },
+          ),
+          AppOverflowMenu(
+            scaleTarget: CardScaleTarget.collection,
+            showCurrency: true,
+            extraEntries: [
+              PopupMenuItem(
+                value: 'share',
+                child: Row(
+                  children: [
+                    const Icon(Icons.share_outlined, size: 20),
+                    const SizedBox(width: 10),
+                    Text(strings.tooltipShareFolder),
+                  ],
                 ),
-                // 2. Botão de Ordenação
-                CardSortButton(
-                  currentOption: _sortOption,
-                  isEn: strings.isEn,
-                  onSelected: (option) {
-                    setState(() {
-                      _sortOption = option;
-                    });
-                  },
+              ),
+              PopupMenuItem(
+                value: 'view',
+                child: Row(
+                  children: [
+                    Icon(
+                      _displayMode == 'grid' ? Icons.book : Icons.grid_view,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      _displayMode == 'grid'
+                          ? strings.viewAsBinder
+                          : strings.viewAsGrid,
+                    ),
+                  ],
                 ),
-                // 3. Menu de Opções Secundárias (Evita qualquer colisão com voltar e título)
-                cardsAsync.when(
-                  data: (cards) => PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert),
-                    tooltip: strings.isEn ? 'More options' : 'Mais opções',
-                    onSelected: (val) {
-                      if (val == 'share') {
-                        _shareFolder(cards, folderName, strings);
-                      } else if (val == 'scale') {
-                        showCardScaleBottomSheet(context, initialTarget: CardScaleTarget.collection);
-                      } else if (val == 'currency') {
-                        ref.read(currencyProvider.notifier).toggleCurrency();
-                      }
-                    },
-                    itemBuilder: (ctx) => [
-                      PopupMenuItem(
-                        value: 'share',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.share_outlined, size: 20),
-                            const SizedBox(width: 10),
-                            Text(strings.tooltipShareFolder),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'scale',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.aspect_ratio, size: 20),
-                            const SizedBox(width: 10),
-                            Text(strings.scaleCollectionTitle),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'currency',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.currency_exchange, size: 20),
-                            const SizedBox(width: 10),
-                            Text(
-                              currency == AppCurrency.usd
-                                  ? (strings.isEn ? 'Switch to BRL (R\$)' : 'Mudar para Real (R\$)')
-                                  : (strings.isEn ? 'Switch to USD (\$)' : 'Mudar para Dólar (\$)'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  loading: () => const SizedBox.shrink(),
-                  error: (err, stack) => const SizedBox.shrink(),
-                ),
-                const SizedBox(width: 4),
-              ]
-            : [
-                // Desktop / Tela Larga: Mantém todos os botões visíveis
-                cardsAsync.when(
-                  data: (cards) => IconButton(
-                    icon: const Icon(Icons.share_outlined),
-                    tooltip: strings.tooltipShareFolder,
-                    onPressed: () => _shareFolder(cards, folderName, strings),
-                  ),
-                  loading: () => const SizedBox.shrink(),
-                  error: (err, stack) => const SizedBox.shrink(),
-                ),
-                const QuickCurrencyToggle(),
-                const CardScaleButton(target: CardScaleTarget.collection),
-                CardSortButton(
-                  currentOption: _sortOption,
-                  isEn: strings.isEn,
-                  onSelected: (option) {
-                    setState(() {
-                      _sortOption = option;
-                    });
-                  },
-                ),
-                IconButton(
-                  icon: Icon(_displayMode == 'grid' ? Icons.book : Icons.grid_view),
-                  tooltip: _displayMode == 'grid' ? strings.viewAsBinder : strings.viewAsGrid,
-                  onPressed: _toggleDisplayMode,
-                ),
-              ],
+              ),
+            ],
+            onExtraSelected: (val) {
+              if (val == 'share') {
+                _shareFolder(cards, folderName, strings);
+              } else if (val == 'view') {
+                _toggleDisplayMode();
+              }
+            },
+          ),
+        ],
       ),
       body: cardsAsync.when(
         data: (cards) {
@@ -284,6 +235,13 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
               icon: Icons.inventory_2_outlined,
               title: strings.folderEmptyTitle,
               message: strings.folderEmptySubtitle,
+              buttonLabel: strings.btnSearchCards,
+              buttonIcon: Icons.search,
+              onAction: () => AppNavigator.toCatalog(
+                context,
+                targetFolder: widget.folder,
+                autoFocusSearch: true,
+              ),
             );
           }
 
@@ -302,6 +260,47 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
 
           return Column(
             children: [
+              // Collection title header: shows the full name (no ellipsis)
+              // above the search bar so buttons/icons never hide it.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Icon(
+                        FolderIconHelper.getIcon(widget.folder?.iconName),
+                        size: 18,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            folderName,
+                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            strings.cardsCount(cards.length),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               // Top Search Bar to locate and animate card reveal in binder or grid
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
@@ -310,9 +309,7 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
                     AppSearchBar(
                       controller: _searchController,
                       padding: EdgeInsets.zero,
-                      hintText: strings.isEn
-                          ? 'Search card in folder by name or #...'
-                          : 'Buscar carta na coleção por nome ou #...',
+                      hintText: strings.searchCardInFolderHint,
                       onChanged: (val) {
                         setState(() {
                           _searchQuery = val;
@@ -357,7 +354,7 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
                 ),
               ),
 
-              // Content: 3D Binder or Grande (Grid) View ONLY
+              // Content: 3D Binder, List or Grid (Card) View
               Expanded(
                 child: _displayMode == 'binder'
                     ? VirtualBinderView(
@@ -365,16 +362,29 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
                         cards: sortedCards,
                         folderName: folderName,
                         highlightedCardId: _highlightedCardId,
-                        onAddCard: () => Navigator.pop(context),
+                        onAddCard: () {
+                          // Bug fix: unfocus the binder's keyboard listener before
+                          // navigating to catalog so the search field gets focus properly
+                          FocusScope.of(context).unfocus();
+                          AppNavigator.toCatalog(
+                            context,
+                            targetFolder: widget.folder,
+                            autoFocusSearch: true,
+                          );
+                        },
                       )
-                    : _buildGridView(context, sortedCards, strings, currency, exchangeRate),
+                    : viewMode == CardViewMode.list
+                        ? _buildListView(context, sortedCards, strings, currency, exchangeRate)
+                        : _buildGridView(context, sortedCards, strings, currency, exchangeRate),
               ),
             ],
           );
         },
         loading: () {
-          final crossAxisCount = calculateScaledCrossAxisCount(
-            width: MediaQuery.of(context).size.width,
+          final crossAxisCount = resolveCardGridCrossAxisCount(
+            context: context,
+            ref: ref,
+            availableWidth: MediaQuery.of(context).size.width,
             cardScale: ref.watch(collectionCardScaleProvider),
           );
           return CardGridSkeleton(
@@ -513,8 +523,10 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
     final cardScale = ref.watch(collectionCardScaleProvider);
 
     // Responsive dynamic column sizing with user scale preference
-    final crossAxisCount = calculateScaledCrossAxisCount(
-      width: width,
+    final crossAxisCount = resolveCardGridCrossAxisCount(
+      context: context,
+      ref: ref,
+      availableWidth: width,
       cardScale: cardScale,
     );
 
@@ -558,23 +570,6 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
         final isGlowing = _highlightedCardId != null &&
             (_highlightedCardId == card.id || _highlightedCardId == card.cardApiId);
 
-        final deleteBadge = InkWell(
-          onTap: () => _confirmDeleteCard(card, strings),
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.75),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.delete_outline,
-              size: 15,
-              color: AppColors.lossRed,
-            ),
-          ),
-        );
-
         final quantityBadge = card.quantity > 1
             ? Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -597,10 +592,123 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
             condition: card.condition,
             language: card.language,
             customPriceText: priceString,
-            topLeftBadge: deleteBadge,
-            topRightBadge: quantityBadge,
+            topLeftBadge: quantityBadge,
             onTap: () => _openCardDetails(context, card),
             onLongPress: () => _showCardContextMenu(context, card, strings),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildListView(BuildContext context, List<UserCard> cards, AppStrings strings, AppCurrency currency, double exchangeRate) {
+    final theme = Theme.of(context);
+
+    return ListView.separated(
+      controller: _gridScrollController,
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+      itemCount: cards.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final card = cards[index];
+        final quantityBadge = card.quantity > 1
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black87,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white24, width: 0.5),
+                ),
+                child: Text(
+                  'x${card.quantity}',
+                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              )
+            : null;
+
+        final priceString = card.purchasePriceBrl > 0
+            ? (currency == AppCurrency.usd
+                ? CurrencyFormatter.toUsd(card.purchasePriceBrl / exchangeRate)
+                : CurrencyFormatter.toBrl(card.purchasePriceBrl))
+            : null;
+
+        return Card(
+          margin: EdgeInsets.zero,
+          color: theme.colorScheme.surfaceContainerHigh,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => _openCardDetails(context, card),
+            onLongPress: () => _showCardContextMenu(context, card, strings),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      AppNetworkImage(
+                        imageUrl: card.imageUrl,
+                        width: 48,
+                        height: 68,
+                        fit: BoxFit.cover,
+                        borderRadius: BorderRadius.circular(6),
+                        fallbackIcon: Icons.style,
+                        fallbackIconSize: 28,
+                      ),
+                      if (quantityBadge != null)
+                        Positioned(
+                          top: -4,
+                          right: -4,
+                          child: quantityBadge,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          card.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${SemanticSearchHelper.formatCardIdentifier(rawName: card.name, number: card.number)} • ${card.setName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            ConditionBadge(condition: card.condition, compact: true),
+                            LanguageFlagBadge(language: card.language, compact: true),
+                            if (priceString != null)
+                              Text(
+                                priceString,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.chevron_right, color: Colors.grey, size: 22),
+                ],
+              ),
+            ),
           ),
         );
       },

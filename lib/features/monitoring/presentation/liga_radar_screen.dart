@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/database/database_provider.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../core/services/app_preferences_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/marketplace_url_helper.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../services/liga_scraper_service.dart';
 import 'widgets/add_edit_liga_alert_dialog.dart';
+import 'widgets/radar_background_settings_sheet.dart';
 
 enum LigaFilterType {
   all,
@@ -94,9 +96,24 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
     );
   }
 
+  Future<void> _openBackgroundSettings() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const RadarBackgroundSettingsSheet(),
+    );
+    // Refresh the toolbar icon state after the sheet closes.
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   Future<void> _checkSingleItem(LigaPriceAlert alert) async {
     setState(() => _checkingItemIds.add(alert.id));
     final db = ref.read(databaseProvider);
+
+    final strings = getStrings(ref.read(languageProvider));
 
     try {
       final result = await LigaScraperService.checkAlert(alert: alert, db: db, notify: true);
@@ -105,8 +122,12 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
           SnackBar(
             content: Text(
               result.isInRange
-                  ? '🎯 ${alert.title}: Disponível na faixa desejada!'
-                  : '🔍 ${alert.title}: Menor preço atualizado.',
+                  ? (strings.isEn
+                      ? '🎯 ${alert.title}: Available in target range!'
+                      : '🎯 ${alert.title}: Disponível na faixa desejada!')
+                  : (strings.isEn
+                      ? '🔍 ${alert.title}: Lowest price updated.'
+                      : '🔍 ${alert.title}: Menor preço atualizado.'),
             ),
             behavior: SnackBarBehavior.floating,
           ),
@@ -216,6 +237,18 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                 : const Icon(Icons.sync),
             tooltip: strings.btnCheckAllNow,
             onPressed: _isCheckingAll ? null : _checkAllItems,
+          ),
+          // Background monitoring settings (single icon; reflects enabled state)
+          IconButton(
+            icon: Icon(
+              Icons.schedule,
+              size: 24,
+              color: AppPreferencesService.isBackgroundLigaMonitoringEnabled()
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            tooltip: strings.radarBackgroundSettingsTooltip,
+            onPressed: _openBackgroundSettings,
           ),
           IconButton(
             icon: Icon(Icons.add_circle, color: theme.colorScheme.primary, size: 28),
@@ -390,7 +423,7 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Erro: $err')),
+        error: (err, _) => Center(child: Text(strings.errorMessage(err.toString()))),
       ),
     );
   }
@@ -823,7 +856,7 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                 // Edit button
                 IconButton(
                   icon: const Icon(Icons.edit_outlined, size: 20),
-                  tooltip: 'Editar',
+                  tooltip: strings.isEn ? 'Edit' : 'Editar',
                   onPressed: () => _openEditDialog(alert),
                 ),
 
