@@ -409,96 +409,406 @@ class CardQuickActionSheet extends ConsumerWidget {
 
   void _showAddToWishlistDialog(BuildContext context, WidgetRef ref, AppStrings strings) {
     final db = ref.read(databaseProvider);
-    double targetPrice = 0.0;
+    double targetPriceMin = 0.0;
+    double targetPriceMax = 0.0;
     String priority = 'Média';
     String folderName = 'Geral';
     String notes = '';
+    String condition = 'Near Mint';
+    String language = 'PT';
+    String finish = 'Regular';
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
-            title: Text('${strings.wishlistTitle}: ${card.name}'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: strings.labelTargetPriceBrl,
-                    prefixText: 'R\$ ',
-                    helperText: strings.alertPriceDropHelper,
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (val) {
-                    targetPrice = CurrencyFormatter.parseCurrencyOrDefault(val);
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: folderName,
-                  decoration: InputDecoration(
-                    labelText: strings.wishlistFolderNameLabel,
-                    prefixIcon: const Icon(Icons.folder_outlined, size: 20),
-                    isDense: true,
-                  ),
-                  onChanged: (val) => folderName = val.trim().isEmpty ? 'Geral' : val.trim(),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(labelText: strings.labelPriority),
-                  initialValue: priority,
-                  items: [
-                    DropdownMenuItem(value: 'Baixa', child: Text(strings.priorityLow)),
-                    DropdownMenuItem(value: 'Média', child: Text(strings.priorityMedium)),
-                    DropdownMenuItem(value: 'Alta', child: Text(strings.priorityHigh)),
-                  ],
-                  onChanged: (val) => setState(() => priority = val!),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: strings.notesObservationsLabel,
-                    hintText: strings.notesObservationsHint,
-                  ),
-                  maxLines: 2,
-                  onChanged: (val) => notes = val,
-                ),
-              ],
+          final theme = Theme.of(context);
+          return Container(
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              border: Border.all(color: theme.dividerColor),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(strings.cancel),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  await db.insertWishlistItem(
-                    WishlistItemsCompanion(
-                      id: drift.Value(const Uuid().v4()),
-                      cardApiId: drift.Value(card.id),
-                      name: drift.Value(card.name),
-                      number: drift.Value(card.number),
-                      setName: drift.Value(card.setName),
-                      imageUrl: drift.Value(card.imageUrlLarge.isNotEmpty ? card.imageUrlLarge : card.imageUrlSmall),
-                      targetPriceBrl: drift.Value(targetPrice),
-                      priority: drift.Value(priority),
-                      folderName: drift.Value(folderName),
-                      notes: drift.Value(notes),
-                      createdAt: drift.Value(DateTime.now()),
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Drag handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  );
+                  ),
+                  const SizedBox(height: 12),
 
-                  if (context.mounted) {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(strings.cardAddedToWishlist(card.name))),
-                    );
-                  }
-                },
-                child: Text(strings.saveToWishlist),
+                  // Title with card info
+                  Row(
+                    children: [
+                      PokemonCardImage(
+                        imageUrl: card.imageUrlSmall,
+                        fallbackImageUrl: card.imageUrlLarge,
+                        width: 40,
+                        height: 56,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${strings.wishlistTitle}: ${card.name}',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${card.setName} • ${card.rarity}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 12),
+
+                  // === PRIORITY & PRICE RANGE (Top section) ===
+                  Text(
+                    strings.labelPriority.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: strings.labelPriority,
+                      isDense: true,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.priority_high, size: 20),
+                    ),
+                    initialValue: priority,
+                    items: [
+                      DropdownMenuItem(value: 'Baixa', child: Text(strings.priorityLow)),
+                      DropdownMenuItem(value: 'Média', child: Text(strings.priorityMedium)),
+                      DropdownMenuItem(value: 'Alta', child: Text(strings.priorityHigh)),
+                    ],
+                    onChanged: (val) => setState(() => priority = val!),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Text(
+                    strings.wishlistPriceRangeTitle.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          decoration: InputDecoration(
+                            labelText: strings.wishlistMinPrice,
+                            prefixText: 'R\$ ',
+                            isDense: true,
+                            border: const OutlineInputBorder(),
+                            helperText: strings.alertPriceDropHelper,
+                            helperMaxLines: 2,
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          onChanged: (val) {
+                            targetPriceMin = CurrencyFormatter.parseCurrencyOrDefault(val);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          decoration: InputDecoration(
+                            labelText: strings.wishlistMaxPrice,
+                            prefixText: 'R\$ ',
+                            isDense: true,
+                            border: const OutlineInputBorder(),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          onChanged: (val) {
+                            targetPriceMax = CurrencyFormatter.parseCurrencyOrDefault(val);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // === CARD DETAILS SECTION ===
+                  Text(
+                    strings.sectionCardInfo.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Condition
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: strings.wishlistDesiredCondition,
+                      isDense: true,
+                      border: const OutlineInputBorder(),
+                    ),
+                    initialValue: condition,
+                    items: [
+                      const DropdownMenuItem(value: 'Mint', child: Text('Mint (M)')),
+                      const DropdownMenuItem(value: 'Near Mint', child: Text('Near Mint (NM)')),
+                      const DropdownMenuItem(value: 'Slightly Played', child: Text('Slightly Played (SP)')),
+                      const DropdownMenuItem(value: 'Moderately Played', child: Text('Moderately Played (MP)')),
+                      const DropdownMenuItem(value: 'Heavily Played', child: Text('Heavily Played (HP)')),
+                      DropdownMenuItem(value: 'Damaged', child: Text(strings.isEn ? 'Damaged (DMG)' : 'Danificada (DMG)')),
+                      DropdownMenuItem(value: 'Graduada (PSA 10)', child: Text(strings.isEn ? 'Graded (PSA 10)' : 'Graduada (PSA 10)')),
+                      DropdownMenuItem(value: 'Graduada (PSA 9)', child: Text(strings.isEn ? 'Graded (PSA 9)' : 'Graduada (PSA 9)')),
+                      DropdownMenuItem(value: 'Any', child: Text(strings.wishlistAnyCondition)),
+                    ],
+                    onChanged: (val) => setState(() => condition = val!),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Language & Finish Row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            labelText: strings.wishlistDesiredLanguage,
+                            isDense: true,
+                            border: const OutlineInputBorder(),
+                          ),
+                          initialValue: language,
+                          items: [
+                            const DropdownMenuItem(
+                              value: 'PT',
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('🇧🇷', style: TextStyle(fontSize: 14)),
+                                  SizedBox(width: 6),
+                                  Text('PT-BR'),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'EN',
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('🇺🇸', style: TextStyle(fontSize: 14)),
+                                  const SizedBox(width: 6),
+                                  Text(strings.isEn ? 'English' : 'Inglês'),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'JP',
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text('🇯🇵', style: TextStyle(fontSize: 14)),
+                                  const SizedBox(width: 6),
+                                  Text(strings.isEn ? 'Japanese' : 'Japonês'),
+                                ],
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Any',
+                              child: Text(strings.wishlistAnyLanguage),
+                            ),
+                          ],
+                          onChanged: (val) => setState(() => language = val!),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            labelText: strings.wishlistDesiredFinish,
+                            isDense: true,
+                            border: const OutlineInputBorder(),
+                          ),
+                          initialValue: finish,
+                          items: [
+                            DropdownMenuItem(value: 'Regular', child: Text(strings.isEn ? 'Regular' : 'Normal')),
+                            const DropdownMenuItem(value: 'Reverse Holo', child: Text('Reverse Holo')),
+                            const DropdownMenuItem(value: 'Holofoil', child: Text('Holofoil')),
+                            const DropdownMenuItem(value: 'Secret Rare', child: Text('Secret Rare')),
+                            DropdownMenuItem(value: 'Any', child: Text(strings.wishlistAnyFinish)),
+                          ],
+                          onChanged: (val) => setState(() => finish = val!),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Badge preview
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          strings.isEn ? 'Card Badge Preview:' : 'Prévia dos Selos:',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (condition != 'Any')
+                          ConditionBadge(condition: condition, compact: true),
+                        if (condition != 'Any')
+                          const SizedBox(width: 6),
+                        if (language != 'Any')
+                          LanguageFlagBadge(language: language, compact: true, showCode: true),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Folder
+                  TextFormField(
+                    initialValue: folderName,
+                    decoration: InputDecoration(
+                      labelText: strings.wishlistFolderNameLabel,
+                      prefixIcon: const Icon(Icons.folder_outlined, size: 20),
+                      isDense: true,
+                      border: const OutlineInputBorder(),
+                    ),
+                    onChanged: (val) => folderName = val.trim().isEmpty ? 'Geral' : val.trim(),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Notes
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: strings.notesObservationsLabel,
+                      hintText: strings.notesObservationsHint,
+                      isDense: true,
+                      border: const OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                    onChanged: (val) => notes = val,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Actions
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(strings.cancel),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: FilledButton.icon(
+                          icon: const Icon(Icons.bookmark_add, size: 18),
+                          label: Text(strings.saveToWishlist),
+                          onPressed: () async {
+                            // Use max as the main target; fallback to min if max is 0
+                            final targetBrl = targetPriceMax > 0
+                                ? targetPriceMax
+                                : targetPriceMin;
+
+                            // Build notes with extra metadata
+                            final metaParts = <String>[];
+                            if (condition != 'Any' && condition != 'Near Mint') {
+                              metaParts.add('Condition: $condition');
+                            }
+                            if (language != 'Any' && language != 'PT') {
+                              metaParts.add('Language: $language');
+                            }
+                            if (finish != 'Any' && finish != 'Regular') {
+                              metaParts.add('Finish: $finish');
+                            }
+                            if (targetPriceMin > 0) {
+                              metaParts.add('Min: R\$ ${targetPriceMin.toStringAsFixed(2)}');
+                            }
+                            final combinedNotes = [
+                              ...metaParts,
+                              if (notes.trim().isNotEmpty) notes.trim(),
+                            ].join(' | ');
+
+                            await db.insertWishlistItem(
+                              WishlistItemsCompanion(
+                                id: drift.Value(const Uuid().v4()),
+                                cardApiId: drift.Value(card.id),
+                                name: drift.Value(card.name),
+                                number: drift.Value(card.number),
+                                setName: drift.Value(card.setName),
+                                imageUrl: drift.Value(card.imageUrlLarge.isNotEmpty ? card.imageUrlLarge : card.imageUrlSmall),
+                                targetPriceBrl: drift.Value(targetBrl),
+                                priority: drift.Value(priority),
+                                folderName: drift.Value(folderName),
+                                notes: drift.Value(combinedNotes),
+                                createdAt: drift.Value(DateTime.now()),
+                              ),
+                            );
+
+                            if (context.mounted) {
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(strings.cardAddedToWishlist(card.name))),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
               ),
-            ],
+            ),
           );
         },
       ),

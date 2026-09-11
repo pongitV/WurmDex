@@ -77,6 +77,134 @@ class LigaScraperService {
   /// Parses a Brazilian currency string like "R$ 1.450,90" or "45,50" into a double
   static double? parseBrlPrice(String? raw) => CurrencyFormatter.parseCurrency(raw);
 
+  /// Auto-detects the card language from explicit markers in a product title.
+  static String detectLanguageTag(String title) {
+    final lower = title.toLowerCase();
+    if (RegExp(r'\b(english|ingles|inglês|en)\b').hasMatch(lower)) return 'EN';
+    if (RegExp(r'\b(portuguese|portugues|português|brasil|bra|pt)\b').hasMatch(lower)) return 'PT';
+    if (RegExp(r'\b(japanese|japones|japonês|jap|jp)\b').hasMatch(lower)) return 'JP';
+    if (RegExp(r'\b(spanish|espanol|español|esp|es)\b').hasMatch(lower)) return 'ES';
+    if (RegExp(r'\b(french|frances|francês|fr)\b').hasMatch(lower)) return 'FR';
+    if (RegExp(r'\b(italian|italiano|it)\b').hasMatch(lower)) return 'IT';
+    if (RegExp(r'\b(german|alemao|alemão|de)\b').hasMatch(lower)) return 'DE';
+    if (RegExp(r'\b(korean|coreano|kor|ko)\b').hasMatch(lower)) return 'KO';
+    if (RegExp(r'\b(chinese|chines|chinês|zh|cn)\b').hasMatch(lower)) return 'CN';
+    return 'PT';
+  }
+
+  /// Auto-detects the TCG set/collection from keywords present in a product title.
+  /// Returns an empty string when no known collection keyword is found.
+  static String detectCollectionTag(String title) {
+    final lower = title.toLowerCase();
+
+    // Ordered from most specific to most generic so shorter tokens don't shadow longer ones.
+    const setKeywords = [
+      'prismatic evolutions',
+      'twilight masquerade',
+      'shrouded fable',
+      'destined rivals',
+      'northern lights',
+      'surging sparks',
+      'stellar crown',
+      'temporal forces',
+      'paradox rift',
+      'paldean fates',
+      'obsidian flames',
+      'scarlet & violet',
+      'scarlet and violet',
+      'fragmented destiny',
+      'crown jewel',
+      'pendulum arc',
+      'crown zenith',
+      'silver tempest',
+      'lost origin',
+      'astral radiance',
+      'brilliant stars',
+      'fusion strike',
+      'chilling reign',
+      'evolving skies',
+      'battle styles',
+      'vivid voltage',
+      'shining fates',
+      'darkness ablaze',
+      'rebel clash',
+      'champions path',
+      'sword & shield',
+      'sword and shield',
+      'hidden fates',
+      'detective pikachu',
+      'team up',
+      'cosmic eclipse',
+      'unbroken bonds',
+      'unified minds',
+      'celestial storm',
+      'forbidden light',
+      'ultra prism',
+      'crimson invasion',
+      'burning shadows',
+      'guardians rising',
+      'sun & moon',
+      'sun and moon',
+      'steam siege',
+      'fates collide',
+      'roaring skies',
+      'ancient origins',
+      'primal clash',
+      'phantom forces',
+      'furious fists',
+      'legendary treasures',
+      'boundaries crossed',
+      'plasma storm',
+      'plasma blast',
+      'plasma freeze',
+      'dragons exalted',
+      'next destinies',
+      'noble victories',
+      'emerging powers',
+      'black & white',
+      'black and white',
+      'mysterious treasures',
+      'great encounters',
+      'secret wonders',
+      'diamond & pearl',
+      'diamond and pearl',
+      'power keepers',
+      'crystal guardians',
+      'dragon frontiers',
+      'holon phantoms',
+      'fire red & leaf green',
+      'fire red and leaf green',
+      'ruby & sapphire',
+      'ruby and sapphire',
+      'legendary collection',
+      'celebrations',
+      'generations',
+      'evolutions',
+      'base set',
+      'jungle',
+      'fossil',
+    ];
+
+    for (final keyword in setKeywords) {
+      if (lower.contains(keyword)) {
+        // Capitalize nicely: "Scarlet & Violet", "Sword & Shield", etc.
+        return keyword
+            .split(' ')
+            .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
+            .join(' ');
+      }
+    }
+
+    // Numeric set codes like "SV1a 151" or standalone "151"
+    final match151 = RegExp(r'\b151\b').firstMatch(lower);
+    if (match151 != null) return '151';
+
+    return '';
+  }
+
+  static ({String collection, String language}) detectTags(String title) =>
+      (collection: detectCollectionTag(title), language: detectLanguageTag(title));
+
   /// Scrapes product details, prices, stock and pre-sale status from a LigaPokemon page.
   /// Uses Jina Reader proxy with tool User-Agent to reliably bypass Cloudflare anti-bot.
   static Future<LigaScrapedProduct?> fetchProductDetails(String input) async {
@@ -499,6 +627,7 @@ class LigaScraperService {
     }
 
     // Update database record
+    final tags = detectTags(product.title.isNotEmpty ? product.title : alert.title);
     await db.updateLigaAlert(
       alert.toCompanion(true).copyWith(
         currentLowestPrice: Value(price),
@@ -514,6 +643,8 @@ class LigaScraperService {
         imageUrl: Value(product.imageUrl.isNotEmpty ? product.imageUrl : alert.imageUrl),
         lastCheckedAt: Value(now),
         lastNotifiedAt: shouldNotify ? Value(now) : const Value.absent(),
+        collectionTag: Value(alert.collectionTag.isNotEmpty ? alert.collectionTag : tags.collection),
+        languageTag: Value(alert.languageTag.isNotEmpty ? alert.languageTag : tags.language),
       ),
     );
 

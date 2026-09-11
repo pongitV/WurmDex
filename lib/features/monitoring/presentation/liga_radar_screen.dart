@@ -4,11 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/database/database_provider.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../core/providers/card_scale_provider.dart';
+import '../../../core/providers/card_view_mode_provider.dart';
+import '../../../core/providers/grid_composition_provider.dart';
 import '../../../core/services/app_preferences_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/marketplace_url_helper.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_network_image.dart';
+import '../../../core/widgets/app_overflow_menu.dart';
 import '../services/liga_scraper_service.dart';
 import 'widgets/add_edit_liga_alert_dialog.dart';
 import 'widgets/radar_background_settings_sheet.dart';
@@ -29,6 +33,8 @@ class LigaRadarScreen extends ConsumerStatefulWidget {
 
 class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
   LigaFilterType _filterType = LigaFilterType.all;
+  String? _collectionFilter;
+  String? _languageFilter;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isCheckingAll = false;
@@ -118,18 +124,34 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
     try {
       final result = await LigaScraperService.checkAlert(alert: alert, db: db, notify: true);
       if (mounted) {
+        final theme = Theme.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              result.isInRange
-                  ? (strings.isEn
-                      ? '🎯 ${alert.title}: Available in target range!'
-                      : '🎯 ${alert.title}: Disponível na faixa desejada!')
-                  : (strings.isEn
-                      ? '🔍 ${alert.title}: Lowest price updated.'
-                      : '🔍 ${alert.title}: Menor preço atualizado.'),
+            content: Row(
+              children: [
+                Icon(
+                  result.isInRange ? Icons.check_circle : Icons.search,
+                  size: 20,
+                  color: result.isInRange ? Colors.green : theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    result.isInRange
+                        ? '${alert.title}: ${strings.statusInRange}'
+                        : '${alert.title}: ${strings.lowestPriceUpdatedText}',
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(milliseconds: 1600),
           ),
         );
       }
@@ -149,10 +171,32 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
     try {
       final count = await LigaScraperService.checkAllActiveAlerts(db: db, notify: true);
       if (mounted) {
+        final theme = Theme.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(strings.alertsCheckedSuccess(count)),
+            content: Row(
+              children: [
+                Icon(
+                  count > 0 ? Icons.check_circle : Icons.info_outline,
+                  size: 20,
+                  color: count > 0 ? Colors.green : theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    strings.alertsCheckedSuccess(count),
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(milliseconds: 2000),
           ),
         );
       }
@@ -207,6 +251,11 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
     final strings = getStrings(ref.watch(languageProvider));
     final alertsAsync = ref.watch(ligaAlertsStreamProvider);
 
+    // Watch display providers so the list/grid and scale react to the menu.
+    final cardScale = ref.watch(collectionCardScaleProvider);
+    ref.watch(gridCompositionProvider);
+    final viewMode = ref.watch(cardViewModeProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -227,28 +276,9 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: _isCheckingAll
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.sync),
-            tooltip: strings.btnCheckAllNow,
-            onPressed: _isCheckingAll ? null : _checkAllItems,
-          ),
-          // Background monitoring settings (single icon; reflects enabled state)
-          IconButton(
-            icon: Icon(
-              Icons.schedule,
-              size: 24,
-              color: AppPreferencesService.isBackgroundLigaMonitoringEnabled()
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurfaceVariant,
-            ),
-            tooltip: strings.radarBackgroundSettingsTooltip,
-            onPressed: _openBackgroundSettings,
+          AppOverflowMenu(
+            scaleTarget: CardScaleTarget.collection,
+            showCurrency: false,
           ),
           IconButton(
             icon: Icon(Icons.add_circle, color: theme.colorScheme.primary, size: 28),
@@ -290,6 +320,12 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                 return false;
               }
             }
+            if (_collectionFilter != null && a.collectionTag != _collectionFilter) {
+              return false;
+            }
+            if (_languageFilter != null && a.languageTag != _languageFilter) {
+              return false;
+            }
             switch (_filterType) {
               case LigaFilterType.inRange:
                 return a.isAvailableInRange;
@@ -302,11 +338,40 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
             }
           }).toList();
 
+          // Distinct collections and languages for the dropdown filters
+          final collections = alerts.map((a) => a.collectionTag).where((c) => c.isNotEmpty).toSet().toList()..sort();
+          final languages = alerts.map((a) => a.languageTag).where((c) => c.isNotEmpty).toSet().toList()..sort();
+
           return Column(
             children: [
-              // Top KPI cards
+              // Search bar at the top, below the title/buttons
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: strings.filterProductsHint,
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                ),
+              ),
+
+              // KPI banners with the sync/schedule actions beside them
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                 child: Row(
                   children: [
                     Expanded(
@@ -342,65 +407,104 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                 ),
               ),
 
-              // Search Bar & Filter Chips
+              // Action buttons (check all + schedule) grouped with the KPIs
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: strings.filterProductsHint,
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                          )
-                        : null,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                ),
-              ),
-
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                 child: Row(
                   children: [
-                    FilterChip(
-                      label: Text(strings.filterAllAlerts),
-                      selected: _filterType == LigaFilterType.all,
-                      onSelected: (_) => setState(() => _filterType = LigaFilterType.all),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: _isCheckingAll
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.sync, size: 18),
+                        label: Text(strings.btnCheckAllNow),
+                        onPressed: _isCheckingAll ? null : _checkAllItems,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    FilterChip(
-                      avatar: const Icon(Icons.check_circle, size: 16, color: Colors.green),
-                      label: Text(strings.filterInRangeAlerts),
-                      selected: _filterType == LigaFilterType.inRange,
-                      onSelected: (_) => setState(() => _filterType = LigaFilterType.inRange),
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: Text(strings.filterPreSaleAlerts),
-                      selected: _filterType == LigaFilterType.preSale,
-                      onSelected: (_) => setState(() => _filterType = LigaFilterType.preSale),
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: Text(strings.filterActiveAlerts),
-                      selected: _filterType == LigaFilterType.active,
-                      onSelected: (_) => setState(() => _filterType = LigaFilterType.active),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: Icon(
+                          Icons.schedule,
+                          size: 18,
+                          color: AppPreferencesService.isBackgroundLigaMonitoringEnabled()
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        label: Text(strings.radarBackgroundSettings),
+                        onPressed: _openBackgroundSettings,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
 
-              // Monitored items list
+              // Filter dropdowns
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildFilterDropdown(
+                        value: _filterType.name,
+                        icon: Icons.filter_alt_outlined,
+                        items: [
+                          DropdownMenuItem(value: LigaFilterType.all.name, child: Text(strings.filterAllAlerts)),
+                          DropdownMenuItem(value: LigaFilterType.inRange.name, child: Text(strings.filterInRangeAlerts)),
+                          DropdownMenuItem(value: LigaFilterType.preSale.name, child: Text(strings.filterPreSaleAlerts)),
+                          DropdownMenuItem(value: LigaFilterType.active.name, child: Text(strings.filterActiveAlerts)),
+                        ],
+                        onChanged: (val) {
+                          if (val == null) return;
+                          setState(() {
+                            _filterType = LigaFilterType.values.firstWhere((e) => e.name == val);
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      if (collections.isNotEmpty)
+                        _buildFilterDropdown(
+                          value: _collectionFilter,
+                          icon: Icons.style_outlined,
+                          hint: strings.filterByCollection,
+                          items: [
+                            DropdownMenuItem<String?>(value: null, child: Text(strings.filterAllCollections)),
+                            ...collections.map((c) => DropdownMenuItem<String?>(value: c, child: Text(c))),
+                          ],
+                          onChanged: (val) => setState(() => _collectionFilter = val),
+                        ),
+                      if (languages.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        _buildFilterDropdown(
+                          value: _languageFilter,
+                          icon: Icons.language,
+                          hint: strings.filterByLanguage,
+                          items: [
+                            DropdownMenuItem<String?>(value: null, child: Text(strings.filterAllLanguages)),
+                            ...languages.map((c) => DropdownMenuItem<String?>(value: c, child: Text(c))),
+                          ],
+                          onChanged: (val) => setState(() => _languageFilter = val),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+
+              // Monitored items list (grid or list, responsive to scale/grid settings)
               Expanded(
                 child: filtered.isEmpty
                     ? Center(
@@ -409,21 +513,97 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                           style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                         ),
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 100),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final alert = filtered[index];
-                          final isChecking = _checkingItemIds.contains(alert.id);
-                          return _buildAlertCard(theme, strings, alert, isChecking);
-                        },
-                      ),
+                    : viewMode == CardViewMode.list
+                        ? ListView.builder(
+                            padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 100),
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) {
+                              final alert = filtered[index];
+                              final isChecking = _checkingItemIds.contains(alert.id);
+                              return _buildAlertCard(theme, strings, alert, isChecking);
+                            },
+                          )
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              final crossAxisCount = resolveCardGridCrossAxisCount(
+                                context: context,
+                                ref: ref,
+                                availableWidth: constraints.maxWidth,
+                                cardScale: cardScale,
+                              );
+
+                              // Scale grows the tile; the card content fills it naturally.
+                              final adjustedAspect =
+                                  (0.70 * (1.15 / cardScale)).clamp(0.55, 1.10).toDouble();
+
+                              return GridView.builder(
+                                padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 100),
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  childAspectRatio: adjustedAspect,
+                                  crossAxisSpacing: 10,
+                                  mainAxisSpacing: 10,
+                                ),
+                                itemCount: filtered.length,
+                                itemBuilder: (context, index) {
+                                  final alert = filtered[index];
+                                  final isChecking = _checkingItemIds.contains(alert.id);
+                                  return _buildAlertGridCard(
+                                    theme,
+                                    strings,
+                                    alert,
+                                    isChecking,
+                                    cardScale: cardScale,
+                                  );
+                                },
+                              );
+                            },
+                          ),
               ),
             ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text(strings.errorMessage(err.toString()))),
+      ),
+    );
+  }
+
+  Widget _buildFilterDropdown({
+    required String? value,
+    required IconData icon,
+    required List<DropdownMenuItem<String?>> items,
+    required ValueChanged<String?> onChanged,
+    String? hint,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 180),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String?>(
+          value: value,
+          hint: hint != null
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 4),
+                    Flexible(child: Text(hint, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12))),
+                  ],
+                )
+              : null,
+          isDense: true,
+          icon: const Icon(Icons.arrow_drop_down, size: 18),
+          items: items.isEmpty ? null : items,
+          onChanged: onChanged,
+          style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface),
+        ),
       ),
     );
   }
@@ -468,6 +648,160 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
     );
   }
 
+  (Color, String) _resolveStatus(LigaPriceAlert alert, double? price, AppStrings strings) {
+    if (alert.isAvailableInRange) {
+      return (Colors.green, strings.statusInRange);
+    }
+    if (price != null && price > 0) {
+      if (alert.minTargetPrice > 0 && price < alert.minTargetPrice) {
+        return (Colors.blue, strings.statusBelowRange);
+      }
+      return (Colors.amber.shade800, strings.statusAboveRange);
+    }
+    return (Colors.grey, alert.lastCheckedAt == null ? strings.statusPending : strings.statusOutOfStock);
+  }
+
+  Widget _buildAlertGridCard(
+    ThemeData theme,
+    AppStrings strings,
+    LigaPriceAlert alert,
+    bool isChecking, {
+    required double cardScale,
+  }) {
+    final price = alert.currentLowestPrice;
+    final priceText = (price != null && price > 0)
+        ? CurrencyFormatter.toBrl(price)
+        : (alert.lastCheckedAt == null ? strings.statusPending : strings.statusOutOfStock);
+    final (statusColor, statusText) = _resolveStatus(alert, price, strings);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: alert.isActive ? 3 : 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: alert.isActive ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
+          width: alert.isActive ? 1.5 : 1,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _openEditDialog(alert),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Product image filling the available tile space
+              Expanded(
+                child: Opacity(
+                  opacity: alert.isActive ? 1.0 : 0.45,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: AppNetworkImage(
+                      imageUrl: alert.imageUrl,
+                      fit: BoxFit.contain,
+                      borderRadius: BorderRadius.circular(10),
+                      fallbackIcon: Icons.inventory_2_outlined,
+                      fallbackIconSize: 36,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                alert.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          statusText,
+                          style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 10),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: alert.isAvailableInRange
+                          ? Colors.green.withValues(alpha: 0.12)
+                          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: alert.isAvailableInRange
+                            ? Colors.green.withValues(alpha: 0.4)
+                            : theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        priceText,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color: alert.isAvailableInRange
+                              ? Colors.green.shade700
+                              : (price != null && price > 0 ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              // Bottom actions: refresh + monitor switch
+              Row(
+                children: [
+                  IconButton(
+                    icon: isChecking
+                        ? const SizedBox(
+                            width: 15,
+                            height: 15,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh, size: 17),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(2),
+                    constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                    tooltip: strings.refreshTooltip,
+                    onPressed: isChecking ? null : () => _checkSingleItem(alert),
+                  ),
+                  const Spacer(),
+                  _RadarActiveToggle(
+                    value: alert.isActive,
+                    accentColor: theme.colorScheme.primary,
+                    size: 24,
+                    onChanged: () => _toggleActive(alert),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildAlertCard(
     ThemeData theme,
     AppStrings strings,
@@ -484,164 +818,171 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
         ? alert.currentStoreName
         : (price != null && price > 0 ? strings.marketplaceFallback : strings.statusOutOfStock);
 
-    Color statusColor;
-    String statusText;
-    if (alert.isAvailableInRange) {
-      statusColor = Colors.green;
-      statusText = strings.statusInRange;
-    } else if (price != null && price > 0) {
-      if (alert.minTargetPrice > 0 && price < alert.minTargetPrice) {
-        statusColor = Colors.blue;
-        statusText = strings.statusBelowRange;
-      } else {
-        statusColor = Colors.amber.shade800;
-        statusText = strings.statusAboveRange;
-      }
-    } else {
-      statusColor = Colors.grey;
-      statusText = alert.lastCheckedAt == null ? strings.statusPending : strings.statusOutOfStock;
-    }
+    final (statusColor, statusText) = _resolveStatus(alert, price, strings);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: alert.isAvailableInRange ? 3 : 1,
+      elevation: alert.isActive ? 3 : 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: alert.isAvailableInRange ? Colors.green.shade400 : theme.colorScheme.outlineVariant,
-          width: alert.isAvailableInRange ? 1.5 : 1,
+          color: alert.isActive ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
+          width: alert.isActive ? 1.5 : 1,
         ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Row: Image, Title, Pre-Sale & Status Badges
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Product Thumbnail / Icon
-                Stack(
-                  children: [
-                    Container(
-                      width: 66,
-                      height: 66,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        border: Border.all(
-                          color: alert.isAvailableInRange ? Colors.green.shade300 : theme.colorScheme.outlineVariant,
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: AppNetworkImage(
-                        imageUrl: alert.imageUrl,
-                        fit: BoxFit.contain,
-                        borderRadius: BorderRadius.circular(12),
-                        fallbackIcon: Icons.inventory_2_outlined,
-                        fallbackIconSize: 32,
-                      ),
-                    ),
-                    if (alert.isPreSale)
-                      Positioned(
-                        right: 2,
-                        bottom: 2,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.deepPurple,
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.white, width: 1.5),
-                          ),
-                          child: Text(
-                            strings.statusPreSale.toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+            // Product image at the top of the widget (size no longer limited
+            // by an overlay)
+            Center(
+              child: Container(
+                width: 110,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  border: Border.all(
+                    color: alert.isActive ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(width: 12),
+                child: AppNetworkImage(
+                  imageUrl: alert.imageUrl,
+                  fit: BoxFit.contain,
+                  borderRadius: BorderRadius.circular(14),
+                  fallbackIcon: Icons.inventory_2_outlined,
+                  fallbackIconSize: 44,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
 
-                // Title and badges
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        alert.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          // Status Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: statusColor.withValues(alpha: 0.5)),
-                            ),
-                            child: Text(
-                              statusText,
-                              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 10),
-                            ),
-                          ),
+            // Last checked: below the image, above the name
+            Text(
+              alert.lastCheckedAt != null
+                  ? '${strings.lastCheckedPrefix}${alert.lastCheckedAt!.hour.toString().padLeft(2, '0')}:${alert.lastCheckedAt!.minute.toString().padLeft(2, '0')}'
+                  : '${strings.lastCheckedPrefix}${strings.neverChecked}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 4),
 
-                          // Pre-Sale Indicator if current offer is pre-sale
-                          if (alert.isPreSale)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.deepPurple,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                strings.statusPreSale.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
+            // Name below the image
+            Text(
+              alert.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
 
-                          // Allow Pre-Sale Tag
-                          if (alert.allowPreSale && !alert.isPreSale)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                strings.preSaleAcceptedTag,
-                                style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurfaceVariant),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
+            // Badges: status / pre-sale / allow pre-sale / collection / language
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                // Status Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.5)),
+                  ),
+                  child: Text(
+                    statusText,
+                    style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 10),
                   ),
                 ),
 
-                // Active Switch
-                Switch(
-                  value: alert.isActive,
-                  onChanged: (_) => _toggleActive(alert),
-                  activeTrackColor: theme.colorScheme.primary.withValues(alpha: 0.4),
-                  activeThumbColor: theme.colorScheme.primary,
-                ),
+                // Pre-Sale Indicator if current offer is pre-sale
+                if (alert.isPreSale)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurple,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      strings.statusPreSale.toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+
+                // Allow Pre-Sale Tag
+                if (alert.allowPreSale && !alert.isPreSale)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      strings.preSaleAcceptedTag,
+                      style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+
+                // Collection tag
+                if (alert.collectionTag.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.style_outlined, size: 11, color: theme.colorScheme.primary),
+                        const SizedBox(width: 3),
+                        Text(
+                          alert.collectionTag,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // Language tag
+                if (alert.languageTag.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.tertiary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.language, size: 11, color: theme.colorScheme.tertiary),
+                        const SizedBox(width: 3),
+                        Text(
+                          alert.languageTag,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.tertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
 
@@ -792,46 +1133,25 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  // Botão para abrir oferta no navegador
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: () => _openExternalLiga(alert.targetUrl),
-                      icon: const Icon(Icons.open_in_new, size: 16),
-                      label: Text(
-                        strings.openOfferInBrowser,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: alert.isAvailableInRange
-                            ? const Color(0xFF1B5E20)
-                            : (theme.brightness == Brightness.dark
-                                ? theme.colorScheme.primary
-                                : const Color(0xFF1565C0)),
-                        foregroundColor: Colors.white,
-                        elevation: 1,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
 
             const SizedBox(height: 10),
 
-            // Bottom Actions Bar
+            // Bottom Actions Bar (active check-toggle + item actions)
             Row(
               children: [
-                Text(
-                  alert.lastCheckedAt != null
-                      ? '${strings.lastCheckedPrefix}${alert.lastCheckedAt!.hour.toString().padLeft(2, '0')}:${alert.lastCheckedAt!.minute.toString().padLeft(2, '0')}'
-                      : '${strings.lastCheckedPrefix}${strings.neverChecked}',
-                  style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
-                ),
                 const Spacer(),
+
+                // Check-toggle: white with black check when ON, black with
+                // white X when OFF; accent border while active
+                _RadarActiveToggle(
+                  value: alert.isActive,
+                  accentColor: theme.colorScheme.primary,
+                  onChanged: () => _toggleActive(alert),
+                ),
+                const SizedBox(width: 12),
 
                 // Check single item now button
                 IconButton(
@@ -846,9 +1166,9 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                   onPressed: isChecking ? null : () => _checkSingleItem(alert),
                 ),
 
-                // Open in Liga button
+                // Open in Liga button (now white)
                 IconButton(
-                  icon: const Icon(Icons.open_in_new, size: 20, color: Colors.blue),
+                  icon: const Icon(Icons.open_in_new, size: 20, color: Colors.white),
                   tooltip: strings.openInLiga,
                   onPressed: () => _openExternalLiga(alert.targetUrl),
                 ),
@@ -869,6 +1189,53 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Check-style toggle used by the Liga Radar product widgets.
+///
+/// White with a black check (plus an accent border) when ON; dark with a
+/// white X when OFF.
+class _RadarActiveToggle extends StatelessWidget {
+  const _RadarActiveToggle({
+    required this.value,
+    required this.accentColor,
+    this.onChanged,
+    this.size = 26,
+  });
+
+  final bool value;
+  final Color accentColor;
+  final VoidCallback? onChanged;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onChanged,
+      customBorder: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: value ? Colors.white : Colors.black,
+          borderRadius: BorderRadius.circular(8),
+          border: value ? Border.all(color: accentColor, width: 2) : null,
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 3,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Icon(
+          value ? Icons.check : Icons.close,
+          size: size * 0.6,
+          color: value ? Colors.black : Colors.white,
         ),
       ),
     );

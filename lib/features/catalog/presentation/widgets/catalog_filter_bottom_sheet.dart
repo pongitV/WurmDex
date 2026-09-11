@@ -65,6 +65,17 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
     {'label': isEn ? 'Secret Rare' : 'Secreta Dourada', 'value': 'Secret Rare'},
   ];
 
+  List<Map<String, String>> _getLanguages(bool isEn) => [
+    {'label': isEn ? 'English' : 'Inglês', 'value': 'en'},
+    {'label': 'Português', 'value': 'pt'},
+    {'label': 'Español', 'value': 'es'},
+    {'label': 'Français', 'value': 'fr'},
+    {'label': 'Deutsch', 'value': 'de'},
+    {'label': 'Italiano', 'value': 'it'},
+    {'label': '日本語', 'value': 'ja'},
+    {'label': '한국어', 'value': 'ko'},
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -78,6 +89,7 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
     final isEn = strings.isEn;
     final types = _getTypes(isEn);
     final rarities = _getRarities(isEn);
+    final languages = _getLanguages(isEn);
 
     return SafeArea(
       child: Container(
@@ -195,6 +207,37 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
                             _state = _state.copyWith(
                               selectedRarity: selected ? r['value'] : null,
                               clearRarity: !selected,
+                            );
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Section: Idioma da Carta
+                  Text(
+                    isEn ? 'CARD LANGUAGE' : 'IDIOMA DA CARTA',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: languages.map((l) {
+                      final isSelected = _state.selectedLanguage == l['value'];
+                      return FilterChip(
+                        label: Text(l['label']!),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() {
+                            _state = _state.copyWith(
+                              selectedLanguage: selected ? l['value'] : null,
+                              clearLanguage: !selected,
                             );
                           });
                         },

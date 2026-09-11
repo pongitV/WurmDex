@@ -1,6 +1,8 @@
+import '../../../core/network/dio_client.dart';
 import '../models/pokedex_entry.dart';
 
 class PokedexData {
+  /// Bundled National Pokédex (id, name, types, generation) for instant display.
   static const List<PokedexEntry> entries = [
     PokedexEntry(id: 1, name: 'Bulbasaur', types: ['Grass', 'Poison'], generation: 1),
     PokedexEntry(id: 2, name: 'Ivysaur', types: ['Grass', 'Poison'], generation: 1),
@@ -1028,4 +1030,102 @@ class PokedexData {
     PokedexEntry(id: 1024, name: 'Terapagos', types: ['Normal'], generation: 9),
     PokedexEntry(id: 1025, name: 'Pecharunt', types: ['Poison', 'Ghost'], generation: 9),
   ];
+
+  /// Snapshot currently shown by the WorldDex (bundled list, upgraded with
+  /// fresh billsarchive.com data after a refresh completes).
+  static List<PokedexEntry>? _resolved;
+
+  /// The authoritative list used by the WorldDex screens.
+  static List<PokedexEntry> get resolved => _resolved ?? entries;
+
+  /// Fetches the National Pokédex from billsarchive.com's
+  /// `/pokemon-index.json` (every Pokémon, generation & types) and merges it
+  /// over the bundled list, keeping the exact local display names and adding
+  /// any new Pokémon (e.g. Gen X starters). Falls back silently to the bundled
+  /// list when the device is offline.
+  static Future<void> refresh() async {
+    try {
+      final response = await DioClient.instance.get(
+        'https://billsarchive.com/pokemon-index.json',
+      );
+      final data = response.data;
+      if (data is! Map<String, dynamic>) return;
+      final remoteList = data['pokemon'] as List<dynamic>?;
+      if (remoteList == null || remoteList.isEmpty) return;
+
+      final localById = <int, PokedexEntry>{for (final e in entries) e.id: e};
+      final merged = <PokedexEntry>[];
+
+      for (final item in remoteList) {
+        if (item is! Map<String, dynamic>) continue;
+        final id = (item['id'] as num?)?.toInt() ?? 0;
+        if (id <= 0) continue;
+
+        final local = localById[id];
+        final name = local?.name ?? _toDisplayName(item['name']?.toString() ?? '');
+        final types = local?.types ?? _toTypes(item['types']);
+        final generation = local?.generation ?? _romanToGeneration(item['gen']?.toString() ?? '');
+
+        if (name.isNotEmpty && types.isNotEmpty) {
+          merged.add(PokedexEntry(id: id, name: name, types: types, generation: generation));
+        }
+      }
+
+      if (merged.isNotEmpty) {
+        merged.sort((a, b) => a.id.compareTo(b.id));
+        _resolved = merged;
+      }
+    } catch (_) {
+      // Offline or temporary failure: keep the bundled list.
+    }
+  }
+
+  /// Maps billsarchive's lowercase slugs to the display names used by the app,
+  /// keeping the exact spelling (symbols, apostrophes) that card searches rely on.
+  static String _toDisplayName(String raw) {
+    const specials = <String, String>{
+      'nidoran-f': 'Nidoran♀',
+      'nidoran-m': 'Nidoran♂',
+      'mr-mime': 'Mr. Mime',
+      'mr-rime': 'Mr. Rime',
+      'mime-jr': 'Mime Jr.',
+      'farfetchd': "Farfetch'd",
+      'sirfetchd': "Sirfetch'd",
+      'type-null': 'Type: Null',
+      'ho-oh': 'Ho-Oh',
+      'porygon-z': 'Porygon-Z',
+      'jangmo-o': 'Jangmo-o',
+      'hakamo-o': 'Hakamo-o',
+      'kommo-o': 'Kommo-o',
+    };
+    if (specials.containsKey(raw)) return specials[raw]!;
+    return raw
+        .split('-')
+        .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
+        .join('-');
+  }
+
+  static List<String> _toTypes(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw.map((t) {
+      final s = t?.toString() ?? '';
+      return s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+    }).toList();
+  }
+
+  static int _romanToGeneration(String roman) {
+    const romans = <String, int>{
+      'I': 1,
+      'II': 2,
+      'III': 3,
+      'IV': 4,
+      'V': 5,
+      'VI': 6,
+      'VII': 7,
+      'VIII': 8,
+      'IX': 9,
+      'X': 10,
+    };
+    return romans[roman.trim().toUpperCase()] ?? 0;
+  }
 }

@@ -11,7 +11,6 @@ import '../../../../core/widgets/condition_badge.dart';
 import '../../../../core/widgets/holographic_card_view.dart';
 import '../../../../core/widgets/language_flag_badge.dart';
 import '../../../../core/widgets/pokemon_card_image.dart';
-import '../../../../core/widgets/app_overflow_menu.dart';
 import '../services/pricing_service.dart';
 import '../../catalog/models/pokemon_card_item.dart';
 import '../../catalog/presentation/widgets/card_quick_action_sheet.dart';
@@ -114,7 +113,11 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
             tooltip: _strings.quickActionsTooltip,
             onPressed: () => CardQuickActionSheet.show(context, card),
           ),
-          const AppOverflowMenu(showCurrency: true),
+          IconButton(
+            icon: const Icon(Icons.currency_exchange),
+            tooltip: isUsd ? _strings.switchToBrl : _strings.switchToUsd,
+            onPressed: () => ref.read(currencyProvider.notifier).toggleCurrency(),
+          ),
           const SizedBox(width: 8),
         ],
       ),

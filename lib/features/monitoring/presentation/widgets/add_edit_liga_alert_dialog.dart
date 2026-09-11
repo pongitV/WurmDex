@@ -32,6 +32,8 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
   late final TextEditingController _currentPriceController;
   late final TextEditingController _minPriceController;
   late final TextEditingController _maxPriceController;
+  late final TextEditingController _collectionController;
+  late final TextEditingController _languageController;
 
   late bool _allowPreSale;
   bool _isLoadingPreview = false;
@@ -62,6 +64,8 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
           ? alert.maxTargetPrice.toStringAsFixed(2).replaceAll('.', ',')
           : '',
     );
+    _collectionController = TextEditingController(text: alert?.collectionTag ?? '');
+    _languageController = TextEditingController(text: alert?.languageTag ?? '');
     _allowPreSale = alert?.allowPreSale ?? true;
     _previewImageUrl = alert?.imageUrl;
     _previewLowestPrice = alert?.currentLowestPrice;
@@ -75,6 +79,8 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
     _currentPriceController.dispose();
     _minPriceController.dispose();
     _maxPriceController.dispose();
+    _collectionController.dispose();
+    _languageController.dispose();
     super.dispose();
   }
 
@@ -134,6 +140,15 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
 
           if (product.isPreSale) {
             _allowPreSale = true;
+          }
+
+          // Auto-detect collection & language from the product title when not manually set
+          final tags = LigaScraperService.detectTags(product.title);
+          if (_collectionController.text.trim().isEmpty) {
+            _collectionController.text = tags.collection;
+          }
+          if (_languageController.text.trim().isEmpty) {
+            _languageController.text = tags.language;
           }
 
           if (product.lowestPrice != null && product.lowestPrice! > 0) {
@@ -208,6 +223,8 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
       isActive: drift.Value(widget.existingAlert?.isActive ?? true),
       lastCheckedAt: drift.Value(DateTime.now()),
       createdAt: drift.Value(widget.existingAlert?.createdAt ?? DateTime.now()),
+      collectionTag: drift.Value(_collectionController.text.trim()),
+      languageTag: drift.Value(_languageController.text.trim()),
     );
 
     if (isEditing) {
@@ -335,6 +352,40 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
                       }
                       return null;
                     },
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Collection & Language Tags (auto-detected, manually editable)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _collectionController,
+                          decoration: InputDecoration(
+                            labelText: widget.strings.collectionLabel,
+                            hintText: widget.strings.collectionHint,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            prefixIcon: const Icon(Icons.style_outlined, size: 20),
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _languageController,
+                          decoration: InputDecoration(
+                            labelText: widget.strings.languageLabel,
+                            hintText: widget.strings.languageHint,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            prefixIcon: const Icon(Icons.language, size: 20),
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
                   // Scraped Preview Card

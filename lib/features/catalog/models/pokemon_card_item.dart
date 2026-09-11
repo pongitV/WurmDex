@@ -14,6 +14,7 @@ class PokemonCardItem {
   final List<String> types;
   final String supertype;
   final String artist;
+  final String language; // e.g. 'en', 'pt'
   final double? tcgMarketUsd;
   final double? tcgMidUsd;
   final double? tcgLowUsd;
@@ -31,6 +32,7 @@ class PokemonCardItem {
     required this.types,
     required this.supertype,
     required this.artist,
+    this.language = 'en',
     this.tcgMarketUsd,
     this.tcgMidUsd,
     this.tcgLowUsd,
@@ -101,6 +103,7 @@ class PokemonCardItem {
     String? imageUrlLarge,
     List<String>? types,
     String? artist,
+    String? language,
     double? tcgMarketUsd,
     double? tcgMidUsd,
     double? tcgLowUsd,
@@ -118,6 +121,7 @@ class PokemonCardItem {
       imageUrlLarge: imageUrlLarge ?? this.imageUrlLarge,
       types: types ?? this.types,
       artist: artist ?? this.artist,
+      language: language ?? this.language,
       tcgMarketUsd: tcgMarketUsd ?? this.tcgMarketUsd,
       tcgMidUsd: tcgMidUsd ?? this.tcgMidUsd,
       tcgLowUsd: tcgLowUsd ?? this.tcgLowUsd,
@@ -165,7 +169,8 @@ class PokemonCardItem {
     );
   }
 
-  factory PokemonCardItem.fromTcgdex(Map<String, dynamic> json, {String? setName}) {
+  factory PokemonCardItem.fromTcgdex(Map<String, dynamic> json,
+      {String? setName, String language = 'en'}) {
     final id = json['id'] as String? ?? '';
     final localId = json['localId']?.toString() ?? '';
     final name = json['name'] as String? ?? 'Card';
@@ -197,6 +202,7 @@ class PokemonCardItem {
       types: types,
       supertype: category,
       artist: json['illustrator']?.toString() ?? '',
+      language: language,
       tcgMarketUsd: market,
       tcgMidUsd: mid,
       tcgLowUsd: low,

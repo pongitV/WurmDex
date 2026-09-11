@@ -32,6 +32,13 @@ class TcgSetsService {
         final List list = response.data as List;
         final List<TcgSetItem> items = [];
 
+        // Upcoming English releases from Bill's Archive (relies on real dates).
+        final upcomingEntries = await _fetchBillsarchiveUpcoming();
+        final upcomingNameSet = upcomingEntries
+            .map((e) => _normalizeSetName(e['name']?.toString() ?? ''))
+            .where((n) => n.isNotEmpty)
+            .toSet();
+
         for (final raw in list) {
           if (raw is Map<String, dynamic>) {
             final id = raw['id']?.toString() ?? '';
@@ -43,7 +50,8 @@ class TcgSetsService {
             }
 
             final inferredYear = TcgSetsData.setYearMap[id] ?? _inferYearFromId(id);
-            final isUpcoming = TcgSetsData.upcomingSetIds.contains(id) || inferredYear >= 2026;
+            final isUpcoming = TcgSetsData.upcomingSetIds.contains(id) ||
+                upcomingNameSet.contains(_normalizeSetName(name));
 
             items.add(
               TcgSetItem.fromJson(
@@ -53,6 +61,35 @@ class TcgSetsService {
               ),
             );
           }
+        }
+
+        // Append upcoming releases announced on Bill's Archive but missing from TCGdex.
+        for (final entry in upcomingEntries) {
+          final name = entry['name']?.toString() ?? '';
+          final normalized = _normalizeSetName(name);
+          if (normalized.isEmpty) continue;
+          if (items.any((s) => _normalizeSetName(s.name) == normalized)) continue;
+
+          final date = entry['date']?.toString() ?? '';
+          final year = (date.length >= 4 ? int.tryParse(date.substring(0, 4)) : null) ??
+              DateTime.now().year;
+          final cards = (entry['cards'] as num?)?.toInt() ?? 0;
+          final link = entry['link']?.toString() ?? '';
+          final slug = link
+              .replaceAll(RegExp(r'\.html$'), '')
+              .replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '-')
+              .replaceAll(RegExp(r'^[-]+|[-]+$'), '');
+
+          items.add(
+            TcgSetItem(
+              id: slug.isEmpty ? 'ba-upcoming-$year' : 'ba-$slug',
+              name: name,
+              totalCards: cards,
+              year: year,
+              releaseDate: date,
+              isUpcoming: true,
+            ),
+          );
         }
 
         // Sort descending by year, then name
@@ -70,6 +107,51 @@ class TcgSetsService {
     }
 
     return _fallbackSets;
+  }
+
+  /// Fetches upcoming English releases from Bill's Archive (billsarchive.com/data/releases.json).
+  /// Returns entries whose release date is today or later.
+  static Future<List<Map<String, dynamic>>> _fetchBillsarchiveUpcoming() async {
+    try {
+      final response = await DioClient.instance.get(
+        'https://billsarchive.com/data/releases.json',
+        options: Options(
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data is Map) {
+        final data = response.data as Map;
+        final list = data['english'];
+        if (list is List) {
+          final today = _todayDateOnly();
+          return list.whereType<Map<String, dynamic>>().where((e) {
+            final date = e['date']?.toString() ?? '';
+            return date.length >= 10 && date.compareTo(today) >= 0;
+          }).toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading billsarchive upcoming releases: $e');
+    }
+
+    return const [];
+  }
+
+  static String _todayDateOnly() {
+    final now = DateTime.now();
+    final m = now.month.toString().padLeft(2, '0');
+    final d = now.day.toString().padLeft(2, '0');
+    return '${now.year}-$m-$d';
+  }
+
+  /// Lowercases a set name and strips the "Mega Evolution" prefix so TCGdex and
+  /// Bill's Archive names can be matched against each other.
+  static String _normalizeSetName(String name) {
+    var normalized = name.toLowerCase().trim();
+    normalized = normalized.replaceAll(RegExp(r'^mega\s+evolution[\s\-]*'), '');
+    normalized = normalized.replaceAll(RegExp(r'^[\s\-]+|[\s\-]+$'), '');
+    return normalized;
   }
 
   static int _inferYearFromId(String id) {

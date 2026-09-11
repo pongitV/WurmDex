@@ -91,9 +91,11 @@ class PokemonCatalogService {
     int page = 1,
     int pageSize = 30,
     bool isEn = true,
+    String? language,
   }) async {
     final cleanQuery = query.trim();
-    final cacheKey = '${cleanQuery.toLowerCase()}_$page';
+    final effectiveLang = language ?? (isEn ? 'en' : 'pt');
+    final cacheKey = '${cleanQuery.toLowerCase()}_$page${effectiveLang.isEmpty ? '' : '_$effectiveLang'}';
 
     if (_queryCache.containsKey(cacheKey)) {
       return _queryCache[cacheKey]!;
@@ -121,7 +123,7 @@ class PokemonCatalogService {
           : 'name=${Uri.encodeComponent(cleanQuery)}';
 
       // Primary endpoint
-      final primaryLang = isEn ? 'en' : 'pt';
+      final primaryLang = effectiveLang;
       final primaryUrl = '${AppConstants.tcgdexBaseUrl}/$primaryLang/cards?$queryParam';
 
       final response = await DioClient.instance.get(
@@ -138,14 +140,15 @@ class PokemonCatalogService {
             final cardId = item['id']?.toString() ?? '';
             final setId = cardId.contains('-') ? cardId.split('-').first : '';
             final setName = _setNamesCache?[setId] ?? _knownSets[setId];
-            final card = PokemonCardItem.fromTcgdex(item, setName: setName);
+            final card = PokemonCardItem.fromTcgdex(item, setName: setName, language: primaryLang);
             candidateCards.add(card);
           }
         }
       }
 
-      // If in PT-BR mode or few results, also check EN counterpart to broaden results
-      if (!isEn && candidateCards.length < 5 && !isNumberQuery) {
+      // If in PT-BR mode or browsing without an explicit language, also check
+      // the EN counterpart to broaden results
+      if (language == null && !isEn && candidateCards.length < 5 && !isNumberQuery) {
         final enUrl = '${AppConstants.tcgdexBaseUrl}/en/cards?$queryParam';
         final enResp = await DioClient.instance.get(
           enUrl,
@@ -157,8 +160,8 @@ class PokemonCatalogService {
               final cardId = item['id']?.toString() ?? '';
               final setId = cardId.contains('-') ? cardId.split('-').first : '';
               final setName = _setNamesCache?[setId] ?? _knownSets[setId];
-              final card = PokemonCardItem.fromTcgdex(item, setName: setName);
-              if (!candidateCards.any((c) => c.id == card.id)) {
+              final card = PokemonCardItem.fromTcgdex(item, setName: setName, language: 'en');
+              if (!candidateCards.any((c) => c.id == card.id && c.language == card.language)) {
                 candidateCards.add(card);
               }
             }
@@ -169,8 +172,9 @@ class PokemonCatalogService {
       debugPrint('TCGdex search error: $e');
     }
 
-    // 3. Fallback/Enrich with pokemontcg.io if candidates are few
-    if (candidateCards.length < 5) {
+    // 3. Fallback/Enrich with pokemontcg.io if candidates are few (only when
+    // no explicit language filter was requested, to avoid mixing languages)
+    if (language == null && candidateCards.length < 5) {
       try {
         String filterString = '';
         if (RegExp(r'^#?\d+$').hasMatch(cleanQuery)) {

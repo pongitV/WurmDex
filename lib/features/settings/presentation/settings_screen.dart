@@ -304,11 +304,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 10),
           Card(
             child: SwitchListTile(
-              secondary: const Icon(Icons.touch_app_outlined, color: AppColors.wurmplePrimary),
+              secondary: const Icon(Icons.touch_app_outlined, color: Colors.white),
               title: Text(strings.pauseAutoclickersTitle),
               subtitle: Text(strings.pauseAutoclickersSub),
               value: ref.watch(autoclickerPausedProvider),
               onChanged: (val) => ref.read(autoclickerPausedProvider.notifier).setPaused(val),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Card(
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                foregroundColor: theme.colorScheme.error,
+                side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
+              ),
+              icon: const Icon(Icons.restart_alt, size: 18),
+              label: Text(strings.resetAutoclickersTitle),
+              onPressed: () => _confirmResetAutoclickers(context, strings),
             ),
           ),
           const SizedBox(height: 24),
@@ -345,7 +359,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.file_download_outlined, color: AppColors.profitGreen),
+                  leading: const Icon(Icons.file_upload_outlined, color: AppColors.profitGreen),
                   title: Text(strings.btnExportDatabase),
                   subtitle: Text(strings.subExportDatabase),
                   trailing: _isExporting ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : null,
@@ -368,7 +382,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.file_upload_outlined, color: AppColors.darkCyan),
+                  leading: const Icon(Icons.file_download_outlined, color: AppColors.darkCyan),
                   title: Text(strings.btnImportBackup),
                   subtitle: Text(strings.subImportBackup),
                   onTap: () => _showRestoreDialog(context, db, strings),
@@ -486,6 +500,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           FilledButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(strings.close),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmResetAutoclickers(BuildContext context, AppStrings strings) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(strings.resetAutoclickersTitle),
+        content: Text(strings.resetAutoclickersConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(strings.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
+            onPressed: () {
+              Navigator.pop(ctx);
+              AppPreferencesService.resetAutoclickerProgress();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(strings.resetAutoclickersSuccess),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: Text(strings.reset),
           ),
         ],
       ),

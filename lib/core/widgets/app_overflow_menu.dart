@@ -12,8 +12,8 @@ import 'card_scale_dialog.dart';
 /// single [PopupMenuButton]. Keeps AppBars clean and guarantees the overflow
 /// menu is always present on the screen.
 class AppOverflowMenu extends ConsumerWidget {
-  /// When non-null, a "Adjust Card Scale / Grid" entry is added that opens the
-  /// scale sheet targeting [scaleTarget].
+  /// When non-null, a single "Scale / Layout" entry is added that opens the
+  /// scale sheet (scale slider + grid composition) targeting [scaleTarget].
   final CardScaleTarget? scaleTarget;
 
   /// Whether to show the currency (BRL / USD) switch entry.
@@ -72,7 +72,7 @@ class AppOverflowMenu extends ConsumerWidget {
                 children: [
                   const Icon(Icons.aspect_ratio, size: 20),
                   const SizedBox(width: 10),
-                  Text(strings.scaleTooltip),
+                  Text(strings.scaleLayoutTooltip),
                 ],
               ),
             ),
@@ -80,7 +80,6 @@ class AppOverflowMenu extends ConsumerWidget {
         }
 
         if (showCurrency) {
-          if (builtIn.isNotEmpty) builtIn.add(const PopupMenuDivider());
           builtIn.add(
             PopupMenuItem(
               value: 'currency',
@@ -96,7 +95,6 @@ class AppOverflowMenu extends ConsumerWidget {
         }
 
         if (showRefresh && onRefresh != null) {
-          if (builtIn.isNotEmpty) builtIn.add(const PopupMenuDivider());
           builtIn.add(
             PopupMenuItem(
               value: 'refresh',
@@ -111,9 +109,6 @@ class AppOverflowMenu extends ConsumerWidget {
           );
         }
 
-        if (extraEntries.isNotEmpty && builtIn.isNotEmpty) {
-          return [...extraEntries, const PopupMenuDivider(), ...builtIn];
-        }
         return [...extraEntries, ...builtIn];
       },
     );

@@ -4,6 +4,8 @@ import '../../features/card_details/presentation/card_details_screen.dart';
 import '../../features/catalog/models/pokemon_card_item.dart';
 import '../../features/catalog/presentation/catalog_screen.dart';
 import '../../features/collections/presentation/folder_detail_screen.dart';
+import '../../features/collections/presentation/top_cards_podium_screen.dart';
+import '../../features/monitoring/models/monitored_card_item.dart';
 import '../../features/monitoring/presentation/price_monitoring_screen.dart';
 import '../../features/pokedex/models/pokedex_entry.dart';
 import '../../features/pokedex/presentation/pokemon_cards_gallery_screen.dart';
@@ -94,6 +96,17 @@ class AppNavigator {
     return push(
       context,
       const PriceMonitoringScreen(),
+    );
+  }
+
+  /// Navigates to the Top 10 podium screen.
+  static Future<void> toTopCardsPodium(
+    BuildContext context, {
+    required List<MonitoredCardItem> topMonitored,
+  }) {
+    return push(
+      context,
+      TopCardsPodiumScreen(topMonitored: topMonitored),
     );
   }
 

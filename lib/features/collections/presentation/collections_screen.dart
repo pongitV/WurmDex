@@ -11,7 +11,6 @@ import '../../../../core/theme/theme_constants.dart';
 import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/utils/folder_icon_helper.dart';
 import '../../../../core/navigation/app_navigator.dart';
-import '../../../../core/widgets/app_overflow_menu.dart';
 import 'widgets/collection_dashboard_widget.dart';
 
 class CollectionsScreen extends ConsumerWidget {
@@ -28,10 +27,6 @@ class CollectionsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(strings.collectionsTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
-        actions: [
-          const AppOverflowMenu(showCurrency: true),
-          const SizedBox(width: 8),
-        ],
       ),
       body: CustomScrollView(
         slivers: [

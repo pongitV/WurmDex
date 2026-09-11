@@ -4,6 +4,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/database/database_provider.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/providers/card_scale_provider.dart';
+import '../../../core/providers/card_view_mode_provider.dart';
 import '../../../core/providers/grid_composition_provider.dart';
 import '../../../core/widgets/app_overflow_menu.dart';
 import '../../../core/widgets/app_search_bar.dart';
@@ -12,6 +13,7 @@ import '../services/set_completion_helper.dart';
 import '../services/tcg_sets_service.dart';
 import '../../../core/navigation/app_navigator.dart';
 import 'widgets/set_card_widget.dart';
+import 'widgets/set_list_tile.dart';
 
 class SetsScreen extends ConsumerStatefulWidget {
   const SetsScreen({super.key});
@@ -121,6 +123,7 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
     // Watch during build so the grids respond to scale/grid changes.
     final menuCardScale = ref.watch(menuCardScaleProvider);
     ref.watch(gridCompositionProvider);
+    final viewMode = ref.watch(cardViewModeProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -188,10 +191,10 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
                   controller: _tabController,
                   children: [
                     // Tab 1: Released sets separated by year
-                    _buildReleasedTab(theme, colorScheme, strings, userCards, menuCardScale),
+                    _buildReleasedTab(theme, colorScheme, strings, userCards, menuCardScale, viewMode),
 
                     // Tab 2: Upcoming releases
-                    _buildUpcomingTab(theme, colorScheme, strings, userCards, menuCardScale),
+                    _buildUpcomingTab(theme, colorScheme, strings, userCards, menuCardScale, viewMode),
                   ],
                 ),
     );
@@ -203,6 +206,7 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
     AppStrings strings,
     List<UserCard> userCards,
     double menuCardScale,
+    CardViewMode viewMode,
   ) {
     final releasedSets = _getFilteredReleasedSets();
     final groupedByYear = _groupByYear(releasedSets);
@@ -220,45 +224,72 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
           onClear: () => setState(() => _searchQuery = ''),
         ),
 
-        // Year Filter Chips ("elas sao separadas por ano")
-        SizedBox(
-          height: 46,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            itemCount: availableYears.length + 1,
-            separatorBuilder: (context, index) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                final isSelected = _selectedYear == null;
-                return FilterChip(
-                  label: Text(strings.txtAllYears),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() => _selectedYear = null);
-                  },
-                  visualDensity: VisualDensity.compact,
-                );
-              }
-
-              final year = availableYears[index - 1];
-              final isSelected = _selectedYear == year;
-
-              return FilterChip(
-                label: Text('$year'),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedYear = selected ? year : null;
-                  });
-                },
-                visualDensity: VisualDensity.compact,
-              );
-            },
+        // Year Filter Dropdown (")
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 200),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int?>(
+                  value: _selectedYear,
+                  isDense: true,
+                  icon: const Icon(Icons.arrow_drop_down, size: 18),
+                  hint: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        size: 15,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        strings.txtAllYears,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  items: [
+                    DropdownMenuItem<int?>(
+                      value: null,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.all_inclusive,
+                            size: 15,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(strings.txtAllYears),
+                        ],
+                      ),
+                    ),
+                    for (final year in availableYears)
+                      DropdownMenuItem<int?>(
+                        value: year,
+                        child: Text('$year'),
+                      ),
+                  ],
+                  onChanged: (val) => setState(() => _selectedYear = val),
+                ),
+              ),
+            ),
           ),
         ),
-
-        const SizedBox(height: 6),
 
         // Sets list grouped/separated by year
         Expanded(
@@ -319,9 +350,29 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
                         ),
                       ),
 
-                      // Responsive Grid of Sets for this year
+                      // Responsive Grid or List of Sets for this year
                       SliverLayoutBuilder(
                         builder: (context, constraints) {
+                          if (viewMode == CardViewMode.list) {
+                            return SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final set = setsForYear[index];
+                                  final ownedCount = SetCompletionHelper.getOwnedDistinctCount(userCards, set);
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: SetListTile(
+                                      set: set,
+                                      ownedCount: ownedCount,
+                                      onTap: () => AppNavigator.toSet(context, set: set),
+                                    ),
+                                  );
+                                },
+                                childCount: setsForYear.length,
+                              ),
+                            );
+                          }
+
                           final crossAxisCount = resolveCardGridCrossAxisCount(
                             context: context,
                             ref: ref,
@@ -329,10 +380,15 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
                             cardScale: menuCardScale,
                           );
 
+                          // Scale grows the whole tile so the change is visible
+                          // even when the column count stays the same on small widths.
+                          final adjustedAspect =
+                              (0.95 * (1.15 / menuCardScale)).clamp(0.6, 1.4).toDouble();
+
                           return SliverGrid(
                             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: crossAxisCount,
-                              childAspectRatio: 0.95,
+                              childAspectRatio: adjustedAspect,
                               crossAxisSpacing: 12,
                               mainAxisSpacing: 12,
                             ),
@@ -367,6 +423,7 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
     AppStrings strings,
     List<UserCard> userCards,
     double menuCardScale,
+    CardViewMode viewMode,
   ) {
     final upcomingSets = _getFilteredUpcomingSets();
 
@@ -377,36 +434,56 @@ class _SetsScreenState extends ConsumerState<SetsScreen>
                     style: theme.textTheme.titleMedium,
                   ),
                 )
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    final crossAxisCount = resolveCardGridCrossAxisCount(
-                      context: context,
-                      ref: ref,
-                      availableWidth: constraints.maxWidth,
-                      cardScale: menuCardScale,
-                    );
-
-                    return GridView.builder(
+              : viewMode == CardViewMode.list
+                  ? ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        childAspectRatio: 0.95,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
                       itemCount: upcomingSets.length,
                       itemBuilder: (context, index) {
                         final set = upcomingSets[index];
                         final ownedCount = SetCompletionHelper.getOwnedDistinctCount(userCards, set);
-                        return SetCardWidget(
-                          set: set,
-                          ownedCount: ownedCount,
-                          isEn: strings.isEn,
-                          onTap: () => AppNavigator.toSet(context, set: set),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: SetListTile(
+                            set: set,
+                            ownedCount: ownedCount,
+                            onTap: () => AppNavigator.toSet(context, set: set),
+                          ),
+                        );
+                      },
+                    )
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final crossAxisCount = resolveCardGridCrossAxisCount(
+                          context: context,
+                          ref: ref,
+                          availableWidth: constraints.maxWidth,
+                          cardScale: menuCardScale,
+                        );
+
+                        final adjustedAspect =
+                            (0.95 * (1.15 / menuCardScale)).clamp(0.6, 1.4).toDouble();
+
+                        return GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            childAspectRatio: adjustedAspect,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemCount: upcomingSets.length,
+                          itemBuilder: (context, index) {
+                            final set = upcomingSets[index];
+                            final ownedCount = SetCompletionHelper.getOwnedDistinctCount(userCards, set);
+                            return SetCardWidget(
+                              set: set,
+                              ownedCount: ownedCount,
+                              isEn: strings.isEn,
+                              onTap: () => AppNavigator.toSet(context, set: set),
+                            );
+                          },
                         );
                       },
                     );
-                  },
-                );
   }
 }

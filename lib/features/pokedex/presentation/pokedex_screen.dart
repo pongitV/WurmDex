@@ -25,13 +25,23 @@ class _PokedexScreenState extends ConsumerState<PokedexScreen> {
   String _searchQuery = '';
 
   @override
+  void initState() {
+    super.initState();
+    // Fetch fresh National Pokédex from billsarchive.com (falls back to the
+    // bundled list offline); local display names are always preserved.
+    PokedexData.refresh().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
   List<PokedexEntry> _getFilteredEntries() {
-    return PokedexData.entries.where((entry) {
+    return PokedexData.resolved.where((entry) {
       // Generation filter
       if (_selectedGeneration > 0 && entry.generation != _selectedGeneration) {
         return false;
@@ -60,6 +70,12 @@ class _PokedexScreenState extends ConsumerState<PokedexScreen> {
 
     final filteredEntries = _getFilteredEntries();
 
+    // Max generation present in the data (e.g. 9 now, 10 once Gen X lands).
+    final maxGeneration = PokedexData.resolved.fold<int>(
+      1,
+      (acc, e) => e.generation > acc ? e.generation : acc,
+    );
+
     // Watch providers during build so the grid responds to scale/grid changes.
     final cardScale = ref.watch(menuCardScaleProvider);
     ref.watch(gridCompositionProvider);
@@ -87,35 +103,49 @@ class _PokedexScreenState extends ConsumerState<PokedexScreen> {
             onClear: () => setState(() => _searchQuery = ''),
           ),
 
-          // Generation Filter Chips
-          SizedBox(
-            height: 48,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              itemCount: 10, // 0 is All, 1-9 are Gens
-              separatorBuilder: (context, index) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final isSelected = _selectedGeneration == index;
-                final label = index == 0
-                    ? strings.pokedexAllGens
-                    : strings.pokedexGen(index);
-
-                return FilterChip(
-                  label: Text(label),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      _selectedGeneration = selected ? index : 0;
-                    });
-                  },
-                  visualDensity: VisualDensity.compact,
-                );
-              },
+          // Generation Filter Dropdown
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 200),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: _selectedGeneration,
+                    isDense: true,
+                    icon: const Icon(Icons.arrow_drop_down, size: 18),
+                    style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface),
+                    items: [
+                      for (int i = 0; i <= maxGeneration; i++)
+                        DropdownMenuItem<int>(
+                          value: i,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                i == 0 ? Icons.all_inclusive : Icons.catching_pokemon,
+                                size: 15,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(i == 0 ? strings.pokedexAllGens : strings.pokedexGen(i)),
+                            ],
+                          ),
+                        ),
+                    ],
+                    onChanged: (val) => setState(() => _selectedGeneration = val ?? 0),
+                  ),
+                ),
+              ),
             ),
           ),
-
-          const SizedBox(height: 8),
 
           // Pokémon Grid (3x3 on mobile, responsive on wider screens)
           Expanded(

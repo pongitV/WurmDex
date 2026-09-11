@@ -94,8 +94,10 @@ class _RadarBackgroundSettingsSheetState extends ConsumerState<RadarBackgroundSe
               child: SwitchListTile(
                 value: _enabled,
                 onChanged: _setEnabled,
-                activeTrackColor: colorScheme.primary.withValues(alpha: 0.4),
+                activeTrackColor: colorScheme.primary,
                 activeThumbColor: colorScheme.primary,
+                inactiveTrackColor: colorScheme.surfaceContainerHighest,
+                inactiveThumbColor: colorScheme.surface,
                 title: Text(
                   strings.radarBackgroundEnabledLabel,
                   style: const TextStyle(fontWeight: FontWeight.w600),

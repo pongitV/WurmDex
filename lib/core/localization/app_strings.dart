@@ -12,6 +12,7 @@ class AppStrings {
   // Common Actions
   String get cancel => isEn ? 'Cancel' : 'Cancelar';
   String get remove => isEn ? 'Remove' : 'Remover';
+  String get reset => isEn ? 'Reset' : 'Resetar';
   String get save => isEn ? 'Save' : 'Salvar';
 
   // General App
@@ -103,6 +104,7 @@ class AppStrings {
       ? 'No cards match the active filters.'
       : 'Nenhuma carta corresponde aos filtros ativos.';
   String get scaleTooltip => isEn ? 'Adjust Card Scale' : 'Ajustar Escala das Cartas';
+  String get scaleLayoutTooltip => isEn ? 'Scale / Layout' : 'Escala / Organização';
   String get gridModeTooltip => isEn ? 'Grid Mode' : 'Modo Grade';
   String get tableModeTooltip => isEn ? 'Table Mode' : 'Modo Planilha';
   String get refreshTooltip => isEn ? 'Refresh' : 'Atualizar';
@@ -237,6 +239,16 @@ class AppStrings {
   String get clickerAutoclickerPaused => isEn ? 'PAUSED' : 'PAUSADO';
   String get clickerPauseTooltip => isEn ? 'Pause automatic clicks' : 'Pausar cliques automáticos';
   String get clickerResumeTooltip => isEn ? 'Resume automatic clicks' : 'Retomar cliques automáticos';
+  String get resetAutoclickersTitle => isEn ? 'Reset Autoclicker Progress' : 'Resetar Progresso dos Autoclickers';
+  String get resetAutoclickersSub => isEn
+      ? 'Resets points, clicks and upgrades. Unlocked themes are kept.'
+      : 'Reseta pontos, cliques e upgrades. Temas desbloqueados são mantidos.';
+  String get resetAutoclickersConfirm => isEn
+      ? 'Are you sure? This erases all clicker points and upgrade progress.'
+      : 'Tem certeza? Isso apaga todos os pontos e upgrades dos clickers.';
+  String get resetAutoclickersSuccess => isEn
+      ? 'Autoclicker progress reset.'
+      : 'Progresso dos autoclickers resetado.';
   String get firstReleaseDateLabel => isEn ? 'Initial Release' : 'Primeiro Lançamento';
   String get reprintDatesLabel => isEn ? 'Reprint Dates' : 'Datas de Reimpressão';
   String get soonInExpectedMonth => isEn ? 'Soon in (expected month)' : 'Em breve (mês esperado)';
@@ -450,6 +462,30 @@ class AppStrings {
   String get priorityMedium => isEn ? 'Medium' : 'Média';
   String get priorityLow => isEn ? 'Low' : 'Baixa';
 
+  String get labelMinPrice => isEn ? 'Min Price (BRL)' : 'Preço Mín (R\$)';
+  String get labelMaxPrice => isEn ? 'Max Price (BRL)' : 'Preço Máx (R\$)';
+  String get priceRangeLabel => isEn ? 'Target Price Range (BRL)' : 'Faixa de Preço-Alvo (R\$)';
+  String get sectionCardInfo => isEn ? 'Card Info' : 'Informações da Carta';
+  String get manageWishlistFolders => isEn ? 'Manage Folders' : 'Gerenciar Pastas';
+  String get editWishlistFolder => isEn ? 'Rename Folder' : 'Renomear Pasta';
+  String get confirmDeleteWishlistFolderTitle => isEn ? 'Delete folder?' : 'Excluir pasta?';
+  String confirmDeleteWishlistFolderMsg(String folder) => isEn
+      ? 'Cards in "$folder" will be moved to General.'
+      : 'As cartas em "$folder" serão movidas para "Geral".';
+  String get wishlistFolderUpdated => isEn ? 'Wishlist folders updated.' : 'Pastas da wishlist atualizadas.';
+  String get wishlistDesiredCondition => isEn ? 'Desired Condition' : 'Qualidade Desejada';
+  String get wishlistDesiredLanguage => isEn ? 'Desired Language' : 'Idioma Desejado';
+  String get wishlistDesiredFinish => isEn ? 'Desired Finish' : 'Acabamento Desejado';
+  String get wishlistPriceRangeTitle => isEn ? 'Target Price Range' : 'Faixa de Preço Desejada';
+  String get wishlistAnyCondition => isEn ? 'Any condition' : 'Qualquer qualidade';
+  String get wishlistAnyLanguage => isEn ? 'Any language' : 'Qualquer idioma';
+  String get wishlistAnyFinish => isEn ? 'Any finish' : 'Qualquer acabamento';
+  String get wishlistMinPrice => isEn ? 'Min (R\$)' : 'Mín (R\$)';
+  String get wishlistMaxPrice => isEn ? 'Max (R\$)' : 'Máx (R\$)';
+  String get wishlistFolderRenamed => isEn ? 'Folder renamed.' : 'Pasta renomeada.';
+  String get wishlistFolderDeleted => isEn ? 'Folder deleted.' : 'Pasta excluída.';
+  String get wishlistNewFolderName => isEn ? 'New name' : 'Novo nome';
+
   // Card Scale Dialog
   String get scaleMenuAndCatalog => isEn ? 'Menu & Catalog' : 'Menu & Catálogo';
   String get scaleCollectionAndBinder => isEn ? 'Collection & Binder' : 'Coleção & Fichário';
@@ -488,6 +524,7 @@ class AppStrings {
   // Filter labels in Catalog
   String get filterTypeLabel => isEn ? 'Type: ' : 'Tipo: ';
   String get filterRarityLabel => isEn ? 'Rarity: ' : 'Raridade: ';
+  String get filterByType => isEn ? 'Type' : 'Tipo';
 
   // Marketplace URLs
   String errOpenMarketplace(String platform) => isEn
@@ -501,6 +538,9 @@ class AppStrings {
   String get top10ValuableCards => isEn ? 'TOP 10 MOST VALUABLE CARDS' : 'TOP 10 CARTAS MAIS VALIOSAS';
   String get top5ValuableCards => top10ValuableCards;
   String get sectionPortfolioMetrics => isEn ? 'PORTFOLIO METRICS' : 'MÉTRICAS DO PORTFÓLIO';
+  String get podiumTitle => isEn ? 'PODIUM' : 'PÓDIO';
+  String get viewPodium => isEn ? 'View podium' : 'Ver pódio';
+  String get ranked4To10Title => isEn ? 'RANKINGS 4-10' : 'CLASSIFICAÇÃO 4-10';
   String get dualCurrencyTotal => isEn ? 'Combined Portfolio Total' : 'Total Geral do Acervo';
 
   // Wishlist & Opportunity Alerts
@@ -666,6 +706,7 @@ class AppStrings {
   String alertsCheckedSuccess(int count) => isEn
       ? '$count deals found in target range!'
       : '$count ofertas encontradas na faixa desejada!';
+  String get lowestPriceUpdatedText => isEn ? 'Lowest price updated' : 'Menor preço atualizado';
   String get statusInRange => isEn ? 'In Target Range' : 'Dentro da Faixa';
   String get statusAboveRange => isEn ? 'Above Target' : 'Acima da Faixa';
   String get statusBelowRange => isEn ? 'Below Target' : 'Abaixo da Faixa';
@@ -694,6 +735,44 @@ class AppStrings {
   String get filterInRangeAlerts => isEn ? 'In Range' : 'Na Faixa';
   String get filterPreSaleAlerts => isEn ? 'Pre-Order' : 'Pré-Venda';
   String get filterActiveAlerts => isEn ? 'Active' : 'Ativos';
+  String get filterByCollection => isEn ? 'Collection' : 'Coleção';
+  String get filterAllCollections => isEn ? 'All collections' : 'Todas as coleções';
+  String get filterByLanguage => isEn ? 'Language' : 'Idioma';
+  String get filterAllLanguages => isEn ? 'All languages' : 'Todos os idiomas';
+  String get collectionLabel => isEn ? 'Collection' : 'Coleção';
+  String get collectionHint => isEn
+      ? 'e.g. Scarlet & Violet - 151'
+      : 'Ex: Scarlet & Violet - 151';
+  String get languageLabel => isEn ? 'Language' : 'Idioma';
+  String get languageHint => isEn
+      ? 'e.g. PT, EN, JP... (blank = Portuguese)'
+      : 'Ex: PT, EN, JP... (vazio = Português)';
+  String languageDisplayName(String code) {
+    switch (code.toLowerCase()) {
+      case 'en':
+        return isEn ? 'English' : 'Inglês';
+      case 'pt':
+        return 'Português';
+      case 'es':
+        return 'Español';
+      case 'fr':
+        return 'Français';
+      case 'de':
+        return 'Deutsch';
+      case 'it':
+        return 'Italiano';
+      case 'ja':
+        return '日本語';
+      case 'ko':
+        return '한국어';
+      case 'zh-hans':
+        return '简体中文';
+      case 'zh-hant':
+        return '繁體中文';
+      default:
+        return code.toUpperCase();
+    }
+  }
   String get kpiMonitoredTotal => isEn ? 'Monitored' : 'Monitorados';
   String get kpiInRangeTotal => isEn ? 'In Range' : 'Na Faixa';
   String get kpiPreSaleTotal => isEn ? 'Pre-Orders' : 'Em Pré-Venda';

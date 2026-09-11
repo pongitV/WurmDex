@@ -5,6 +5,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/providers/card_scale_provider.dart';
+import '../../../../core/providers/card_view_mode_provider.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/providers/grid_composition_provider.dart';
 import '../../../../core/utils/card_sorting_helper.dart';
@@ -13,8 +14,8 @@ import '../../../../core/utils/semantic_search_helper.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/widgets/app_empty_state.dart';
 import '../../../../core/widgets/app_network_image.dart';
+import '../../../../core/widgets/app_overflow_menu.dart';
 import '../../../../core/widgets/card_grid_skeleton.dart';
-import '../../../../core/widgets/card_scale_dialog.dart';
 import '../../../../core/widgets/card_sort_button.dart';
 import '../../../../core/widgets/wobbly_menu_icon.dart';
 import '../../news/presentation/widgets/tcg_news_widget.dart';
@@ -24,11 +25,6 @@ import '../services/pokemon_catalog_service.dart';
 import 'widgets/card_grid_item.dart';
 import 'widgets/card_quick_action_sheet.dart';
 import 'widgets/catalog_filter_bottom_sheet.dart';
-
-enum CatalogViewMode {
-  grid,
-  table,
-}
 
 class CatalogScreen extends ConsumerStatefulWidget {
   final FocusNode? searchFocusNode;
@@ -57,7 +53,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   bool _isLoading = false;
   bool _isSearching = false;
   List<PokemonCardItem> _cards = [];
-  CatalogViewMode _viewMode = CatalogViewMode.grid;
+  String? _searchLanguage;
   CatalogFilterState _filterState = const CatalogFilterState();
 
   List<PokemonCardItem> get _filteredAndSortedCards {
@@ -86,6 +82,12 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       }).toList();
     }
 
+    // Apply Card Language filter
+    if (_filterState.selectedLanguage != null) {
+      final lang = _filterState.selectedLanguage!.toLowerCase();
+      list = list.where((card) => card.language.toLowerCase() == lang).toList();
+    }
+
     // Apply Sorting
     return CardSortingHelper.sort(list, _filterState.sortOption);
   }
@@ -95,7 +97,11 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
       setState(() => _isLoading = true);
       final isEn = ref.read(languageProvider) == AppLanguage.enUs;
-      final results = await PokemonCatalogService.searchCards(query: query, isEn: isEn);
+      final results = await PokemonCatalogService.searchCards(
+        query: query,
+        isEn: isEn,
+        language: _searchLanguage,
+      );
       if (mounted) {
         setState(() {
           _cards = results;
@@ -128,6 +134,33 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     _effectiveFocusNode.requestFocus();
   }
 
+  void _applyFilter(CatalogFilterState newState, AppStrings strings) {
+    final nextLang = newState.selectedLanguage;
+    String? newSearchLanguage;
+    if (nextLang != null) {
+      final currentEffective = _searchLanguage ?? (strings.isEn ? 'en' : 'pt');
+      newSearchLanguage = nextLang != currentEffective ? nextLang : _searchLanguage;
+    } else {
+      newSearchLanguage = null;
+    }
+    final needsResearch = newSearchLanguage != _searchLanguage;
+    setState(() {
+      _filterState = newState;
+      _searchLanguage = newSearchLanguage;
+    });
+    if (needsResearch) {
+      _onSearchChanged(_searchController.text);
+    }
+  }
+
+  void _clearAllFilters() {
+    setState(() {
+      _filterState = const CatalogFilterState();
+      _searchLanguage = null;
+    });
+    _onSearchChanged(_searchController.text);
+  }
+
   void _exitSearch() {
     if (widget.targetFolder != null) {
       _searchController.clear();
@@ -138,6 +171,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       _isSearching = false;
       _searchController.clear();
       _cards = [];
+      _searchLanguage = null;
       _filterState = const CatalogFilterState();
     });
   }
@@ -159,6 +193,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     final language = ref.watch(languageProvider);
     final strings = getStrings(language);
     final exchangeRate = ref.watch(exchangeRateProvider);
+    final viewMode = ref.watch(cardViewModeProvider);
+    final isListView = viewMode == CardViewMode.list;
 
     // Responsive dynamic column sizing respecting universal grid composition
     final crossAxisCount = resolveCardGridCrossAxisCount(
@@ -212,85 +248,16 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         actions: [
           // Secondary controls condensed into a single overflow menu so the
           // search bar below keeps its full width (filter/sort stay visible).
-          PopupMenuButton<String>(
-            icon: Icon(
-              Icons.more_vert,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            tooltip: strings.moreOptionsTitle,
-            onSelected: (val) {
-              switch (val) {
-                case 'view':
-                  setState(() {
-                    _viewMode = _viewMode == CatalogViewMode.grid
-                        ? CatalogViewMode.table
-                        : CatalogViewMode.grid;
-                  });
-                case 'scale':
-                  showCardScaleBottomSheet(context, initialTarget: CardScaleTarget.menu);
-                case 'currency':
-                  ref.read(currencyProvider.notifier).toggleCurrency();
-                case 'refresh':
-                  ref.read(exchangeRateProvider.notifier).refreshRate();
-                  if (showSearchResults) {
-                    _onSearchChanged(_searchController.text);
-                  }
+          AppOverflowMenu(
+            scaleTarget: CardScaleTarget.menu,
+            showCurrency: true,
+            showRefresh: true,
+            onRefresh: () {
+              ref.read(exchangeRateProvider.notifier).refreshRate();
+              if (showSearchResults) {
+                _onSearchChanged(_searchController.text);
               }
             },
-            itemBuilder: (ctx) => [
-              if (showSearchResults)
-                PopupMenuItem(
-                  value: 'view',
-                  child: Row(
-                    children: [
-                      Icon(
-                        _viewMode == CatalogViewMode.grid ? Icons.table_chart : Icons.grid_view,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        _viewMode == CatalogViewMode.grid
-                            ? strings.tableModeTooltip
-                            : strings.gridModeTooltip,
-                      ),
-                    ],
-                  ),
-                ),
-              PopupMenuItem(
-                value: 'scale',
-                child: Row(
-                  children: [
-                    const Icon(Icons.aspect_ratio, size: 20),
-                    const SizedBox(width: 10),
-                    Text(strings.scaleTooltip),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'currency',
-                child: Row(
-                  children: [
-                    const Icon(Icons.currency_exchange, size: 20),
-                    const SizedBox(width: 10),
-                    Text(
-                      ref.watch(currencyProvider) == AppCurrency.usd
-                          ? strings.switchToBrl
-                          : strings.switchToUsd,
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'refresh',
-                child: Row(
-                  children: [
-                    const Icon(Icons.refresh, size: 20),
-                    const SizedBox(width: 10),
-                    Text(strings.refreshTooltip),
-                  ],
-                ),
-              ),
-            ],
           ),
           const SizedBox(width: 4),
         ],
@@ -351,9 +318,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                         currentState: _filterState,
                         strings: strings,
                         onApply: (newState) {
-                          setState(() {
-                            _filterState = newState;
-                          });
+                          _applyFilter(newState, strings);
                         },
                       );
                     },
@@ -440,14 +405,24 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                             },
                           ),
                         ),
+                      if (_filterState.selectedLanguage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: InputChip(
+                            label: Text('${strings.languageLabel}${strings.languageDisplayName(_filterState.selectedLanguage!)}'),
+                            onDeleted: () {
+                              setState(() {
+                                _filterState = _filterState.copyWith(clearLanguage: true);
+                                _searchLanguage = null;
+                              });
+                              _onSearchChanged(_searchController.text);
+                            },
+                          ),
+                        ),
                       TextButton.icon(
                         icon: const Icon(Icons.close, size: 16),
                         label: Text(strings.btnClearFilters, style: const TextStyle(fontSize: 11)),
-                        onPressed: () {
-                          setState(() {
-                            _filterState = const CatalogFilterState();
-                          });
-                        },
+                        onPressed: _clearAllFilters,
                       ),
                     ],
                   ),
@@ -457,7 +432,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
           // Main View: Either Search Results or Home Dashboard
           Expanded(
             child: showSearchResults
-                ? _buildSearchResults(crossAxisCount, theme, strings, exchangeRate)
+                ? _buildSearchResults(crossAxisCount, theme, strings, exchangeRate, isListView)
                 : _buildHomeDashboard(theme),
           ),
         ],
@@ -475,7 +450,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
-  Widget _buildSearchResults(int crossAxisCount, ThemeData theme, AppStrings strings, double exchangeRate) {
+  Widget _buildSearchResults(int crossAxisCount, ThemeData theme, AppStrings strings, double exchangeRate, bool isListView) {
     if (_isLoading) {
       return CardGridSkeleton(
         crossAxisCount: crossAxisCount,
@@ -499,16 +474,15 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         title: strings.noFilterMatch,
         buttonLabel: strings.btnClearFilters,
         buttonIcon: Icons.filter_alt,
-        onAction: () {
-          setState(() {
-            _filterState = const CatalogFilterState();
-          });
-        },
+        onAction: _clearAllFilters,
       );
     }
 
-    return _viewMode == CatalogViewMode.grid
-        ? GridView.builder(
+    if (isListView) {
+      return _buildTableView(displayCards, theme, exchangeRate);
+    }
+
+    return GridView.builder(
             padding: const EdgeInsets.all(12),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
@@ -535,8 +509,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 onLongPress: () => CardQuickActionSheet.show(context, card),
               );
             },
-          )
-        : _buildTableView(displayCards, theme, exchangeRate);
+          );
   }
 
   Widget _buildTableView(List<PokemonCardItem> displayCards, ThemeData theme, double exchangeRate) {

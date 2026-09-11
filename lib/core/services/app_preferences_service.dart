@@ -163,6 +163,14 @@ class AppPreferencesService {
     _persist();
   }
 
+  // --- Autoclicker Reset (keeps theme unlocks) ---
+  static void resetAutoclickerProgress() {
+    if (!_initialized) return;
+    _cache.remove(_keyWurmpleClicker);
+    _cache.remove(_keyLugiaClicker);
+    _persist();
+  }
+
   // --- Theme Unlocks ---
   static const String _keyWurmpleShinyUnlocked = 'wurmple_shiny_unlocked';
   static const String _keyLugiaShinyUnlocked = 'lugia_shiny_unlocked';

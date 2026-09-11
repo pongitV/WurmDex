@@ -7,21 +7,16 @@ import '../../../../core/database/database_provider.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/providers/card_scale_provider.dart';
 import '../../../../core/providers/currency_provider.dart';
-import '../../../../core/providers/grid_composition_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_empty_state.dart';
-import '../../../../core/widgets/app_network_image.dart';
 import '../../../../core/widgets/app_sort_button.dart';
 import '../../../../core/widgets/app_overflow_menu.dart';
-import '../../../../core/navigation/app_navigator.dart';
-import '../../catalog/models/pokemon_card_item.dart';
 
 import 'widgets/wishlist_card_tile.dart';
 import 'widgets/wishlist_edit_dialog.dart';
 import 'widgets/wishlist_folder_dialog.dart';
-
-enum WishlistViewMode { list, grid }
+import 'widgets/wishlist_manage_folders_dialog.dart';
 
 enum WishlistSortMode {
   newest,
@@ -42,7 +37,6 @@ class WishlistScreen extends ConsumerStatefulWidget {
 class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   String _selectedFolder = 'Todas';
   WishlistSortMode _sortMode = WishlistSortMode.newest;
-  WishlistViewMode _viewMode = WishlistViewMode.list;
 
   @override
   Widget build(BuildContext context) {
@@ -97,13 +91,16 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
               ),
             ],
           ),
-          // Grid / List view toggle
+          // Manage wishlist folders
           IconButton(
-            icon: Icon(_viewMode == WishlistViewMode.list ? Icons.grid_view : Icons.view_list),
-            tooltip: _viewMode == WishlistViewMode.list ? strings.gridModeTooltip : strings.tableModeTooltip,
-            onPressed: () => setState(() {
-              _viewMode = _viewMode == WishlistViewMode.list ? WishlistViewMode.grid : WishlistViewMode.list;
-            }),
+            icon: const Icon(Icons.folder_copy_outlined),
+            tooltip: strings.manageWishlistFolders,
+            onPressed: () => WishlistManageFoldersDialog.show(
+              context,
+              db: db,
+              allItems: wishlistAsync.asData?.value ?? [],
+              strings: strings,
+            ),
           ),
           // Secondary display controls always available via the overflow menu
           const AppOverflowMenu(scaleTarget: CardScaleTarget.menu, showCurrency: true),
@@ -265,74 +262,43 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                 ),
               ),
 
-              // Wishlist Items — List or Grid depending on _viewMode
-              if (_viewMode == WishlistViewMode.list)
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final item = filteredItems[index];
-                        return WishlistCardTile(
+              // Wishlist Items — Always list view
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final item = filteredItems[index];
+                      return WishlistCardTile(
+                        item: item,
+                        isUsd: isUsd,
+                        exchangeRate: exchangeRate,
+                        strings: strings,
+                        onEdit: () => WishlistEditDialog.show(
+                          context,
+                          db: db,
                           item: item,
+                          strings: strings,
                           isUsd: isUsd,
                           exchangeRate: exchangeRate,
-                          strings: strings,
-                          onEdit: () => WishlistEditDialog.show(
-                            context,
-                            db: db,
-                            item: item,
-                            strings: strings,
-                            isUsd: isUsd,
-                            exchangeRate: exchangeRate,
-                          ),
-                          onMoveToCollection: () => _moveToCollection(context, db, item, strings),
-                          onDelete: () async {
-                            await db.deleteWishlistItem(item.id);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(strings.itemRemovedFromWishlist(item.name)),
-                                ),
-                              );
-                            }
-                          },
-                        );
-                      },
-                      childCount: filteredItems.length,
-                    ),
-                  ),
-                )
-              else
-                SliverLayoutBuilder(
-                  builder: (context, constraints) {
-                    final crossAxisCount = resolveCardGridCrossAxisCount(
-                      context: context,
-                      ref: ref,
-                      availableWidth: constraints.crossAxisExtent,
-                    );
-                    return SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      sliver: SliverGrid(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: crossAxisCount,
-                          childAspectRatio: 0.65,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
                         ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final item = filteredItems[index];
-                            return _buildWishlistGridCard(
-                              context, item, isUsd, exchangeRate, strings, db,
+                        onMoveToCollection: () => _moveToCollection(context, db, item, strings),
+                        onDelete: () async {
+                          await db.deleteWishlistItem(item.id);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(strings.itemRemovedFromWishlist(item.name)),
+                              ),
                             );
-                          },
-                          childCount: filteredItems.length,
-                        ),
-                      ),
-                    );
-                  },
+                          }
+                        },
+                      );
+                    },
+                    childCount: filteredItems.length,
+                  ),
                 ),
+              ),
             ],
           );
         },
@@ -392,93 +358,5 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
     }
   }
 
-  Widget _buildWishlistGridCard(
-    BuildContext context,
-    WishlistItem item,
-    bool isUsd,
-    double exchangeRate,
-    AppStrings strings,
-    AppDatabase db,
-  ) {
-    final theme = Theme.of(context);
-    final priceText = item.targetPriceBrl > 0
-        ? (isUsd
-            ? CurrencyFormatter.toUsd(item.targetPriceBrl / exchangeRate)
-            : CurrencyFormatter.toBrl(item.targetPriceBrl))
-        : '—';
 
-    return GestureDetector(
-      onTap: () {
-        final catalogCard = PokemonCardItem(
-          id: item.cardApiId,
-          name: item.name,
-          number: item.number,
-          setId: item.setName.toLowerCase().replaceAll(' ', '-'),
-          setName: item.setName,
-          rarity: strings.defaultRarity,
-          imageUrlSmall: item.imageUrl,
-          imageUrlLarge: item.imageUrl,
-          types: const [],
-          supertype: 'Pokémon',
-          artist: '',
-          tcgMarketUsd: item.targetPriceBrl > 0 ? item.targetPriceBrl / exchangeRate : null,
-        );
-        AppNavigator.toCardDetails(context, catalogCard);
-      },
-      onLongPress: () => WishlistEditDialog.show(
-        context,
-        db: db,
-        item: item,
-        strings: strings,
-        isUsd: isUsd,
-        exchangeRate: exchangeRate,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: AppNetworkImage(
-                  imageUrl: item.imageUrl,
-                  fit: BoxFit.contain,
-                  fallbackIcon: Icons.style,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.name,
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    priceText,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.profitGreen,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

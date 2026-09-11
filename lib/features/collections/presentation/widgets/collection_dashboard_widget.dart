@@ -5,11 +5,9 @@ import '../../../../core/localization/app_strings.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
-import '../../../../core/widgets/condition_badge.dart';
-import '../../../../core/widgets/pokemon_card_image.dart';
 import '../../../../core/navigation/app_navigator.dart';
-import '../../../catalog/models/pokemon_card_item.dart';
 import '../../../monitoring/services/price_monitoring_service.dart';
+import 'top_cards_widget.dart';
 
 class CollectionDashboardWidget extends ConsumerWidget {
   final List<UserCard> cards;
@@ -31,7 +29,6 @@ class CollectionDashboardWidget extends ConsumerWidget {
     final strings = getStrings(language);
     final isUsd = currency == AppCurrency.usd;
 
-    int totalCount = 0;
     double totalInvestedBrl = 0.0;
     double estimatedCurrentValueBrl = 0.0;
 
@@ -46,7 +43,6 @@ class CollectionDashboardWidget extends ConsumerWidget {
     for (int i = 0; i < cards.length; i++) {
       final card = cards[i];
       final qty = card.quantity;
-      totalCount += qty;
       totalInvestedBrl += (card.purchasePriceBrl * qty);
 
       final item = monitoredItems[i];
@@ -84,7 +80,7 @@ class CollectionDashboardWidget extends ConsumerWidget {
     // Sort Top 10 most valuable cards
     final sortedMonitored = List.of(monitoredItems)
       ..sort((a, b) => b.estimatedCurrentPriceBrl.compareTo(a.estimatedCurrentPriceBrl));
-    final topCards = sortedMonitored.take(10).map((m) => m.card).toList();
+    final topMonitored = sortedMonitored.take(10).toList();
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -100,87 +96,6 @@ class CollectionDashboardWidget extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Section Header
-            // Top Section Header
-            Row(
-              children: [
-                Icon(Icons.account_balance_wallet_outlined, size: 20, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  strings.sectionPortfolioMetrics,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                if (totalCount > 0) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      strings.cardsCount(totalCount),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Price Monitor Action Button below title
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => AppNavigator.toPriceMonitoring(context),
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.35),
-                      width: 1.0,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.analytics_outlined,
-                        size: 16,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        strings.priceMonitor,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.chevron_right,
-                        size: 16,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.7),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
             // Metrics Row (Invested, Current Value, Profit/Loss)
             Row(
               children: [
@@ -216,190 +131,26 @@ class CollectionDashboardWidget extends ConsumerWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 14),
+
+            // Price Monitor & Currency buttons below the metrics
+            Row(
+              children: [
+                Expanded(
+                  child: _buildPriceMonitorButton(context, strings),
+                ),
+                const SizedBox(width: 10),
+                _buildCurrencyComparisonChip(context, ref, strings),
+              ],
+            ),
 
             // Top 10 Most Valuable Cards Section
-            if (topCards.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.workspace_premium, size: 16, color: Colors.amber.shade700),
-                      const SizedBox(width: 6),
-                      Text(
-                        strings.top10ValuableCards,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.8,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    strings.cardsCount(topCards.length),
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              // Horizontal list of top cards
-              SizedBox(
-                height: 124,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: topCards.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 10),
-                  itemBuilder: (context, index) {
-                    final card = topCards[index];
-                    final rank = index + 1;
-                    final cardPriceBrl = card.purchasePriceBrl > 0 ? card.purchasePriceBrl : 15.0;
-                    final priceDisplay = isUsd
-                        ? CurrencyFormatter.toUsd(cardPriceBrl / effectiveRate)
-                        : CurrencyFormatter.toBrl(cardPriceBrl);
-
-                    Color rankColor = theme.colorScheme.primary;
-                    if (rank == 1) rankColor = Colors.amber.shade700;
-                    if (rank == 2) rankColor = Colors.blueGrey;
-                    if (rank == 3) rankColor = Colors.brown.shade400;
-
-                    return InkWell(
-                      onTap: () {
-                        final catalogCard = PokemonCardItem(
-                          id: card.cardApiId,
-                          name: card.name,
-                          number: card.number,
-                          setId: card.setName.toLowerCase().replaceAll(' ', '-'),
-                          setName: card.setName,
-                          rarity: card.rarity,
-                          imageUrlSmall: card.imageUrl,
-                          imageUrlLarge: card.imageUrl,
-                          types: const ['Colorless'],
-                          supertype: 'Pokémon',
-                          artist: '',
-                          tcgMarketUsd: cardPriceBrl / effectiveRate,
-                        );
-                        AppNavigator.toCardDetails(
-                          context,
-                          catalogCard,
-                          userCardId: card.id,
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        width: 190,
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: rank == 1
-                                ? Colors.amber.withValues(alpha: 0.6)
-                                : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                            width: rank == 1 ? 1.5 : 1.0,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            // Card Thumbnail with Rank Overlay
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                PokemonCardImage(
-                                  imageUrl: card.imageUrl,
-                                  width: 50,
-                                  height: 70,
-                                  fit: BoxFit.contain,
-                                ),
-                                Positioned(
-                                  top: 2,
-                                  left: 2,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                    decoration: BoxDecoration(
-                                      color: rankColor,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      '#$rank',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(width: 8),
-
-                            // Details
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    card.name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  Text(
-                                    '${card.setName} (${card.number})',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      ConditionBadge(
-                                        condition: card.condition,
-                                        compact: true,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(
-                                          priceDisplay,
-                                          style: const TextStyle(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.profitGreen,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${card.quantity}x',
-                                    style: const TextStyle(fontSize: 9, color: Colors.grey),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+            if (topMonitored.isNotEmpty) ...[
+              TopCardsWidget(
+                topMonitored: topMonitored,
+                isUsd: isUsd,
+                effectiveRate: effectiveRate,
+                strings: strings,
               ),
               const SizedBox(height: 12),
             ],
@@ -445,6 +196,99 @@ class CollectionDashboardWidget extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+Widget _buildPriceMonitorButton(BuildContext context, AppStrings strings) {
+    final theme = Theme.of(context);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => AppNavigator.toPriceMonitoring(context),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          height: 34,
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.35),
+              width: 1.0,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.analytics_outlined,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  strings.priceMonitor,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrencyComparisonChip(BuildContext context, WidgetRef ref, AppStrings strings) {
+    final theme = Theme.of(context);
+    final isUsd = ref.watch(currencyProvider) == AppCurrency.usd;
+    final rate = ref.watch(exchangeRateProvider);
+    final primary = theme.colorScheme.primary;
+
+    final String brlText;
+    final String usdText;
+    if (isUsd) {
+      brlText = rate.toStringAsFixed(2);
+      usdText = '1,00';
+    } else {
+      brlText = '1,00';
+      usdText = (1 / rate).toStringAsFixed(2);
+    }
+
+    return ActionChip(
+      avatar: const Icon(Icons.currency_exchange, size: 16),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      label: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: 'R\$ $brlText',
+              style: TextStyle(
+                fontWeight: isUsd ? FontWeight.normal : FontWeight.bold,
+                color: isUsd ? null : primary,
+              ),
+            ),
+            const TextSpan(text: ' = '),
+            TextSpan(
+              text: 'US\$ $usdText',
+              style: TextStyle(
+                fontWeight: isUsd ? FontWeight.bold : FontWeight.normal,
+                color: isUsd ? primary : null,
+              ),
+            ),
+          ],
+        ),
+      ),
+      tooltip: isUsd ? strings.switchToBrl : strings.switchToUsd,
+      onPressed: () => ref.read(currencyProvider.notifier).toggleCurrency(),
     );
   }
 }

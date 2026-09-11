@@ -300,6 +300,7 @@ class _CardScaleSheetContentState extends ConsumerState<CardScaleSheetContent> {
             avatar: Icon(Icons.view_list, size: 14),
             label: Text(strings.viewAsList, style: const TextStyle(fontSize: 12)),
             selected: isList,
+            showCheckmark: false,
             onSelected: (_) {
               HapticFeedback.selectionClick();
               ref.read(cardViewModeProvider.notifier).setMode(CardViewMode.list);
@@ -312,6 +313,7 @@ class _CardScaleSheetContentState extends ConsumerState<CardScaleSheetContent> {
               avatar: Icon(icon, size: 14),
               label: Text(label, style: const TextStyle(fontSize: 12)),
               selected: isSelected,
+              showCheckmark: false,
               onSelected: (_) {
                 HapticFeedback.selectionClick();
                 ref.read(cardViewModeProvider.notifier).setMode(CardViewMode.grid);

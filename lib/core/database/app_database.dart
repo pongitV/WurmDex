@@ -81,6 +81,8 @@ class LigaPriceAlerts extends Table {
   TextColumn get title => text()();
   TextColumn get targetUrl => text()();
   TextColumn get imageUrl => text().withDefault(const Constant(''))();
+  TextColumn get collectionTag => text().withDefault(const Constant(''))();
+  TextColumn get languageTag => text().withDefault(const Constant(''))();
   RealColumn get minTargetPrice => real().withDefault(const Constant(0.0))();
   RealColumn get maxTargetPrice => real().withDefault(const Constant(0.0))();
   BoolColumn get allowPreSale => boolean().withDefault(const Constant(true))();
@@ -102,7 +104,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -119,6 +121,10 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 4) {
         await m.createTable(ligaPriceAlerts);
+      }
+      if (from < 5) {
+        await m.addColumn(ligaPriceAlerts, ligaPriceAlerts.collectionTag);
+        await m.addColumn(ligaPriceAlerts, ligaPriceAlerts.languageTag);
       }
       await _createIndexes();
     },

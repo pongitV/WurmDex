@@ -5,15 +5,21 @@ import '../../../core/database/app_database.dart';
 import '../../../core/database/database_provider.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/providers/card_scale_provider.dart';
+import '../../../core/providers/card_view_mode_provider.dart';
 import '../../../core/providers/currency_provider.dart';
 import '../../../core/providers/grid_composition_provider.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/card_sorting_helper.dart';
+import '../../../core/utils/currency_formatter.dart';
+import '../../../core/utils/semantic_search_helper.dart';
+import '../../../core/navigation/app_navigator.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/app_overflow_menu.dart';
 import '../../../core/widgets/app_search_bar.dart';
 import '../../../core/widgets/card_grid_skeleton.dart';
 import '../../../core/widgets/card_sort_button.dart';
+import '../../../core/widgets/pokemon_card_image.dart';
 import '../../catalog/models/catalog_filter_state.dart';
 import '../../catalog/models/pokemon_card_item.dart';
 import '../../catalog/presentation/widgets/card_grid_item.dart';
@@ -112,6 +118,8 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
     final isEn = strings.isEn;
 
     final userCards = ref.watch(userCardsStreamProvider).asData?.value ?? [];
+    final cardScale = ref.watch(menuCardScaleProvider);
+    final viewMode = ref.watch(cardViewModeProvider);
     final ownedCount = SetCompletionHelper.getOwnedDistinctCount(userCards, widget.set);
     final ratio = SetCompletionHelper.getCompletionRatio(ownedCount, widget.set);
     final totalCards = widget.set.totalCards > 0 ? widget.set.totalCards : widget.set.officialCards;
@@ -150,6 +158,7 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
                   crossAxisCount: resolveCardGridCrossAxisCount(
                     context: context,
                     ref: ref,
+                    cardScale: cardScale,
                   ),
                   padding: const EdgeInsets.all(16),
                 )
@@ -176,10 +185,20 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
                           totalCards,
                           ratio,
                           isEn,
+                          cardScale,
+                          viewMode,
                         ),
 
                         // Tab 2: Sealed Products
-                        _buildProductsTab(theme, colorScheme, exchangeRate, isEn),
+                        _buildProductsTab(
+                          theme,
+                          colorScheme,
+                          strings,
+                          exchangeRate,
+                          isEn,
+                          cardScale,
+                          viewMode,
+                        ),
                       ],
                     ),
     );
@@ -195,6 +214,8 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
     int totalCards,
     double ratio,
     bool isEn,
+    double cardScale,
+    CardViewMode viewMode,
   ) {
     final filteredCards = _getFilteredAndSortedCards();
     final initialReleaseDate = TcgSetsData.getInitialReleaseDate(
@@ -377,7 +398,7 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
           ),
         ),
 
-        // Grid of Cards
+        // Grid or List of Cards
         Expanded(
           child: filteredCards.isEmpty
               ? AppEmptyState(
@@ -387,46 +408,154 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
                       ? (isEn ? 'Try adjusting your search term' : 'Tente ajustar o termo da busca')
                       : null,
                 )
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    final crossAxisCount = resolveCardGridCrossAxisCount(
-                      context: context,
-                      ref: ref,
-                      availableWidth: constraints.maxWidth,
-                    );
+              : viewMode == CardViewMode.list
+                  ? _buildCardsListView(filteredCards, userCards, exchangeRate)
+                  : LayoutBuilder(
+                      builder: (context, constraints) {
+                        final crossAxisCount = resolveCardGridCrossAxisCount(
+                          context: context,
+                          ref: ref,
+                          availableWidth: constraints.maxWidth,
+                          cardScale: cardScale,
+                        );
 
-                    return GridView.builder(
-                      padding: const EdgeInsets.all(12),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        childAspectRatio: AppConstants.cardGridItemAspectRatio,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                      ),
-                      itemCount: filteredCards.length,
-                      itemBuilder: (context, index) {
-                        final card = filteredCards[index];
-                        final isOwned = SetCompletionHelper.isCardOwned(userCards, card);
+                        // Scale grows the whole tile (art + text) by increasing the
+                        // card's height so content fills the tile without clipping.
+                        final adjustedAspect =
+                            (AppConstants.cardGridItemAspectRatio * (1.15 / cardScale))
+                                .clamp(0.55, 1.2)
+                                .toDouble();
 
-                        return CardGridItem(
-                          card: card,
-                          exchangeRate: exchangeRate,
-                          isOwned: isOwned,
+                        return GridView.builder(
+                          padding: const EdgeInsets.all(12),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            childAspectRatio: adjustedAspect,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                          ),
+                          itemCount: filteredCards.length,
+                          itemBuilder: (context, index) {
+                            final card = filteredCards[index];
+                            final isOwned = SetCompletionHelper.isCardOwned(userCards, card);
+
+                            return CardGridItem(
+                              card: card,
+                              exchangeRate: exchangeRate,
+                              isOwned: isOwned,
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                ),
+                    ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCardsListView(
+    List<PokemonCardItem> cards,
+    List<UserCard> userCards,
+    double exchangeRate,
+  ) {
+    final currency = ref.watch(currencyProvider);
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      itemCount: cards.length,
+      separatorBuilder: (context, index) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final card = cards[index];
+        final title = SemanticSearchHelper.formatCardIdentifier(
+          rawName: card.name,
+          number: card.number,
+          setTotal: card.setTotal,
+        );
+        final priceText = CurrencyFormatter.formatCardPrice(
+          usdValue: card.effectiveMidPriceUsd,
+          exchangeRate: exchangeRate,
+          currency: currency,
+        );
+        final isOwned = SetCompletionHelper.isCardOwned(userCards, card);
+
+        return ListTile(
+          dense: true,
+          leading: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              PokemonCardImage(
+                imageUrl: card.imageUrlSmall,
+                fallbackImageUrl: card.imageUrlLarge,
+                width: 42,
+                height: 58,
+                fit: BoxFit.contain,
+              ),
+              if (isOwned)
+                Positioned(
+                  top: -3,
+                  right: -3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.profitGreen,
+                      borderRadius: BorderRadius.circular(6),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black38,
+                          blurRadius: 3,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            '${card.setName} • ${card.rarity}',
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: Text(
+            priceText,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: AppColors.profitGreen,
+            ),
+          ),
+          onTap: () => AppNavigator.toCardDetails(context, card),
+        );
+      },
     );
   }
 
   Widget _buildProductsTab(
     ThemeData theme,
     ColorScheme colorScheme,
+    AppStrings strings,
     double exchangeRate,
     bool isEn,
+    double cardScale,
+    CardViewMode viewMode,
   ) {
     if (_products.isEmpty) {
       return AppEmptyState(
@@ -435,17 +564,160 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: _products.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        return SetProductCard(
-          product: _products[index],
-          exchangeRate: exchangeRate,
-          isEn: isEn,
+    final currency = ref.watch(currencyProvider);
+
+    if (viewMode == CardViewMode.list) {
+      return ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: _products.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          return SetProductCard(
+            product: _products[index],
+            exchangeRate: exchangeRate,
+            isEn: isEn,
+          );
+        },
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = resolveCardGridCrossAxisCount(
+          context: context,
+          ref: ref,
+          availableWidth: constraints.maxWidth,
+          cardScale: cardScale,
+        );
+
+        // Scale grows the product tile so the change is visible even when the
+        // column count stays the same on small widths.
+        final adjustedAspect = (0.82 * (1.15 / cardScale)).clamp(0.62, 1.15).toDouble();
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: adjustedAspect,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+          ),
+          itemCount: _products.length,
+          itemBuilder: (context, index) {
+            return _ProductGridTile(
+              product: _products[index],
+              exchangeRate: exchangeRate,
+              currency: currency,
+              isEn: isEn,
+            );
+          },
         );
       },
+    );
+  }
+}
+
+class _ProductGridTile extends StatelessWidget {
+  final SetProductItem product;
+  final double exchangeRate;
+  final AppCurrency currency;
+  final bool isEn;
+
+  const _ProductGridTile({
+    required this.product,
+    required this.exchangeRate,
+    required this.currency,
+    required this.isEn,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final brlEstimated = product.msrpUsd != null ? product.msrpUsd! * exchangeRate : null;
+    final isUsd = currency == AppCurrency.usd;
+    final primaryText = product.msrpUsd == null
+        ? 'TBA'
+        : (isUsd
+            ? CurrencyFormatter.toUsd(product.msrpUsd)
+            : CurrencyFormatter.toBrl(brlEstimated));
+
+    return Card(
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
+      color: colorScheme.surfaceContainerLow,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Product image area
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: theme.brightness == Brightness.dark
+                    ? colorScheme.surfaceContainerHighest
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+                ),
+              ),
+              child: AppNetworkImage(
+                imageUrl: product.imageUrl,
+                fit: BoxFit.contain,
+                borderRadius: BorderRadius.circular(8),
+                fallbackIcon: Icons.inventory_2_outlined,
+                fallbackIconSize: 32,
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              product.name,
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              product.productType,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.primary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+            child: Text(
+              primaryText,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
