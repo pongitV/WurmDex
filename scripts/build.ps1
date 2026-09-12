@@ -11,15 +11,37 @@ Write-Host "          WURMDEX - BUILD AUTOMATIZADO" -ForegroundColor Cyan
 Write-Host "=======================================================" -ForegroundColor Cyan
 Write-Host ""
 
-$flutterCmd = "flutter"
-if (-not (Get-Command flutter -ErrorAction SilentlyContinue)) {
-    if (Test-Path "D:\flutter\bin\flutter.bat") {
-        $flutterCmd = "D:\flutter\bin\flutter.bat"
-    } else {
-        Write-Error "Flutter SDK nao foi encontrado no PATH nem em D:\flutter\bin\flutter.bat"
-        exit 1
-    }
+$flutterCandidates = @(
+    (Join-Path $projectRoot ".fvm\flutter_sdk\bin\flutter.bat"),
+    (Join-Path $projectRoot "flutter\bin\flutter.bat"),
+    "C:\SDKs\flutter\bin\flutter.bat"
+)
+if ($env:FLUTTER_ROOT) {
+    $flutterCandidates += Join-Path $env:FLUTTER_ROOT "bin\flutter.bat"
 }
+if ($env:USERPROFILE) {
+    $flutterCandidates += Join-Path $env:USERPROFILE "develop\flutter\bin\flutter.bat"
+    $flutterCandidates += Join-Path $env:USERPROFILE "flutter\bin\flutter.bat"
+}
+$flutterCandidates += @(
+    "C:\src\flutter\bin\flutter.bat",
+    "C:\flutter\bin\flutter.bat",
+    "D:\flutter\bin\flutter.bat"
+)
+
+$flutterCommand = Get-Command flutter -ErrorAction SilentlyContinue
+if ($flutterCommand) {
+    $flutterCmd = $flutterCommand.Source
+} else {
+    $flutterCmd = $flutterCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+}
+
+if (-not $flutterCmd) {
+    Write-Error "Flutter SDK nao foi encontrado. Adicione flutter ao PATH, defina FLUTTER_ROOT ou instale-o em um local comum."
+    exit 1
+}
+
+Write-Host "Flutter encontrado em: $flutterCmd" -ForegroundColor DarkGray
 
 $distDir = Join-Path $projectRoot "dist"
 $windowsDist = Join-Path $distDir "windows"

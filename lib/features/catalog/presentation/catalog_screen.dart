@@ -134,6 +134,42 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     _effectiveFocusNode.requestFocus();
   }
 
+  Future<void> _openSearchDialog() async {
+    final strings = getStrings(ref.read(languageProvider));
+    final controller = TextEditingController(text: _searchController.text);
+    final query = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(strings.btnSearchCards),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textInputAction: TextInputAction.search,
+          onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
+          decoration: InputDecoration(
+            hintText: strings.searchHint,
+            prefixIcon: const Icon(Icons.search),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(strings.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
+            child: Text(strings.btnSearchCards),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (query == null || !mounted) return;
+    _searchController.text = query;
+    setState(() => _isSearching = true);
+    _onSearchChanged(query);
+  }
+
   void _applyFilter(CatalogFilterState newState, AppStrings strings) {
     final nextLang = newState.selectedLanguage;
     String? newSearchLanguage;
@@ -266,7 +302,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         children: [
           // Persistent Search Bar at the top of the Menu / Catalog (full width,
           // above the action buttons so it never gets squeezed)
-          Padding(
+          if (widget.targetFolder != null)
+            Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               controller: _searchController,
@@ -437,6 +474,13 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
           ),
         ],
       ),
+      floatingActionButton: widget.targetFolder == null
+          ? FloatingActionButton(
+              onPressed: _openSearchDialog,
+              tooltip: strings.searchHint,
+              child: const Icon(Icons.search),
+            )
+          : null,
     );
   }
 

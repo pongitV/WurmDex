@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/constants/app_constants.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/navigation/app_navigator.dart';
@@ -8,7 +9,6 @@ import '../../../core/providers/card_view_mode_provider.dart';
 import '../../../core/providers/currency_provider.dart';
 import '../../../core/providers/grid_composition_provider.dart';
 import '../../../core/utils/card_sorting_helper.dart';
-import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/semantic_search_helper.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_network_image.dart';
@@ -27,10 +27,7 @@ import 'widgets/pokemon_cards_filter_bottom_sheet.dart';
 class PokemonCardsGalleryScreen extends ConsumerStatefulWidget {
   final PokedexEntry pokemon;
 
-  const PokemonCardsGalleryScreen({
-    super.key,
-    required this.pokemon,
-  });
+  const PokemonCardsGalleryScreen({super.key, required this.pokemon});
 
   @override
   ConsumerState<PokemonCardsGalleryScreen> createState() =>
@@ -46,13 +43,16 @@ class _PokemonCardsGalleryScreenState
   PokemonCardsFilter _filter = const PokemonCardsFilter();
 
   List<String> get _availableSets =>
-      _cards.map((c) => c.setName).where((s) => s.isNotEmpty).toSet().toList()..sort();
+      _cards.map((c) => c.setName).where((s) => s.isNotEmpty).toSet().toList()
+        ..sort();
 
   List<String> get _availableLanguages =>
-      _cards.map((c) => c.language).where((s) => s.isNotEmpty).toSet().toList()..sort();
+      _cards.map((c) => c.language).where((s) => s.isNotEmpty).toSet().toList()
+        ..sort();
 
   List<String> get _availableTypes =>
-      _cards.expand((c) => c.types).where((s) => s.isNotEmpty).toSet().toList()..sort();
+      _cards.expand((c) => c.types).where((s) => s.isNotEmpty).toSet().toList()
+        ..sort();
 
   List<PokemonCardItem> get _filteredCards {
     var list = List<PokemonCardItem>.of(_cards);
@@ -173,12 +173,12 @@ class _PokemonCardsGalleryScreenState
     final cardScale = ref.watch(menuCardScaleProvider);
     ref.watch(gridCompositionProvider);
     final viewMode = ref.watch(cardViewModeProvider);
-    final currency = ref.watch(currencyProvider);
-
     // Scale grows the whole tile (photo + text) by increasing the card's height.
     // Keeps the default 0.58 ratio at the default scale (1.15).
     final adjustedAspect =
-        (AppConstants.cardGridItemAspectRatio * (1.15 / cardScale)).clamp(0.55, 1.2).toDouble();
+        (AppConstants.cardGridItemAspectRatio * (1.15 / cardScale))
+            .clamp(0.55, 1.2)
+            .toDouble();
     // Bigger artwork that also responds to the card scale.
     final artSize = (130.0 * cardScale).clamp(110.0, 220.0).toDouble();
 
@@ -225,7 +225,9 @@ class _PokemonCardsGalleryScreenState
               margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                color: colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.5,
+                ),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: colorScheme.outlineVariant.withValues(alpha: 0.3),
@@ -248,7 +250,9 @@ class _PokemonCardsGalleryScreenState
                   const SizedBox(height: 10),
                   Text(
                     '${widget.pokemon.formattedNumber} ${widget.pokemon.name}',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
@@ -297,11 +301,6 @@ class _PokemonCardsGalleryScreenState
                     number: card.number,
                     setTotal: card.setTotal,
                   );
-                  final priceText = CurrencyFormatter.formatCardPrice(
-                    usdValue: card.effectiveMidPriceUsd,
-                    exchangeRate: exchangeRate,
-                    currency: currency,
-                  );
                   return ListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
@@ -317,17 +316,19 @@ class _PokemonCardsGalleryScreenState
                     ),
                     title: Text(
                       title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                     subtitle: Text(
                       '${card.setName} • ${card.rarity}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 11, color: colorScheme.onSurface.withValues(alpha: 0.6)),
-                    ),
-                    trailing: Text(
-                      priceText,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.green),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
                     onTap: () => AppNavigator.toCardDetails(context, card),
                     onLongPress: () => CardQuickActionSheet.show(context, card),
@@ -354,16 +355,14 @@ class _PokemonCardsGalleryScreenState
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                     ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final card = displayCards[index];
-                        return CardGridItem(
-                          card: card,
-                          exchangeRate: exchangeRate,
-                        );
-                      },
-                      childCount: displayCards.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final card = displayCards[index];
+                      return CardGridItem(
+                        card: card,
+                        exchangeRate: exchangeRate,
+                        showPrice: false,
+                      );
+                    }, childCount: displayCards.length),
                   );
                 },
               ),
@@ -376,38 +375,54 @@ class _PokemonCardsGalleryScreenState
   Widget _buildActiveFilterChips(ThemeData theme, AppStrings strings) {
     final chips = <Widget>[];
     if (_filter.selectedSet != null) {
-      chips.add(Padding(
-        padding: const EdgeInsets.only(right: 6),
-        child: InputChip(
-          label: Text('${strings.filterByCollection}: ${_filter.selectedSet}'),
-          onDeleted: () => setState(() => _filter = _filter.copyWith(clearSet: true)),
+      chips.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: InputChip(
+            label: Text(
+              '${strings.filterByCollection}: ${_filter.selectedSet}',
+            ),
+            onDeleted: () =>
+                setState(() => _filter = _filter.copyWith(clearSet: true)),
+          ),
         ),
-      ));
+      );
     }
     if (_filter.selectedLanguage != null) {
       final langLabel = strings.languageDisplayName(_filter.selectedLanguage!);
-      chips.add(Padding(
-        padding: const EdgeInsets.only(right: 6),
-        child: InputChip(
-          label: Text('${strings.languageLabel}: $langLabel'),
-          onDeleted: () => setState(() => _filter = _filter.copyWith(clearLanguage: true)),
+      chips.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: InputChip(
+            label: Text('${strings.languageLabel}: $langLabel'),
+            onDeleted: () =>
+                setState(() => _filter = _filter.copyWith(clearLanguage: true)),
+          ),
         ),
-      ));
+      );
     }
     if (_filter.selectedType != null) {
-      chips.add(Padding(
-        padding: const EdgeInsets.only(right: 6),
-        child: InputChip(
-          label: Text('${strings.filterByType}: ${_filter.selectedType}'),
-          onDeleted: () => setState(() => _filter = _filter.copyWith(clearType: true)),
+      chips.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: InputChip(
+            label: Text('${strings.filterByType}: ${_filter.selectedType}'),
+            onDeleted: () =>
+                setState(() => _filter = _filter.copyWith(clearType: true)),
+          ),
         ),
-      ));
+      );
     }
-    chips.add(TextButton.icon(
-      icon: const Icon(Icons.close, size: 16),
-      label: Text(strings.btnClearFilters, style: const TextStyle(fontSize: 11)),
-      onPressed: () => setState(() => _filter = const PokemonCardsFilter()),
-    ));
+    chips.add(
+      TextButton.icon(
+        icon: const Icon(Icons.close, size: 16),
+        label: Text(
+          strings.btnClearFilters,
+          style: const TextStyle(fontSize: 11),
+        ),
+        onPressed: () => setState(() => _filter = const PokemonCardsFilter()),
+      ),
+    );
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(children: chips),

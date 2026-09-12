@@ -21,6 +21,7 @@ class CardGridItem extends ConsumerWidget {
   final Widget? topLeftBadge;
   final Widget? topRightBadge;
   final String? customPriceText;
+  final bool showPrice;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
@@ -34,6 +35,7 @@ class CardGridItem extends ConsumerWidget {
     this.topLeftBadge,
     this.topRightBadge,
     this.customPriceText,
+    this.showPrice = true,
     this.onTap,
     this.onLongPress,
   });
@@ -192,7 +194,9 @@ class CardGridItem extends ConsumerWidget {
 
                   // Linha 3: Qualidade, bandeira do país e preço(médio) embaixo
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: showPrice
+                        ? MainAxisAlignment.spaceBetween
+                        : MainAxisAlignment.start,
                     children: [
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -208,19 +212,20 @@ class CardGridItem extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      Flexible(
-                        child: Text(
-                          effectivePriceText,
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.profitGreen,
+                      if (showPrice)
+                        Flexible(
+                          child: Text(
+                            effectivePriceText,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.profitGreen,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.end,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.end,
                         ),
-                      ),
                     ],
                   ),
                 ],

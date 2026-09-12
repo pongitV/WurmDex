@@ -52,6 +52,8 @@ class TcgNewsService {
     final sceneUrl = isEn
         ? 'https://news.google.com/rss/search?q=Pokemon+TCG+competitive+OR+Pokemon+TCG+tournament+OR+Pokemon+TCG+meta+OR+Pokemon+TCG+deck&hl=en-US&gl=US&ceid=US:en'
         : 'https://news.google.com/rss/search?q=Pokemon+Estampas+Ilustradas+torneio+OR+Pokemon+TCG+competitivo+OR+Pokemon+TCG+regional&hl=pt-BR&gl=BR&ceid=BR:pt-419';
+    final tcgTalkUrl =
+        'https://news.google.com/rss/search?q=site%3Atcgtalk.com+Pokemon+TCG&hl=${isEn ? 'en-US' : 'pt-BR'}&gl=${isEn ? 'US' : 'BR'}&ceid=${isEn ? 'US:en' : 'BR:pt-419'}';
 
     // Fetch in parallel for maximum speed and responsiveness
     final results = await Future.wait([
@@ -77,12 +79,22 @@ class TcgNewsService {
         debugPrint('Error fetching TCG Scene news: $e');
         return <TcgNewsItem>[];
       }),
+      _fetchGoogleNewsRss(
+        url: tcgTalkUrl,
+        feedGroup: 'tcgtalk',
+        sourceName: 'TCGTalk',
+        defaultCategory: isEn ? 'TCG TALK' : 'NOTÍCIAS TCG',
+      ).catchError((e) {
+        debugPrint('Error fetching TCGTalk news: $e');
+        return <TcgNewsItem>[];
+      }),
     ]);
 
     final List<TcgNewsItem> combined = [];
     final officialArticles = results[0];
     final billsArticles = results[1];
     final sceneArticles = results[2];
+    final tcgTalkArticles = results[3];
 
     combined.addAll(officialArticles);
     combined.addAll(billsArticles);
@@ -90,6 +102,11 @@ class TcgNewsService {
     for (final art in sceneArticles) {
       if (!combined.any((item) => item.title.toLowerCase() == art.title.toLowerCase())) {
         combined.add(art);
+      }
+      for (final art in tcgTalkArticles) {
+        if (!combined.any((item) => item.title.toLowerCase() == art.title.toLowerCase())) {
+          combined.add(art);
+        }
       }
     }
 
@@ -415,4 +432,3 @@ class TcgNewsService {
     return result.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 }
-

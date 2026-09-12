@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/constants/app_constants.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/database/database_provider.dart';
@@ -33,10 +34,7 @@ import 'widgets/set_product_card.dart';
 class SetDetailScreen extends ConsumerStatefulWidget {
   final TcgSetItem set;
 
-  const SetDetailScreen({
-    super.key,
-    required this.set,
-  });
+  const SetDetailScreen({super.key, required this.set});
 
   @override
   ConsumerState<SetDetailScreen> createState() => _SetDetailScreenState();
@@ -120,87 +118,99 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
     final userCards = ref.watch(userCardsStreamProvider).asData?.value ?? [];
     final cardScale = ref.watch(menuCardScaleProvider);
     final viewMode = ref.watch(cardViewModeProvider);
-    final ownedCount = SetCompletionHelper.getOwnedDistinctCount(userCards, widget.set);
-    final ratio = SetCompletionHelper.getCompletionRatio(ownedCount, widget.set);
-    final totalCards = widget.set.totalCards > 0 ? widget.set.totalCards : widget.set.officialCards;
+    final ownedCount = SetCompletionHelper.getOwnedDistinctCount(
+      userCards,
+      widget.set,
+    );
+    final ratio = SetCompletionHelper.getCompletionRatio(
+      ownedCount,
+      widget.set,
+    );
+    final totalCards = widget.set.totalCards > 0
+        ? widget.set.totalCards
+        : widget.set.officialCards;
 
     return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              widget.set.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-              overflow: TextOverflow.ellipsis,
+      appBar: AppBar(
+        title: Text(
+          widget.set.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          AppOverflowMenu(
+            scaleTarget: CardScaleTarget.menu,
+            showCurrency: true,
+            showRefresh: true,
+            onRefresh: _loadData,
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(
+              icon: const Icon(Icons.style, size: 20),
+              text: isEn
+                  ? 'Cards (${_cards.length})'
+                  : 'Cartas (${_cards.length})',
             ),
-            actions: [
-              AppOverflowMenu(
-                scaleTarget: CardScaleTarget.menu,
-                showCurrency: true,
-                showRefresh: true,
-                onRefresh: _loadData,
+            Tab(
+              icon: const Icon(Icons.inventory_2_outlined, size: 20),
+              text: isEn
+                  ? 'Products (${_products.length})'
+                  : 'Produtos (${_products.length})',
+            ),
+          ],
+        ),
+      ),
+      body: _isLoading
+          ? CardGridSkeleton(
+              crossAxisCount: resolveCardGridCrossAxisCount(
+                context: context,
+                ref: ref,
+                cardScale: cardScale,
               ),
-            ],
-            bottom: TabBar(
+              padding: const EdgeInsets.all(16),
+            )
+          : _errorMessage != null
+          ? AppEmptyState(
+              icon: Icons.error_outline,
+              iconColor: colorScheme.error,
+              title: _errorMessage!,
+              buttonLabel: strings.btnTryAgain,
+              buttonIcon: Icons.refresh,
+              onAction: _loadData,
+            )
+          : TabBarView(
               controller: _tabController,
-              tabs: [
-                Tab(
-                  icon: const Icon(Icons.style, size: 20),
-                  text: isEn ? 'Cards (${_cards.length})' : 'Cartas (${_cards.length})',
+              children: [
+                // Tab 1: Cards
+                _buildCardsTab(
+                  theme,
+                  colorScheme,
+                  strings,
+                  exchangeRate,
+                  userCards,
+                  ownedCount,
+                  totalCards,
+                  ratio,
+                  isEn,
+                  cardScale,
+                  viewMode,
                 ),
-                Tab(
-                  icon: const Icon(Icons.inventory_2_outlined, size: 20),
-                  text: isEn ? 'Products (${_products.length})' : 'Produtos (${_products.length})',
+
+                // Tab 2: Sealed Products
+                _buildProductsTab(
+                  theme,
+                  colorScheme,
+                  strings,
+                  exchangeRate,
+                  isEn,
+                  cardScale,
+                  viewMode,
                 ),
               ],
             ),
-          ),
-          body: _isLoading
-              ? CardGridSkeleton(
-                  crossAxisCount: resolveCardGridCrossAxisCount(
-                    context: context,
-                    ref: ref,
-                    cardScale: cardScale,
-                  ),
-                  padding: const EdgeInsets.all(16),
-                )
-              : _errorMessage != null
-                  ? AppEmptyState(
-                      icon: Icons.error_outline,
-                      iconColor: colorScheme.error,
-                      title: _errorMessage!,
-                      buttonLabel: strings.btnTryAgain,
-                      buttonIcon: Icons.refresh,
-                      onAction: _loadData,
-                    )
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        // Tab 1: Cards
-                        _buildCardsTab(
-                          theme,
-                          colorScheme,
-                          strings,
-                          exchangeRate,
-                          userCards,
-                          ownedCount,
-                          totalCards,
-                          ratio,
-                          isEn,
-                          cardScale,
-                          viewMode,
-                        ),
-
-                        // Tab 2: Sealed Products
-                        _buildProductsTab(
-                          theme,
-                          colorScheme,
-                          strings,
-                          exchangeRate,
-                          isEn,
-                          cardScale,
-                          viewMode,
-                        ),
-                      ],
-                    ),
     );
   }
 
@@ -226,229 +236,279 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
     );
     final reprintDates = TcgSetsData.getReprintDates(widget.set.id, isEn: isEn);
 
-    return Column(
-      children: [
+    return CustomScrollView(
+      primary: true,
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
         // Set Header & Progress Bar
-        Container(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-            border: Border(
-              bottom: BorderSide(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.2),
+        SliverToBoxAdapter(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.35,
+              ),
+              border: Border(
+                bottom: BorderSide(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.2),
+                ),
               ),
             ),
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  if (widget.set.logoUrl != null && widget.set.logoUrl!.isNotEmpty)
-                    AppNetworkImage(
-                      imageUrl: widget.set.logoUrl!,
-                      height: 36,
-                      fit: BoxFit.contain,
-                      errorWidget: const SizedBox.shrink(),
-                    ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.set.displayNameWithCount,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '${widget.set.year} • $ownedCount / $totalCards ${(ratio * 100).toStringAsFixed(1)}%',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: ratio,
-                  minHeight: 6,
-                  backgroundColor: colorScheme.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    ratio >= 1.0 ? Colors.green : colorScheme.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Dates section: Initial Release & Reprints
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: colorScheme.outlineVariant.withValues(alpha: 0.25),
-                    width: 0.8,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    // Initial Release Row
-                    Row(
-                      children: [
-                        Icon(Icons.calendar_today_outlined, size: 13, color: colorScheme.primary),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${strings.firstReleaseDateLabel}: ',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            initialReleaseDate,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: colorScheme.primary,
+                    if (widget.set.logoUrl != null &&
+                        widget.set.logoUrl!.isNotEmpty)
+                      AppNetworkImage(
+                        imageUrl: widget.set.logoUrl!,
+                        height: 36,
+                        fit: BoxFit.contain,
+                        errorWidget: const SizedBox.shrink(),
+                      ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.set.displayNameWithCount,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    // Reprints Row
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.repeat_rounded, size: 14, color: Colors.orange.shade700),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${strings.reprintDatesLabel}: ',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
+                          Text(
+                            '${widget.set.year} • $ownedCount / $totalCards ${(ratio * 100).toStringAsFixed(1)}%',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: Wrap(
-                            spacing: 6,
-                            runSpacing: 4,
-                            children: reprintDates.map((rDate) {
-                              final isSoon = rDate.toLowerCase().contains('soon');
-                              return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: (isSoon ? Colors.amber : Colors.orange).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: (isSoon ? Colors.amber : Colors.orange).withValues(alpha: 0.4),
-                                    width: 0.6,
-                                  ),
-                                ),
-                                child: Text(
-                                  rDate,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSoon ? Colors.amber.shade800 : Colors.orange.shade800,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: ratio,
+                    minHeight: 6,
+                    backgroundColor: colorScheme.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      ratio >= 1.0 ? Colors.green : colorScheme.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Dates section: Initial Release & Reprints
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.55,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.25),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Initial Release Row
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_outlined,
+                            size: 13,
+                            color: colorScheme.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${strings.firstReleaseDateLabel}: ',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              initialReleaseDate,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.primary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // Reprints Row
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.repeat_rounded,
+                            size: 14,
+                            color: Colors.orange.shade700,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${strings.reprintDatesLabel}: ',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          Expanded(
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: reprintDates.map((rDate) {
+                                final isSoon = rDate.toLowerCase().contains(
+                                  'soon',
+                                );
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        (isSoon ? Colors.amber : Colors.orange)
+                                            .withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color:
+                                          (isSoon
+                                                  ? Colors.amber
+                                                  : Colors.orange)
+                                              .withValues(alpha: 0.4),
+                                      width: 0.6,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    rDate,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSoon
+                                          ? Colors.amber.shade800
+                                          : Colors.orange.shade800,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
 
         // Search and Sort Bar (DRY)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: AppSearchBar(
-                  controller: _searchController,
-                  hintText: isEn ? 'Search card in set...' : 'Buscar carta na coleção...',
-                  padding: EdgeInsets.zero,
-                  onChanged: (val) => setState(() => _searchQuery = val),
-                  onClear: () => setState(() => _searchQuery = ''),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: AppSearchBar(
+                    controller: _searchController,
+                    hintText: isEn
+                        ? 'Search card in set...'
+                        : 'Buscar carta na coleção...',
+                    padding: EdgeInsets.zero,
+                    onChanged: (val) => setState(() => _searchQuery = val),
+                    onClear: () => setState(() => _searchQuery = ''),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              CardSortButton(
-                currentOption: _sortOption,
-                isEn: isEn,
-                onSelected: (opt) => setState(() => _sortOption = opt),
-              ),
-            ],
+                const SizedBox(width: 8),
+                CardSortButton(
+                  currentOption: _sortOption,
+                  isEn: isEn,
+                  onSelected: (opt) => setState(() => _sortOption = opt),
+                ),
+              ],
+            ),
           ),
         ),
 
         // Grid or List of Cards
-        Expanded(
-          child: filteredCards.isEmpty
-              ? AppEmptyState(
-                  icon: Icons.search_off,
-                  title: isEn ? 'No cards found' : 'Nenhuma carta encontrada',
-                  message: _searchQuery.isNotEmpty
-                      ? (isEn ? 'Try adjusting your search term' : 'Tente ajustar o termo da busca')
-                      : null,
-                )
-              : viewMode == CardViewMode.list
-                  ? _buildCardsListView(filteredCards, userCards, exchangeRate)
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        final crossAxisCount = resolveCardGridCrossAxisCount(
-                          context: context,
-                          ref: ref,
-                          availableWidth: constraints.maxWidth,
-                          cardScale: cardScale,
-                        );
+        if (filteredCards.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: AppEmptyState(
+              icon: Icons.search_off,
+              title: isEn ? 'No cards found' : 'Nenhuma carta encontrada',
+              message: _searchQuery.isNotEmpty
+                  ? (isEn
+                        ? 'Try adjusting your search term'
+                        : 'Tente ajustar o termo da busca')
+                  : null,
+            ),
+          )
+        else if (viewMode == CardViewMode.list)
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            sliver: _buildCardsListView(filteredCards, userCards),
+          )
+        else
+          SliverLayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.crossAxisExtent;
+              final crossAxisCount = resolveCardGridCrossAxisCount(
+                context: context,
+                ref: ref,
+                availableWidth: width,
+                cardScale: cardScale,
+              );
 
-                        // Scale grows the whole tile (art + text) by increasing the
-                        // card's height so content fills the tile without clipping.
-                        final adjustedAspect =
-                            (AppConstants.cardGridItemAspectRatio * (1.15 / cardScale))
-                                .clamp(0.55, 1.2)
-                                .toDouble();
+              // Scale grows the whole tile (art + text) by increasing the
+              // card's height so content fills the tile without clipping.
+              final adjustedAspect =
+                  (AppConstants.cardGridItemAspectRatio * (1.15 / cardScale))
+                      .clamp(0.55, 1.2)
+                      .toDouble();
 
-                        return GridView.builder(
-                          padding: const EdgeInsets.all(12),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            childAspectRatio: adjustedAspect,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                          ),
-                          itemCount: filteredCards.length,
-                          itemBuilder: (context, index) {
-                            final card = filteredCards[index];
-                            final isOwned = SetCompletionHelper.isCardOwned(userCards, card);
+              return SliverPadding(
+                padding: const EdgeInsets.all(12),
+                sliver: SliverGrid(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    childAspectRatio: adjustedAspect,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final card = filteredCards[index];
+                    final isOwned = SetCompletionHelper.isCardOwned(
+                      userCards,
+                      card,
+                    );
 
-                            return CardGridItem(
-                              card: card,
-                              exchangeRate: exchangeRate,
-                              isOwned: isOwned,
-                            );
-                          },
-                        );
-                      },
-                    ),
-        ),
+                    return CardGridItem(
+                      card: card,
+                      exchangeRate: exchangeRate,
+                      isOwned: isOwned,
+                      showPrice: false,
+                    );
+                  }, childCount: filteredCards.length),
+                ),
+              );
+            },
+          ),
       ],
     );
   }
@@ -456,95 +516,88 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
   Widget _buildCardsListView(
     List<PokemonCardItem> cards,
     List<UserCard> userCards,
-    double exchangeRate,
   ) {
-    final currency = ref.watch(currencyProvider);
-
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      itemCount: cards.length,
-      separatorBuilder: (context, index) => const Divider(height: 1),
-      itemBuilder: (context, index) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
         final card = cards[index];
         final title = SemanticSearchHelper.formatCardIdentifier(
           rawName: card.name,
           number: card.number,
           setTotal: card.setTotal,
         );
-        final priceText = CurrencyFormatter.formatCardPrice(
-          usdValue: card.effectiveMidPriceUsd,
-          exchangeRate: exchangeRate,
-          currency: currency,
-        );
         final isOwned = SetCompletionHelper.isCardOwned(userCards, card);
 
-        return ListTile(
-          dense: true,
-          leading: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              PokemonCardImage(
-                imageUrl: card.imageUrlSmall,
-                fallbackImageUrl: card.imageUrlLarge,
-                width: 42,
-                height: 58,
-                fit: BoxFit.contain,
-              ),
-              if (isOwned)
-                Positioned(
-                  top: -3,
-                  right: -3,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.profitGreen,
-                      borderRadius: BorderRadius.circular(6),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black38,
-                          blurRadius: 3,
-                          offset: Offset(0, 1),
+        return Column(
+          children: [
+            ListTile(
+              dense: true,
+              leading: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  PokemonCardImage(
+                    imageUrl: card.imageUrlSmall,
+                    fallbackImageUrl: card.imageUrlLarge,
+                    width: 42,
+                    height: 58,
+                    fit: BoxFit.contain,
+                  ),
+                  if (isOwned)
+                    Positioned(
+                      top: -3,
+                      right: -3,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
                         ),
-                      ],
-                    ),
-                    child: const Text(
-                      'OK',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
+                        decoration: BoxDecoration(
+                          color: AppColors.profitGreen,
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black38,
+                              blurRadius: 3,
+                              offset: Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                ],
+              ),
+              title: Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
                 ),
-            ],
-          ),
-          title: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            '${card.setName} • ${card.rarity}',
-            style: TextStyle(
-              fontSize: 11,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(
+                '${card.setName} • ${card.rarity}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurface
+                      .withValues(alpha: 0.6),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () => AppNavigator.toCardDetails(context, card),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: Text(
-            priceText,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-              color: AppColors.profitGreen,
-            ),
-          ),
-          onTap: () => AppNavigator.toCardDetails(context, card),
+            if (index < cards.length - 1) const Divider(height: 1),
+          ],
         );
-      },
+      }, childCount: cards.length),
     );
   }
 
@@ -560,7 +613,9 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
     if (_products.isEmpty) {
       return AppEmptyState(
         icon: Icons.inventory_2_outlined,
-        title: isEn ? 'No sealed products listed' : 'Nenhum produto selado disponível',
+        title: isEn
+            ? 'No sealed products listed'
+            : 'Nenhum produto selado disponível',
       );
     }
 
@@ -592,7 +647,9 @@ class _SetDetailScreenState extends ConsumerState<SetDetailScreen>
 
         // Scale grows the product tile so the change is visible even when the
         // column count stays the same on small widths.
-        final adjustedAspect = (0.82 * (1.15 / cardScale)).clamp(0.62, 1.15).toDouble();
+        final adjustedAspect = (0.82 * (1.15 / cardScale))
+            .clamp(0.62, 1.15)
+            .toDouble();
 
         return GridView.builder(
           padding: const EdgeInsets.all(16),
@@ -635,13 +692,15 @@ class _ProductGridTile extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final brlEstimated = product.msrpUsd != null ? product.msrpUsd! * exchangeRate : null;
+    final brlEstimated = product.msrpUsd != null
+        ? product.msrpUsd! * exchangeRate
+        : null;
     final isUsd = currency == AppCurrency.usd;
     final primaryText = product.msrpUsd == null
         ? 'TBA'
         : (isUsd
-            ? CurrencyFormatter.toUsd(product.msrpUsd)
-            : CurrencyFormatter.toBrl(brlEstimated));
+              ? CurrencyFormatter.toUsd(product.msrpUsd)
+              : CurrencyFormatter.toBrl(brlEstimated));
 
     return Card(
       elevation: 0,

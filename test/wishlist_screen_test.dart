@@ -6,7 +6,7 @@ import 'package:wurmdex/core/database/database_provider.dart';
 import 'package:wurmdex/features/wishlist/presentation/wishlist_screen.dart';
 
 void main() {
-  testWidgets('WishlistScreen shows folder filter chips and sort button', (tester) async {
+  testWidgets('WishlistScreen shows folder dropdown and sort button', (tester) async {
     final mockItems = [
       WishlistItem(
         id: 'w1',
@@ -49,16 +49,18 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify folders are rendered as chips
-    expect(find.widgetWithText(FilterChip, 'All Folders (2)'), findsOneWidget);
-    expect(find.widgetWithText(FilterChip, 'Sonhos (1)'), findsOneWidget);
-    expect(find.widgetWithText(FilterChip, 'Grails (1)'), findsOneWidget);
+    // Verify the folder filter is rendered below the statistics.
+    expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
+    expect(find.text('All Folders (2)'), findsOneWidget);
 
     // Verify sort icon exists in appbar
     expect(find.byIcon(Icons.sort), findsOneWidget);
+    expect(find.byIcon(Icons.add_circle), findsOneWidget);
 
     // Filter by "Sonhos"
-    await tester.tap(find.widgetWithText(FilterChip, 'Sonhos (1)'));
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Sonhos (1)').last);
     await tester.pump(const Duration(milliseconds: 500));
 
     // Only Charizard should be shown
@@ -66,4 +68,3 @@ void main() {
     expect(find.textContaining('Pikachu'), findsNothing);
   });
 }
-

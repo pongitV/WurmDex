@@ -116,6 +116,8 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
                 _buildFilterChip(strings.chipBillsArchive, filterKey: "Bill's Archive"),
                 const SizedBox(width: 8),
                 _buildFilterChip(strings.chipTcgScene, filterKey: 'Scene'),
+                const SizedBox(width: 8),
+                _buildFilterChip('TCGTalk', filterKey: 'TCGTalk'),
               ],
             ),
           ),
@@ -181,6 +183,9 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
                     item.source.contains('Cenário') ||
                     item.category == 'COMPETITIVE' ||
                     item.category == 'MERCADO';
+              }
+              if (_selectedSource == 'TCGTalk') {
+                return item.id.startsWith('tcgtalk_') || item.source.contains('TCGTalk');
               }
               return true;
             }).toList();

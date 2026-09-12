@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_provider.dart';
 import '../../../../core/localization/app_strings.dart';
@@ -16,7 +17,6 @@ import '../../../../core/widgets/app_overflow_menu.dart';
 import 'widgets/wishlist_card_tile.dart';
 import 'widgets/wishlist_edit_dialog.dart';
 import 'widgets/wishlist_folder_dialog.dart';
-import 'widgets/wishlist_manage_folders_dialog.dart';
 
 enum WishlistSortMode {
   newest,
@@ -37,6 +37,7 @@ class WishlistScreen extends ConsumerStatefulWidget {
 class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   String _selectedFolder = 'Todas';
   WishlistSortMode _sortMode = WishlistSortMode.newest;
+  final Set<String> _createdFolders = {};
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +52,10 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(strings.wishlistTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          strings.wishlistTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         actions: [
           AppSortButton<WishlistSortMode>(
             currentOption: _sortMode,
@@ -91,36 +95,28 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
               ),
             ],
           ),
-          // Manage wishlist folders
-          IconButton(
-            icon: const Icon(Icons.folder_copy_outlined),
-            tooltip: strings.manageWishlistFolders,
-            onPressed: () => WishlistManageFoldersDialog.show(
-              context,
-              db: db,
-              allItems: wishlistAsync.asData?.value ?? [],
-              strings: strings,
-            ),
-          ),
           // Secondary display controls always available via the overflow menu
-          const AppOverflowMenu(scaleTarget: CardScaleTarget.menu, showCurrency: true),
+          const AppOverflowMenu(
+            scaleTarget: CardScaleTarget.menu,
+            showCurrency: true,
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.add_circle,
+              color: theme.colorScheme.primary,
+              size: 28,
+            ),
+            tooltip: strings.wishlistNewFolder,
+            onPressed: () => _createFolder(context, strings),
+          ),
           const SizedBox(width: 8),
         ],
       ),
       body: wishlistAsync.when(
         data: (allItems) {
-          if (allItems.isEmpty) {
-            return Center(
-              child: AppEmptyState(
-                icon: Icons.favorite_border,
-                title: strings.wishlistEmptyTitle,
-                message: strings.wishlistEmptySubtitle,
-              ),
-            );
-          }
-
           // Extract distinct folders
           final folders = <String>{'Todas'};
+          folders.addAll(_createdFolders);
           for (final item in allItems) {
             if (item.folderName.isNotEmpty) {
               folders.add(item.folderName);
@@ -133,7 +129,9 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
           var filteredItems = _selectedFolder == 'Todas'
               ? allItems
               : allItems.where((i) {
-                  final folder = i.folderName.isNotEmpty ? i.folderName : 'Geral';
+                  final folder = i.folderName.isNotEmpty
+                      ? i.folderName
+                      : 'Geral';
                   return folder == _selectedFolder;
                 }).toList();
 
@@ -149,7 +147,14 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
               case WishlistSortMode.nameAsc:
                 return a.name.compareTo(b.name);
               case WishlistSortMode.priority:
-                final pMap = {'Alta': 3, 'High': 3, 'Média': 2, 'Medium': 2, 'Baixa': 1, 'Low': 1};
+                final pMap = {
+                  'Alta': 3,
+                  'High': 3,
+                  'Média': 2,
+                  'Medium': 2,
+                  'Baixa': 1,
+                  'Low': 1,
+                };
                 final pA = pMap[a.priority] ?? 0;
                 final pB = pMap[b.priority] ?? 0;
                 return pB.compareTo(pA);
@@ -163,7 +168,9 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
           int opportunityCount = 0;
           for (final item in filteredItems) {
             totalTargetBrl += item.targetPriceBrl;
-            final estMarket = item.targetPriceBrl > 0 ? (item.targetPriceBrl * 0.95) : 25.0;
+            final estMarket = item.targetPriceBrl > 0
+                ? (item.targetPriceBrl * 0.95)
+                : 25.0;
             if (item.targetPriceBrl > 0 && estMarket <= item.targetPriceBrl) {
               opportunityCount++;
             }
@@ -173,67 +180,46 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
               ? CurrencyFormatter.toUsd(totalTargetBrl / exchangeRate)
               : CurrencyFormatter.toBrl(totalTargetBrl);
 
-          return CustomScrollView(
-            slivers: [
-              // Folder Selector Horizontal Bar
-              SliverToBoxAdapter(
-                child: Container(
-                  height: 48,
-                  margin: const EdgeInsets.only(top: 8, bottom: 4),
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      ...folders.map((folder) {
-                        final isSelected = _selectedFolder == folder;
-                        final displayName = folder == 'Todas'
-                            ? strings.wishlistFolderAll
-                            : (folder == 'Geral' ? strings.wishlistFolderDefault : folder);
-                        final count = folder == 'Todas'
-                            ? allItems.length
-                            : allItems.where((i) => (i.folderName.isNotEmpty ? i.folderName : 'Geral') == folder).length;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text('$displayName ($count)'),
-                            selected: isSelected,
-                            onSelected: (_) {
-                              setState(() => _selectedFolder = folder);
-                            },
-                            avatar: isSelected
-                                ? null
-                                : const Icon(Icons.folder_outlined, size: 16),
-                          ),
-                        );
-                      }),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ActionChip(
-                          avatar: const Icon(Icons.create_new_folder_outlined, size: 16),
-                          label: Text(strings.wishlistNewFolder),
-                          onPressed: () async {
-                            final newFolder = await WishlistFolderDialog.show(context, strings);
-                            if (newFolder != null && mounted) {
-                              setState(() => _selectedFolder = newFolder);
-                            }
-                          },
-                        ),
-                      ),
-                    ],
+          if (allItems.isEmpty) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: _buildFolderFilter(
+                    context,
+                    db,
+                    allItems,
+                    folders,
+                    strings,
                   ),
                 ),
-              ),
+                Expanded(
+                  child: AppEmptyState(
+                    icon: Icons.favorite_border,
+                    title: strings.wishlistEmptyTitle,
+                    message: strings.wishlistEmptySubtitle,
+                  ),
+                ),
+              ],
+            );
+          }
 
+          return CustomScrollView(
+            slivers: [
               // Wishlist Summary Banner
               SliverToBoxAdapter(
                 child: Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                     side: BorderSide(
-                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                   ),
                   child: Padding(
@@ -262,41 +248,58 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                 ),
               ),
 
+              // Folder filter below the summary statistics.
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: _buildFolderFilter(
+                    context,
+                    db,
+                    allItems,
+                    folders,
+                    strings,
+                  ),
+                ),
+              ),
+
               // Wishlist Items — Always list view
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final item = filteredItems[index];
-                      return WishlistCardTile(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final item = filteredItems[index];
+                    return WishlistCardTile(
+                      item: item,
+                      isUsd: isUsd,
+                      exchangeRate: exchangeRate,
+                      strings: strings,
+                      onEdit: () => WishlistEditDialog.show(
+                        context,
+                        db: db,
                         item: item,
+                        strings: strings,
                         isUsd: isUsd,
                         exchangeRate: exchangeRate,
-                        strings: strings,
-                        onEdit: () => WishlistEditDialog.show(
-                          context,
-                          db: db,
-                          item: item,
-                          strings: strings,
-                          isUsd: isUsd,
-                          exchangeRate: exchangeRate,
-                        ),
-                        onMoveToCollection: () => _moveToCollection(context, db, item, strings),
-                        onDelete: () async {
-                          await db.deleteWishlistItem(item.id);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(strings.itemRemovedFromWishlist(item.name)),
+                      ),
+                      onMoveToCollection: () =>
+                          _moveToCollection(context, db, item, strings),
+                      onDelete: () async {
+                        await db.deleteWishlistItem(item.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                strings.itemRemovedFromWishlist(item.name),
                               ),
-                            );
-                          }
-                        },
-                      );
-                    },
-                    childCount: filteredItems.length,
-                  ),
+                            ),
+                          );
+                        }
+                      },
+                    );
+                  }, childCount: filteredItems.length),
                 ),
               ),
             ],
@@ -306,6 +309,135 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
         error: (err, _) => Center(child: Text(strings.errorWithMsg(err))),
       ),
     );
+  }
+
+  Widget _buildFolderFilter(
+    BuildContext context,
+    AppDatabase db,
+    List<WishlistItem> allItems,
+    Set<String> folders,
+    AppStrings strings,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            initialValue: folders.contains(_selectedFolder)
+                ? _selectedFolder
+                : 'Todas',
+            decoration: InputDecoration(
+              labelText: strings.wishlistFolderAll,
+              prefixIcon: const Icon(Icons.folder_outlined),
+              border: const OutlineInputBorder(),
+              isDense: true,
+            ),
+            items: folders.map((folder) {
+              final displayName = folder == 'Todas'
+                  ? strings.wishlistFolderAll
+                  : (folder == 'Geral'
+                        ? strings.wishlistFolderDefault
+                        : folder);
+              final count = folder == 'Todas'
+                  ? allItems.length
+                  : allItems
+                        .where(
+                          (i) =>
+                              (i.folderName.isNotEmpty
+                                  ? i.folderName
+                                  : 'Geral') ==
+                              folder,
+                        )
+                        .length;
+              return DropdownMenuItem(
+                value: folder,
+                child: Text('$displayName ($count)'),
+              );
+            }).toList(),
+            onChanged: (folder) {
+              if (folder != null) setState(() => _selectedFolder = folder);
+            },
+          ),
+        ),
+        if (_selectedFolder != 'Todas' && _selectedFolder != 'Geral')
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: strings.editWishlistFolder,
+            onPressed: () =>
+                _renameFolder(context, db, allItems, _selectedFolder, strings),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _createFolder(BuildContext context, AppStrings strings) async {
+    final newFolder = await WishlistFolderDialog.show(context, strings);
+    if (newFolder == null ||
+        newFolder == 'Geral' ||
+        newFolder == 'Todas' ||
+        !mounted) {
+      return;
+    }
+
+    setState(() {
+      _createdFolders.add(newFolder);
+      _selectedFolder = newFolder;
+    });
+  }
+
+  Future<void> _renameFolder(
+    BuildContext context,
+    AppDatabase db,
+    List<WishlistItem> allItems,
+    String oldName,
+    AppStrings strings,
+  ) async {
+    final controller = TextEditingController(text: oldName);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(strings.editWishlistFolder),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: strings.wishlistNewFolderName,
+            border: const OutlineInputBorder(),
+            isDense: true,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(strings.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = controller.text.trim();
+              Navigator.pop(dialogContext, value.isNotEmpty ? value : null);
+            },
+            child: Text(strings.save),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (newName == null || newName == oldName || !mounted) return;
+    if (newName == 'Geral' || newName == 'Todas') return;
+
+    for (final item in allItems.where((item) => item.folderName == oldName)) {
+      await (db.update(db.wishlistItems)
+            ..where((table) => table.id.equals(item.id)))
+          .write(WishlistItemsCompanion(folderName: drift.Value(newName)));
+    }
+    if (!mounted) return;
+
+    setState(() {
+      _createdFolders
+        ..remove(oldName)
+        ..add(newName);
+      _selectedFolder = newName;
+    });
   }
 
   Widget _buildSummaryStat(String label, String value, Color color) {
@@ -357,6 +489,4 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
       );
     }
   }
-
-
 }

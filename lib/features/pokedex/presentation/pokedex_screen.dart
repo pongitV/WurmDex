@@ -92,55 +92,59 @@ class _PokedexScreenState extends ConsumerState<PokedexScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: Column(
-        children: [
+      body: CustomScrollView(
+        slivers: [
           // Search Box (DRY)
-          AppSearchBar(
-            controller: _searchController,
-            hintText: strings.pokedexSearchHint,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            onChanged: (val) => setState(() => _searchQuery = val),
-            onClear: () => setState(() => _searchQuery = ''),
+          SliverToBoxAdapter(
+            child: AppSearchBar(
+              controller: _searchController,
+              hintText: strings.pokedexSearchHint,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              onChanged: (val) => setState(() => _searchQuery = val),
+              onClear: () => setState(() => _searchQuery = ''),
+            ),
           ),
 
           // Generation Filter Dropdown
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 200),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: _selectedGeneration,
-                    isDense: true,
-                    icon: const Icon(Icons.arrow_drop_down, size: 18),
-                    style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface),
-                    items: [
-                      for (int i = 0; i <= maxGeneration; i++)
-                        DropdownMenuItem<int>(
-                          value: i,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                i == 0 ? Icons.all_inclusive : Icons.catching_pokemon,
-                                size: 15,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(i == 0 ? strings.pokedexAllGens : strings.pokedexGen(i)),
-                            ],
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 200),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: _selectedGeneration,
+                      isDense: true,
+                      icon: const Icon(Icons.arrow_drop_down, size: 18),
+                      style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface),
+                      items: [
+                        for (int i = 0; i <= maxGeneration; i++)
+                          DropdownMenuItem<int>(
+                            value: i,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  i == 0 ? Icons.all_inclusive : Icons.catching_pokemon,
+                                  size: 15,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(i == 0 ? strings.pokedexAllGens : strings.pokedexGen(i)),
+                              ],
+                            ),
                           ),
-                        ),
-                    ],
-                    onChanged: (val) => setState(() => _selectedGeneration = val ?? 0),
+                      ],
+                      onChanged: (val) => setState(() => _selectedGeneration = val ?? 0),
+                    ),
                   ),
                 ),
               ),
@@ -148,75 +152,74 @@ class _PokedexScreenState extends ConsumerState<PokedexScreen> {
           ),
 
           // Pokémon Grid (3x3 on mobile, responsive on wider screens)
-          Expanded(
-            child: filteredEntries.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+          if (filteredEntries.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                           Icon(
                             Icons.catching_pokemon,
                             size: 64,
                             color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                           ),
                           const SizedBox(height: 16),
-                          Text(
-                            strings.noCardsFound,
-                            style: theme.textTheme.titleMedium,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : viewMode == CardViewMode.list
-                    ? ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        itemCount: filteredEntries.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final pokemon = filteredEntries[index];
-                          return PokemonListItem(
-                            pokemon: pokemon,
-                            onTap: () => AppNavigator.toPokemonGallery(context, pokemon: pokemon),
-                          );
-                        },
-                      )
-                    : LayoutBuilder(
-                    builder: (context, constraints) {
-                      final crossAxisCount = resolveCardGridCrossAxisCount(
-                        context: context,
-                        ref: ref,
-                        availableWidth: constraints.maxWidth,
-                      );
+                          Text(strings.noCardsFound, style: theme.textTheme.titleMedium),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (viewMode == CardViewMode.list)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              sliver: SliverList.separated(
+                itemCount: filteredEntries.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final pokemon = filteredEntries[index];
+                  return PokemonListItem(
+                    pokemon: pokemon,
+                    onTap: () => AppNavigator.toPokemonGallery(context, pokemon: pokemon),
+                  );
+                },
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              sliver: SliverLayoutBuilder(
+                builder: (context, constraints) {
+                  final crossAxisCount = resolveCardGridCrossAxisCount(
+                    context: context,
+                    ref: ref,
+                    availableWidth: constraints.crossAxisExtent,
+                  );
 
-                      // Scale grows the whole tile (photo + text) by increasing
-                      // the card's height; the content fills the tile naturally,
-                      // so nothing overflows or gets clipped.
-                      final adjustedAspect =
+                  final adjustedAspect =
                           (0.85 * (1.15 / cardScale)).clamp(0.6, 1.4).toDouble();
 
-                      return GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: crossAxisCount,
-                          childAspectRatio: adjustedAspect,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                        ),
-                        itemCount: filteredEntries.length,
-                        itemBuilder: (context, index) {
-                          final pokemon = filteredEntries[index];
-                          return PokemonGridCard(
-                            pokemon: pokemon,
-                            onTap: () => AppNavigator.toPokemonGallery(context, pokemon: pokemon),
-                          );
-                        },
-                      );
-                    },
-                  ),
-          ),
+                  return SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              childAspectRatio: adjustedAspect,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                              final pokemon = filteredEntries[index];
+                              return PokemonGridCard(
+                                pokemon: pokemon,
+                                onTap: () => AppNavigator.toPokemonGallery(context, pokemon: pokemon),
+                              );
+                    }, childCount: filteredEntries.length),
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
