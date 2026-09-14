@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/card_pricing_helper.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../services/wishlist_folder_service.dart';
 
@@ -190,7 +191,23 @@ class _WishlistEditDialogState extends State<WishlistEditDialog> {
                 );
               }).toList(),
               onChanged: (val) {
-                if (val != null) setState(() => _condition = val);
+                if (val != null) {
+                  setState(() {
+                    _condition = val;
+                    final realPrice = CardPricingHelper.getPriceForCondition(
+                      cardApiId: widget.item.cardApiId,
+                      cardName: widget.item.name,
+                      cardNumber: widget.item.number,
+                      setName: widget.item.setName,
+                      basePriceBrl: widget.item.targetPriceBrl,
+                      condition: val,
+                    );
+                    if (realPrice > 0 && widget.item.targetPriceBrl > 0) {
+                      final displayPrice = widget.isUsd ? (realPrice / widget.exchangeRate) : realPrice;
+                      _priceController.text = displayPrice.toStringAsFixed(2);
+                    }
+                  });
+                }
               },
             ),
             const SizedBox(height: 12),

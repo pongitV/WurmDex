@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/localization/app_strings.dart';
+import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/card_condition_helper.dart';
+import '../../../../core/utils/card_pricing_helper.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_action_fab.dart';
 import '../../../../core/widgets/app_filter_modal.dart';
@@ -106,9 +108,23 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
     }
   }
 
+  bool _isRefreshingPrices = false;
+
   void _updateCardCondition(TradeCardItem card, String newCondition, bool isYour) {
+    final newValue = CardPricingHelper.getPriceForCondition(
+      cardApiId: card.id,
+      cardName: card.name,
+      cardNumber: card.number,
+      setName: card.setName,
+      basePriceBrl: card.basePriceBrl,
+      minPriceBrl: card.minPriceBrl,
+      maxPriceBrl: card.maxPriceBrl,
+      condition: newCondition,
+    );
+
     final updated = card.copyWith(
       condition: newCondition,
+      valueBrl: newValue,
     );
 
     setState(() {
@@ -118,6 +134,100 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
         list[idx] = updated;
       }
     });
+  }
+
+  Future<void> _refreshTradePrices() async {
+    if (_isRefreshingPrices) return;
+
+    setState(() => _isRefreshingPrices = true);
+
+    try {
+      await ref.read(exchangeRateProvider.notifier).refreshRate();
+      final rate = ref.read(exchangeRateProvider);
+
+      final updatedYour = <TradeCardItem>[];
+      for (final card in _yourCards) {
+        final quotes = await CardPricingHelper.forceRefreshCardQuotes(
+          cardApiId: card.id,
+          cardName: card.name,
+          cardNumber: card.number,
+          setName: card.setName,
+          exchangeRate: rate,
+        );
+
+        final newBase = quotes.avgBrl > 0 ? quotes.avgBrl : card.basePriceBrl;
+        final newValue = CardPricingHelper.getPriceForCondition(
+          cardApiId: card.id,
+          cardName: card.name,
+          cardNumber: card.number,
+          setName: card.setName,
+          basePriceBrl: newBase,
+          minPriceBrl: quotes.minBrl,
+          maxPriceBrl: quotes.maxBrl,
+          condition: card.condition,
+        );
+
+        updatedYour.add(card.copyWith(
+          basePriceBrl: newBase,
+          minPriceBrl: quotes.minBrl,
+          maxPriceBrl: quotes.maxBrl,
+          valueBrl: newValue,
+        ));
+      }
+
+      final updatedTheir = <TradeCardItem>[];
+      for (final card in _theirCards) {
+        final quotes = await CardPricingHelper.forceRefreshCardQuotes(
+          cardApiId: card.id,
+          cardName: card.name,
+          cardNumber: card.number,
+          setName: card.setName,
+          exchangeRate: rate,
+        );
+
+        final newBase = quotes.avgBrl > 0 ? quotes.avgBrl : card.basePriceBrl;
+        final newValue = CardPricingHelper.getPriceForCondition(
+          cardApiId: card.id,
+          cardName: card.name,
+          cardNumber: card.number,
+          setName: card.setName,
+          basePriceBrl: newBase,
+          minPriceBrl: quotes.minBrl,
+          maxPriceBrl: quotes.maxBrl,
+          condition: card.condition,
+        );
+
+        updatedTheir.add(card.copyWith(
+          basePriceBrl: newBase,
+          minPriceBrl: quotes.minBrl,
+          maxPriceBrl: quotes.maxBrl,
+          valueBrl: newValue,
+        ));
+      }
+
+      if (mounted) {
+        setState(() {
+          _yourCards.clear();
+          _yourCards.addAll(updatedYour);
+          _theirCards.clear();
+          _theirCards.addAll(updatedTheir);
+        });
+
+        final strings = getStrings(ref.read(languageProvider));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(strings.tradePricesRefreshed),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error refreshing trade prices: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshingPrices = false);
+      }
+    }
   }
 
   void _editCardPrice(
@@ -303,12 +413,15 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: _isRefreshingPrices
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh),
             tooltip: strings.refreshTooltip,
-            onPressed: () {
-              setState(() {});
-              ref.read(exchangeRateProvider.notifier).refreshRate();
-            },
+            onPressed: _isRefreshingPrices ? null : _refreshTradePrices,
           ),
           const AppOverflowMenu(showCurrency: true),
           const SizedBox(width: 8),
@@ -557,41 +670,58 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Line 1: Card Name and Code / Number
-                                  RichText(
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    text: TextSpan(
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12.5,
-                                      ),
-                                      children: [
-                                        TextSpan(text: card.name),
-                                        if (card.number.isNotEmpty)
-                                          TextSpan(
-                                            text: ' • #${card.number}',
-                                            style: TextStyle(
-                                              color: theme.colorScheme.primary,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 11.5,
+                                  // Line 1: Card Name and Code / Number (Tap to view card details)
+                                  InkWell(
+                                    borderRadius: BorderRadius.circular(4),
+                                    onTap: () {
+                                      AppNavigator.toCardDetails(
+                                        context,
+                                        card.toPokemonCardItem(exchangeRate: exchangeRate),
+                                      );
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 2),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          RichText(
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            text: TextSpan(
+                                              style: theme.textTheme.bodyMedium?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12.5,
+                                              ),
+                                              children: [
+                                                TextSpan(text: card.name),
+                                                if (card.number.isNotEmpty)
+                                                  TextSpan(
+                                                    text: ' • #${card.number}',
+                                                    style: TextStyle(
+                                                      color: theme.colorScheme.primary,
+                                                      fontWeight: FontWeight.w600,
+                                                      fontSize: 11.5,
+                                                    ),
+                                                  ),
+                                              ],
                                             ),
                                           ),
-                                      ],
+                                          if (card.setName.isNotEmpty) ...[
+                                            const SizedBox(height: 1),
+                                            Text(
+                                              card.setName,
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                  if (card.setName.isNotEmpty) ...[
-                                    const SizedBox(height: 1),
-                                    Text(
-                                      card.setName,
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
                                   const SizedBox(height: 4),
 
                                   // Line 2: Card Price below Name and Code (Tap to edit custom price)

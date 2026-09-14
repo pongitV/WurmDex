@@ -47,15 +47,15 @@ void main() {
       expect(CardConditionHelper.getShortCondition('   '), 'NM');
     });
 
-    test('Calculates price multipliers relative to NM', () {
+    test('Fixed artificial multipliers are removed and return 1.0', () {
       expect(CardConditionHelper.getConditionMultiplier('NM'), 1.0);
       expect(CardConditionHelper.getConditionMultiplier('Near Mint'), 1.0);
-      expect(CardConditionHelper.getConditionMultiplier('Slightly Played'), 0.85);
-      expect(CardConditionHelper.getConditionMultiplier('Moderately Played'), 0.70);
-      expect(CardConditionHelper.getConditionMultiplier('Heavily Played'), 0.50);
-      expect(CardConditionHelper.getConditionMultiplier('Damaged'), 0.30);
-      expect(CardConditionHelper.getConditionMultiplier('Mint'), 1.10);
-      expect(CardConditionHelper.getConditionMultiplier('PSA 10'), 3.5);
+      expect(CardConditionHelper.getConditionMultiplier('Slightly Played'), 1.0);
+      expect(CardConditionHelper.getConditionMultiplier('Moderately Played'), 1.0);
+      expect(CardConditionHelper.getConditionMultiplier('Heavily Played'), 1.0);
+      expect(CardConditionHelper.getConditionMultiplier('Damaged'), 1.0);
+      expect(CardConditionHelper.getConditionMultiplier('Mint'), 1.0);
+      expect(CardConditionHelper.getConditionMultiplier('PSA 10'), 1.0);
     });
 
     test('Returns distinctive colors for conditions', () {

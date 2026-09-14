@@ -446,17 +446,54 @@ void main() {
       expect(price, equals(45.0));
     });
 
-    test('getPriceForQuality returns universal Preço Médio without artificial multipliers', () {
+    test('getPriceForQuality and getPriceForCondition use Liga prices without fixed multipliers', () {
       const basePrice = 180.0;
+
+      // Without Liga min/max quotes, never applies artificial multipliers:
       final nmPrice = CardPricingHelper.getPriceForQuality(basePrice, 'Near Mint');
       final spPrice = CardPricingHelper.getPriceForQuality(basePrice, 'Slightly Played');
       final dmgPrice = CardPricingHelper.getPriceForQuality(basePrice, 'Damaged');
       expect(nmPrice, equals(basePrice));
       expect(spPrice, equals(basePrice));
       expect(dmgPrice, equals(basePrice));
+
+      // With authentic Liga min/max/quality quotes:
+      final customSp = CardPricingHelper.getPriceForCondition(
+        basePriceBrl: 180.0,
+        minPriceBrl: 140.0,
+        maxPriceBrl: 220.0,
+        condition: 'Slightly Played',
+      );
+      expect(customSp, equals(140.0)); // Exact Liga Menor
+
+      final customMint = CardPricingHelper.getPriceForCondition(
+        basePriceBrl: 180.0,
+        minPriceBrl: 140.0,
+        maxPriceBrl: 220.0,
+        condition: 'Mint',
+      );
+      expect(customMint, equals(220.0)); // Exact Liga Maior
+
+      final customNm = CardPricingHelper.getPriceForCondition(
+        basePriceBrl: 180.0,
+        minPriceBrl: 140.0,
+        maxPriceBrl: 220.0,
+        condition: 'Near Mint',
+      );
+      expect(customNm, equals(180.0)); // Exact Liga Médio
+
+      // Explicit marketplace condition quote from Liga
+      final customDmg = CardPricingHelper.getPriceForCondition(
+        basePriceBrl: 180.0,
+        minPriceBrl: 140.0,
+        maxPriceBrl: 220.0,
+        conditionPrices: {'Damaged': 65.0},
+        condition: 'Damaged',
+      );
+      expect(customDmg, equals(65.0)); // Exact price from Liga listing
     });
 
-    test('TradeCardItem allows updating condition with universal Preço Médio', () {
+    test('TradeCardItem updates valueBrl when condition changes', () {
       const item = TradeCardItem(
         id: 'c1',
         name: 'Charizard ex',
@@ -464,16 +501,26 @@ void main() {
         setName: '151',
         imageUrl: 'https://example.com/c1.png',
         basePriceBrl: 200.0,
+        minPriceBrl: 160.0,
+        maxPriceBrl: 260.0,
         valueBrl: 200.0,
         condition: 'Near Mint',
       );
 
-      final updated = item.copyWith(
+      final newPrice = CardPricingHelper.getPriceForCondition(
+        basePriceBrl: item.basePriceBrl,
+        minPriceBrl: item.minPriceBrl,
+        maxPriceBrl: item.maxPriceBrl,
         condition: 'Slightly Played',
       );
 
+      final updated = item.copyWith(
+        condition: 'Slightly Played',
+        valueBrl: newPrice,
+      );
+
       expect(updated.condition, equals('Slightly Played'));
-      expect(updated.valueBrl, equals(200.0));
+      expect(updated.valueBrl, equals(160.0));
       expect(updated.number, equals('199/165'));
     });
   });

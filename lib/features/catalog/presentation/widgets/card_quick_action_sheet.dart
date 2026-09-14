@@ -344,7 +344,14 @@ class CardQuickActionSheet extends ConsumerWidget {
                             labelText: strings.labelPurchasePriceBrl,
                             prefixText: 'R\$ ',
                             hintText: CurrencyFormatter.toBrl(
-                              CardPricingHelper.convertUsdToRealisticBrl(card.effectiveMidPriceUsd ?? 1.5, 5.5),
+                              CardPricingHelper.getPriceForCondition(
+                                cardApiId: card.id,
+                                cardName: card.name,
+                                cardNumber: card.number,
+                                setName: card.setName,
+                                basePriceBrl: CardPricingHelper.convertUsdToRealisticBrl(card.effectiveMidPriceUsd ?? 1.5, 5.5),
+                                condition: condition,
+                              ),
                             ),
                           ),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -377,9 +384,16 @@ class CardQuickActionSheet extends ConsumerWidget {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  final defaultMarketPrice = CardPricingHelper.convertUsdToRealisticBrl(
-                    card.effectiveMidPriceUsd ?? 1.5,
-                    5.5,
+                  final defaultMarketPrice = CardPricingHelper.getPriceForCondition(
+                    cardApiId: card.id,
+                    cardName: card.name,
+                    cardNumber: card.number,
+                    setName: card.setName,
+                    basePriceBrl: CardPricingHelper.convertUsdToRealisticBrl(
+                      card.effectiveMidPriceUsd ?? 1.5,
+                      5.5,
+                    ),
+                    condition: condition,
                   );
                   final finalPrice = purchasePrice > 0 ? purchasePrice : defaultMarketPrice;
 

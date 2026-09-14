@@ -19,9 +19,12 @@ class TradeCardItem {
   final String setName;
   final String imageUrl;
   final double basePriceBrl;
+  final double? minPriceBrl;
+  final double? maxPriceBrl;
   final double valueBrl;
   final String condition;
   final String rarity;
+  final PokemonCardItem? catalogCard;
 
   const TradeCardItem({
     required this.id,
@@ -30,9 +33,12 @@ class TradeCardItem {
     required this.setName,
     required this.imageUrl,
     required this.basePriceBrl,
+    this.minPriceBrl,
+    this.maxPriceBrl,
     required this.valueBrl,
     this.condition = 'Near Mint',
     this.rarity = '',
+    this.catalogCard,
   });
 
   TradeCardItem copyWith({
@@ -42,9 +48,12 @@ class TradeCardItem {
     String? setName,
     String? imageUrl,
     double? basePriceBrl,
+    double? minPriceBrl,
+    double? maxPriceBrl,
     double? valueBrl,
     String? condition,
     String? rarity,
+    PokemonCardItem? catalogCard,
   }) {
     return TradeCardItem(
       id: id ?? this.id,
@@ -53,9 +62,35 @@ class TradeCardItem {
       setName: setName ?? this.setName,
       imageUrl: imageUrl ?? this.imageUrl,
       basePriceBrl: basePriceBrl ?? this.basePriceBrl,
+      minPriceBrl: minPriceBrl ?? this.minPriceBrl,
+      maxPriceBrl: maxPriceBrl ?? this.maxPriceBrl,
       valueBrl: valueBrl ?? this.valueBrl,
       condition: condition ?? this.condition,
       rarity: rarity ?? this.rarity,
+      catalogCard: catalogCard ?? this.catalogCard,
+    );
+  }
+
+  PokemonCardItem toPokemonCardItem({double exchangeRate = 5.60}) {
+    if (catalogCard != null) {
+      return catalogCard!;
+    }
+    final rate = exchangeRate > 0 ? exchangeRate : 5.60;
+    return PokemonCardItem(
+      id: id,
+      name: name,
+      number: number,
+      setId: setName.toLowerCase().replaceAll(' ', '-'),
+      setName: setName,
+      rarity: rarity.isNotEmpty ? rarity : 'Rare',
+      imageUrlSmall: imageUrl,
+      imageUrlLarge: imageUrl,
+      types: const ['Colorless'],
+      supertype: 'Pokémon',
+      artist: '',
+      tcgMarketUsd: valueBrl > 0
+          ? valueBrl / rate
+          : (basePriceBrl > 0 ? basePriceBrl / rate : 0),
     );
   }
 }
@@ -236,14 +271,39 @@ class _TradeCardSelectorDialogState extends ConsumerState<_TradeCardSelectorDial
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               onTap: () async {
-                final realBasePrice = await CardPricingHelper.getOrFetchCardPriceBrl(
+                final quotes = await CardPricingHelper.getOrFetchPriceQuotes(
                   cardApiId: card.cardApiId,
                   cardName: card.name,
                   cardNumber: card.number,
                   setName: card.setName,
                   exchangeRate: widget.exchangeRate,
                 );
-                final effectiveBase = card.purchasePriceBrl > 0 ? card.purchasePriceBrl : realBasePrice;
+                final effectiveBase = card.purchasePriceBrl > 0 ? card.purchasePriceBrl : quotes.avgBrl;
+                final cardCond = card.condition.isNotEmpty ? card.condition : 'Near Mint';
+                final effectiveValue = CardPricingHelper.getPriceForCondition(
+                  cardApiId: card.cardApiId,
+                  cardName: card.name,
+                  cardNumber: card.number,
+                  setName: card.setName,
+                  basePriceBrl: effectiveBase,
+                  minPriceBrl: quotes.minBrl,
+                  maxPriceBrl: quotes.maxBrl,
+                  condition: cardCond,
+                );
+                final catalogCard = PokemonCardItem(
+                  id: card.cardApiId.isNotEmpty ? card.cardApiId : card.id,
+                  name: card.name,
+                  number: card.number,
+                  setId: card.setName.toLowerCase().replaceAll(' ', '-'),
+                  setName: card.setName,
+                  rarity: card.rarity,
+                  imageUrlSmall: card.imageUrl,
+                  imageUrlLarge: card.imageUrl,
+                  types: const ['Colorless'],
+                  supertype: 'Pokémon',
+                  artist: '',
+                  tcgMarketUsd: effectiveValue > 0 ? effectiveValue / widget.exchangeRate : 0,
+                );
                 final item = TradeCardItem(
                   id: card.id,
                   name: card.name,
@@ -251,9 +311,12 @@ class _TradeCardSelectorDialogState extends ConsumerState<_TradeCardSelectorDial
                   setName: card.setName,
                   imageUrl: card.imageUrl,
                   basePriceBrl: effectiveBase,
-                  valueBrl: effectiveBase,
-                  condition: card.condition.isNotEmpty ? card.condition : 'Near Mint',
+                  minPriceBrl: quotes.minBrl,
+                  maxPriceBrl: quotes.maxBrl,
+                  valueBrl: effectiveValue,
+                  condition: cardCond,
                   rarity: card.rarity,
+                  catalogCard: catalogCard,
                 );
                 if (context.mounted) Navigator.pop(context, item);
               },
@@ -320,7 +383,7 @@ class _TradeCardSelectorDialogState extends ConsumerState<_TradeCardSelectorDial
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           onTap: () async {
-                            final realBasePrice = await CardPricingHelper.getOrFetchCardPriceBrl(
+                            final quotes = await CardPricingHelper.getOrFetchPriceQuotes(
                               cardApiId: card.id,
                               cardName: card.name,
                               cardNumber: card.number,
@@ -334,10 +397,13 @@ class _TradeCardSelectorDialogState extends ConsumerState<_TradeCardSelectorDial
                               number: card.number,
                               setName: card.setName,
                               imageUrl: card.imageUrlSmall,
-                              basePriceBrl: realBasePrice,
-                              valueBrl: realBasePrice,
+                              basePriceBrl: quotes.avgBrl,
+                              minPriceBrl: quotes.minBrl,
+                              maxPriceBrl: quotes.maxBrl,
+                              valueBrl: quotes.avgBrl,
                               condition: 'Near Mint',
                               rarity: card.rarity,
+                              catalogCard: card,
                             );
                             if (context.mounted) Navigator.pop(context, item);
                           },

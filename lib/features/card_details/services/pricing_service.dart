@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/network/currency_service.dart';
 import '../../../core/network/dio_client.dart';
+import '../../../core/utils/card_condition_helper.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/tcg_pricing_parser.dart';
 
@@ -38,6 +39,7 @@ class CardPricesResult {
   final double? ligaMinBrl;
   final double? ligaAvgBrl;
   final double? ligaMaxBrl;
+  final Map<String, double> pricesByCondition;
   final double? tcgMarketUsd;
   final double? tcgMarketBrl;
   final double exchangeRate;
@@ -51,6 +53,7 @@ class CardPricesResult {
     this.ligaMinBrl,
     this.ligaAvgBrl,
     this.ligaMaxBrl,
+    this.pricesByCondition = const {},
     this.tcgMarketUsd,
     this.tcgMarketBrl,
     required this.exchangeRate,
@@ -167,10 +170,11 @@ class PricingService {
       ligaDirectUrl = 'https://www.ligapokemon.com.br/?view=cards/card&card=$cleanName';
     }
 
-    // Fetch or estimate LigaPokemon prices
+    // Fetch LigaPokemon prices
     double? ligaMin;
     double? ligaAvg;
     double? ligaMax;
+    final pricesByCondition = <String, double>{};
 
     try {
       final response = await DioClient.instance.get(ligaDirectUrl);
@@ -195,17 +199,33 @@ class PricingService {
         if (maxMatch != null) {
           ligaMax = CurrencyFormatter.parseCurrency(maxMatch.group(1));
         }
+
+        // Parse explicit quality listings from Liga marketplace table if present
+        final conditionRowRegex = RegExp(
+          r'(?:title=["\x27]|>)\s*(Mint|Near\s*Mint|NM|Slightly\s*Played|SP|Moderately\s*Played|MP|Heavily\s*Played|HP|Damaged|DMG|D)\b[^<]*?(?:<[^>]+>[\s\S]*?){0,5}R\$\s*([\d\.,]+)',
+          caseSensitive: false,
+        );
+        for (final m in conditionRowRegex.allMatches(html)) {
+          final cond = m.group(1)!.trim();
+          final price = CurrencyFormatter.parseCurrency(m.group(2));
+          if (price != null && price > 0) {
+            final short = CardConditionHelper.getShortCondition(cond);
+            if (!pricesByCondition.containsKey(short) || price < pricesByCondition[short]!) {
+              pricesByCondition[short] = price;
+            }
+          }
+        }
       }
     } catch (e) {
       debugPrint('LigaPokemon lookup notice: $e');
     }
 
     // When domestic scraping is blocked or rate-limited,
-    // calculate domestic market values based on direct currency conversion
+    // calculate domestic market values based on direct currency conversion without artificial multipliers
     if (ligaAvg == null && tcgBrl != null) {
       ligaAvg = tcgBrl;
-      ligaMin = (tcgLowUsd != null ? tcgLowUsd * exchangeRate : tcgBrl * 0.85);
-      ligaMax = (tcgBrl * 1.35);
+      ligaMin = (tcgLowUsd != null ? tcgLowUsd * exchangeRate : null);
+      ligaMax = null;
     }
 
     final effectiveBaseBrl = ligaAvg ?? tcgBrl;
@@ -231,6 +251,7 @@ class PricingService {
       ligaMinBrl: ligaMin,
       ligaAvgBrl: ligaAvg,
       ligaMaxBrl: ligaMax,
+      pricesByCondition: pricesByCondition,
       tcgMarketUsd: tcgUsd,
       tcgMarketBrl: tcgBrl,
       exchangeRate: exchangeRate,

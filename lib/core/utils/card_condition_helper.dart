@@ -66,33 +66,9 @@ class CardConditionHelper {
         lower.contains('graded');
   }
 
-  /// Price multiplier relative to Near Mint (NM standard reference = 1.0)
-  static double getConditionMultiplier(String? condition) {
-    final short = getShortCondition(condition).toUpperCase();
-    if (short.contains('GRADUADA') || short.contains('GRADED')) {
-      if (short.contains('10')) return 3.5;
-      if (short.contains('9.5')) return 2.2;
-      if (short.contains('9')) return 1.8;
-      if (short.contains('8')) return 1.3;
-      return 2.0;
-    }
-    switch (short) {
-      case 'MINT':
-        return 1.10;
-      case 'NM':
-        return 1.0;
-      case 'SP':
-        return 0.85;
-      case 'MP':
-        return 0.70;
-      case 'HP':
-        return 0.50;
-      case 'DMG':
-        return 0.30;
-      default:
-        return 1.0;
-    }
-  }
+  /// Returns 1.0. Fixed artificial multipliers have been removed per user instruction.
+  /// The app retrieves actual condition-based prices directly from LigaPokémon.
+  static double getConditionMultiplier(String? condition) => 1.0;
 
   /// Distinctive collector accent color for each condition badge
   static Color getConditionColor(String shortCondition) {

@@ -422,6 +422,8 @@ class AppStrings {
   String get tradeStatusBalanced => isEn ? 'Balanced Trade (Fair)' : 'Troca Equilibrada (Justa)';
   String get tradeDifferencePrefix => isEn ? 'Difference: ' : 'Diferenca: ';
   String get tradeSummaryCopied => isEn ? 'Trade summary copied to clipboard!' : 'Resumo da troca copiado para a area de transferencia!';
+  String get tradePricesRefreshed => isEn ? 'Trade card average prices refreshed from live market!' : 'Preço médio das cartas da troca atualizado com sucesso!';
+  String get tradePricesRefreshing => isEn ? 'Updating average prices from LigaPokémon...' : 'Atualizando preço médio das cartas na LigaPokémon...';
   String get dlgAddCardToTrade => isEn ? 'Add Card to Trade' : 'Adicionar Carta à Troca';
   String get tabMyCollection => isEn ? 'My Collection' : 'Minha Coleção';
   String get tabSearchCatalog => isEn ? 'Search Catalog' : 'Buscar no Catálogo';
@@ -742,7 +744,8 @@ class AppStrings {
   String alertsCheckedSuccess(int count) => isEn
       ? '$count deals found in target range!'
       : '$count ofertas encontradas na faixa desejada!';
-  String get lowestPriceUpdatedText => isEn ? 'Lowest price updated' : 'Menor preço atualizado';
+  String get lowestPriceUpdatedText => isEn ? 'Average price updated' : 'Preço médio atualizado';
+  String get avgPriceUpdatedText => isEn ? 'Average price updated' : 'Preço médio atualizado';
   String get statusInRange => isEn ? 'In Target Range' : 'Dentro da Faixa';
   String get statusAboveRange => isEn ? 'Above Target' : 'Acima da Faixa';
   String get statusBelowRange => isEn ? 'Below Target' : 'Abaixo da Faixa';

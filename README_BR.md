@@ -4,7 +4,7 @@
 
 # WurmDex [BR]
 
-Gerenciador de Coleções, Fichário Virtual e Acompanhamento de Mercado para Pokémon TCG
+Gerenciador de Coleções, Fichário Virtual, Simulador de Trocas e Acompanhamento Financeiro de Mercado para Pokémon TCG
 
 Idioma do Documento: [BR] | Document Language: [BR]
 Alternar Idioma / Switch Language: [[EN] English (README_EN.md)](README_EN.md) | [[BR] Português do Brasil (README_BR.md)](README_BR.md)
@@ -15,9 +15,9 @@ Alternar Idioma / Switch Language: [[EN] English (README_EN.md)](README_EN.md) |
 
 - Identificador de Idioma: [BR] (Português do Brasil)
 - Propósito do Projeto: Projeto recreativo e pessoal desenvolvido estritamente por diversão (hobby).
-- Aviso de Estabilidade: Este software foi concebido por pura diversão e está sujeito a mudanças bruscas de arquitetura, refatorações profundas e alterações estruturais sem aviso prévio.
+- Aviso de Estabilidade: Este software foi concebido para fins de estudo e lazer, estando sujeito a refatorações estruturais e alterações de arquitetura sem aviso prévio.
 - Idiomas Suportados na Interface do App: [BR] Português (Brasil) e [EN] Inglês (Estados Unidos).
-- Linguagens de Programação e Tecnologias: Dart 3.5+, Flutter 3.24+, C++ (Runner Nativo do Windows Desktop), SQLite 3 com Drift ORM.
+- Tecnologias Principais: Dart 3.5+, Flutter 3.24+, C++ (Runner Nativo do Windows Desktop), SQLite 3 via Drift ORM, Dio e Riverpod.
 - Plataformas Suportadas: Windows Desktop (x64, Windows 10/11) e Android (API 21+, ARM64/x86_64).
 - Licença de Software: GNU General Public License v3.0 (GPL-3.0).
 
@@ -25,10 +25,10 @@ Alternar Idioma / Switch Language: [[EN] English (README_EN.md)](README_EN.md) |
 
 ## Downloads Pré-Compilados (Instalação Direta)
 
-Os pacotes prontos para uso estão disponíveis diretamente na pasta `dist/` do repositório:
+Os binários executáveis prontos para uso são disponibilizados diretamente na pasta `dist/` do repositório:
 
 - **Android (APK)**: [`dist/android/WurmDex-release.apk`](dist/android/WurmDex-release.apk)
-- **Windows Desktop (EXE)**: [`dist/windows/wurmdex.exe`](dist/windows/wurmdex.exe) (execute diretamente da pasta `dist/windows` com todas as dependências e DLLs inclusas)
+- **Windows Desktop (EXE)**: [`dist/windows/wurmdex.exe`](dist/windows/wurmdex.exe) (execute diretamente da pasta `dist/windows`, contendo todas as bibliotecas e DLLs necessárias para execução independente)
 
 ---
 
@@ -38,92 +38,113 @@ O WurmDex é um aplicativo de código aberto, gratuito, sem fins lucrativos e de
 
 ### Nintendo e The Pokemon Company
 
-Pokemon, nomes de personagens Pokemon, designs de cartas, ilustrações, logotipos, símbolos e elementos visuais são marcas registradas e propriedades intelectuais protegidas de:
+Pokemon, nomes de personagens, designs de cartas, ilustrações, logotipos, marcas e elementos visuais correlatos são propriedades intelectuais registradas de:
 - Nintendo Co., Ltd.
 - Creatures Inc.
 - GAME FREAK inc.
 - The Pokemon Company e The Pokemon Company International.
 
-O WurmDex NÃO possui qualquer vínculo oficial, afiliação, endosso, aprovação ou patrocínio da Nintendo, The Pokemon Company, Creatures Inc. ou GAME FREAK inc. Nenhuma infração de direitos autorais ou violação de marca é pretendida. Toda a propriedade intelectual permanece sob titularidade exclusiva de seus respectivos donos.
+O WurmDex não possui qualquer afiliação oficial, endosso, aprovação, vínculo comercial ou patrocínio da Nintendo, The Pokemon Company, Creatures Inc. ou GAME FREAK inc. Nenhuma infração de propriedade intelectual é pretendida. Todos os direitos permanecem sob titularidade exclusiva de seus respectivos detentores.
 
 ### Marketplaces e Provedores de Dados de Terceiros
 
-- LigaPokemon é uma plataforma brasileira de marketplace pertencente aos seus respectivos proprietários. O WurmDex fornece referências de cotação e atalhos de hiperlink externos exclusivamente para conveniência e consulta do colecionador, sob preceitos de uso justo (fair use).
-- TCGPlayer é marca registrada de TCGplayer, Inc. / eBay Inc. Preços e hiperlinks externos são utilizados puramente como índice referencial.
+- LigaPokemon é uma plataforma de marketplace operada por seus respectivos proprietários. O WurmDex fornece referências de cotação e atalhos de hiperlink externos exclusivamente para conveniência e consulta do colecionador, sob preceitos de uso justo (fair use).
+- TCGPlayer é marca registrada de TCGplayer, Inc. / eBay Inc. Cotações em USD e hiperlinks externos são utilizados puramente como índice referencial.
 - Cardmarket é marca registrada de Sammelkartenmarkt GmbH & Co. KG.
 - TCGdex é um banco de dados aberto comunitário.
-- PokeAPI é uma API aberta de dados educacionais sobre Pokemon.
-- AwesomeAPI é um serviço de consulta pública de taxas cambiais.
+- PokeAPI é uma API aberta de dados sobre Pokemon.
+- AwesomeAPI é um serviço público para consulta de taxas de câmbio monetário.
 
 ### Identidade Visual e Ativos do Aplicativo
-- O ícone do aplicativo, o mascote oficial do WurmDex e os elementos de interface (como o ícone de menu estilizado) são obras originais da comunidade, sem a utilização de sprites, logotipos ou gráficos proprietários como identidade do executável (.EXE) ou pacote Android (.APK).
 
-O WurmDex não comercializa cartas, não intermedia transações financeiras, não exibe anúncios publicitários e não cobra qualquer taxa ou assinatura de seus usuários.
+O ícone do aplicativo, o mascote oficial do WurmDex e os elementos visuais de interface são obras originais da comunidade, sem a utilização de sprites, logotipos ou gráficos proprietários como identificadores do executável Windows (.EXE) ou do pacote Android (.APK).
+
+O WurmDex não comercializa produtos físicos, não processa pagamentos monetários, não exibe anúncios publicitários e não efetua cobrança de taxas ou assinaturas.
 
 ---
 
-## Arquitetura e Recursos Principais
+## Arquitetura e Módulos do Sistema
 
 ### 1. Padrão Universal de Exibição de Cartas
-Todas as cartas exibidas no aplicativo (catálogo, expansões, galeria da pokedex, pastas de coleções e listas de desejos) adotam o componente unificado (CardGridItem):
-- Conformidade física rigorosa com a proporção oficial de cartas Pokemon (63mm x 88mm / ~0.7159), exibindo a carta por inteiro sem corte de cantos ou bordas (BoxFit.contain).
-- Estrutura de metadados em 3 níveis verticais dedicados:
-  - Nível Superior (Encima): Nome da carta e número de colecionador formatado (ex.: Charizard-ex #199/197).
-  - Nível Intermediário (Meio): Nome da coleção / expansão oficial.
-  - Nível Inferior (Embaixo): Badge de estado de conservação (NM, SP, MP, HP, DMG) posicionado à esquerda, alinhado ao valor médio de mercado destacado à direita.
-- Estimativa de piso de mercado automática calculada a partir da raridade (Comum, Incomum, Rara, Holo, Dupla Rara, Ultra Rara, Ilustração Especial, Hiper Rara) quando a listagem de resumos da API não contiver cotações imediatas, eliminando a exibição de indicadores vazios.
+Todas as listagens de cartas (Catálogo, Expansões, Galeria da Pokédex, Fichários e Wishlist) adotam o componente unificado `CardGridItem`:
+- Proporção física estrita de 63mm x 88mm (~0.7159), preservando a geometria oficial sem corte de cantos ou distorções visuais (BoxFit.contain).
+- Estrutura vertical de metadados em 3 níveis:
+  - Superior: Nome da carta e número oficial do colecionador formatado (ex.: Charizard-ex #199/197).
+  - Intermediário: Nome da expansão oficial.
+  - Inferior: Badge de estado de conservação (NM, SP, MP, HP, DMG) alinhado à esquerda, pareado com a cotação média de mercado à direita.
+- Estimativa automática de piso de mercado baseada na raridade quando a listagem de resumos da API não contiver cotações imediatas, evitando indicadores vazios.
 
 ### 2. Motor de Cotações em Tempo Real e Multimercado
-- Suporte nativo a duas moedas: Real Brasileiro (BRL / R$) e Dólar Americano (USD / $).
-- Sincronização cambial em tempo real com a AwesomeAPI e armazenamento em cache offline.
-- Cotações paralelas comparando o mercado nacional (LigaPokemon) com o mercado internacional (TCGPlayer convertido em BRL).
+- Suporte nativo a Real Brasileiro (BRL / R$) e Dólar Americano (USD / $).
+- Conversão cambial em tempo real sincronizada via AwesomeAPI, com armazenamento em cache local para operação offline.
+- Cotações autênticas da LigaPokémon fundamentadas no Preço Médio oficial como métrica primária de mercado.
+- Cotações específicas por estado de conservação (Near Mint, Slightly Played, Moderately Played, Heavily Played, Damaged) extraídas diretamente do catálogo e da tabela de ofertas ativas da LigaPokémon, sem aplicação de taxas arbitrárias ou fórmulas de multiplicação artificial.
 - Gráfico interativo de histórico e tendências de preço (fl_chart):
-  - Formatação monetária estrita com 2 casas decimais e separador decimal por vírgula (ex.: R$ 25,50 ou $ 14,20), tanto nos eixos quanto no tooltip de toque, eliminando imperfeições de ponto flutuante.
-  - 4 faixas temporais selecionáveis: 1 Semana (7 dias), 1 Mês (30 dias), 1 Ano (365 dias) e Desde o Lançamento (All-Time).
-  - Prevenção de oscilação cúbica de Bézier (preventCurveOverShooting) e margens verticais seguras no eixo Y, impedindo que a curva encoste ou atravesse os rótulos de datas.
-- Histórico de Compras Concluídas por Compradores:
-  - Botão e modal dedicados para inspecionar transações reais pagas por colecionadores, diferindo do preço meramente anunciado.
-  - Seletor de plataforma entre LigaPokemon e TCGPlayer.
-  - Métricas consolidadas: Preço Médio Pago, Menor Preço Pago, Maior Preço Pago e Quantidade de Vendas Registradas.
-  - Atalhos diretos para abrir o histórico e compras concluídas nos marketplaces oficiais.
+  - Formatação monetária com duas casas decimais e separador por vírgula em todos os eixos e tooltips.
+  - 4 faixas temporais selecionáveis: 1 Semana (7 dias), 1 Mês (30 dias), 1 Ano (365 dias) e Histórico Completo (All-Time).
+  - Prevenção de oscilação cúbica de Bézier (preventCurveOverShooting) e margens seguras no eixo vertical, impedindo sobreposição com os rótulos de data.
+- Histórico de Compras Concluídas:
+  - Consulta de transações reais registradas por compradores em marketplaces.
+  - Métricas agregadas: Preço Médio Pago, Menor Preço Pago, Maior Preço Pago e Total de Transações Registradas.
+  - Atalhos diretos para verificar o histórico oficial no navegador web.
 
-### 3. Modo Fichário Virtual 3D
-- Visualização de folhas em grade 3x3 (9 cartas por página) reproduzindo a experiência tátil de um fichário físico.
-- Perspectiva com argolas metálicas realistas, margens em acabamento couro e folheamento fluido.
-- Simulação de iluminação sobre cartas holográficas e gestos interativos de manipulação.
+### 3. Simulador e Avaliador de Trocas Justas (Trade Evaluator)
+- Painel para balanceamento de trocas entre duas partes: "Suas Cartas" (You Give) e "Cartas Recebidas" (You Receive).
+- Cálculo dinâmico do somatório financeiro de cada lado, diferença líquida e parecer objetivo da negociação (Troca Equilibrada/Justa, Vantajosa para Você ou Desfavorável para Você).
+- **Nome da Carta Clicável**: tocar no nome ou código de qualquer carta na tela de troca abre diretamente a tela completa de detalhes da carta do catálogo (`CardDetailsScreen`), exibindo cotações da LigaPokémon, histórico de preços, vendas recentes e visualizador em alta resolução.
+- **Seletor Interativo de Estado de Conservação**: menu dropdown dedicado por carta (Near Mint, Slightly Played, Moderately Played, Heavily Played, Damaged) que atualiza o valor da carta de forma dinâmica com base nas cotações reais da LigaPokémon para aquela qualidade.
+- **Edição de Valor Personalizado**: toque no preço da carta para inserir um valor acordado manualmente entre os negociadores.
+- **Atualização de Preço Médio**: botão na barra superior para reconsultar em tempo real o Preço Médio das cartas da troca diretamente nos servidores da LigaPokémon.
+- **Filtros e Ordenação**: modos de visualização (Todas as cartas, Apenas Suas, Apenas Recebidas) e ordenação por Maior Valor, Menor Valor ou Nome (A-Z).
+- **Exportação de Resumo**: botão de ação rápida para copiar o resumo analítico da troca formatado diretamente para a área de transferência do sistema.
 
-### 4. Gestão Financeira de Portfólio
-- Total Investido versus Valor Estimado Atual de Mercado calculado automaticamente.
-- Apuração de Lucro ou Prejuízo não realizado com indicadores percentuais coloridos.
-- Classificação das 10 cartas mais valiosas da coleção.
-- Distribuição analítica por estado de conservação, idioma, acabamento (Regular, Holográfica, Reverse Holo) e expansão.
+### 4. Fichário Virtual 3D (Virtual Binder)
+- Grade de 9 bolsos por folha (3x3), reproduzindo a experiência tátil de um fichário físico de colecionador.
+- Transições de página com argolas metálicas, textura de couro nas bordas e folheamento fluido.
+- Efeitos visuais de reflexo holográfico sobre cartas especiais e suporte a manipulação por gestos.
 
-### 5. Busca Semântica e DexMundial Bilíngue
-- Normalização de termos e correspondência automática entre Português e Inglês.
-- Consultas por nome, número de catálogo mundial, código da carta, coleção, ilustrador e raridade.
-- DexMundial completa offline cobrindo todas as gerações, fraquezas, resistências e atributos elementares.
+### 5. Gestão Financeira de Portfólio e Coleções
+- Consolidação do Total Investido (custo de aquisição registrado) versus Valor Atual de Mercado.
+- Cálculo contínuo de Lucro ou Prejuízo não realizado com indicadores percentuais coloridos.
+- Classificação analítica das 10 cartas mais valiosas do acervo.
+- Relatórios de distribuição por estado de conservação, idioma da carta, acabamento (Regular, Holográfica, Reverse Holo) e expansão.
+- Criação e gerenciamento ilimitado de pastas e fichários personalizados com metadados de compra.
 
-### 6. Armazenamento Local, Backup e Privacidade
-- Persistência nativa em SQLite com Drift ORM, sem envio de telemetria, cookies ou rastreadores externos.
-- Todas as coleções, notas pessoais e registros de preços permanecem restritos ao dispositivo local do usuário.
-- Exportação e restauração completa de backup em formato JSON compatível com pastas do sistema.
-- Modos de restauração por Mesclagem ou Substituição com validação estrutural de segurança.
+### 6. Radar de Preços LigaPokémon (Produtos Selados e Cartas)
+- Monitoramento contínuo de produtos cadastrados via URL direta da LigaPokémon.
+- Identificação em tempo real de disponibilidade de estoque, menor preço ofertado, identificador da loja vendedora e detecção de itens em pré-venda.
+- Notificações locais no sistema operacional quando ofertas entrarem na faixa de preço configurada.
+- Verificação individual ou em lote sob demanda, com mensagens informando a atualização do preço médio de mercado.
+- Abertura da oferta original no navegador padrão com um clique.
 
-### 7. Radar de Preços LigaPokémon (Pré-Vendas & Ofertas)
-- Monitoramento contínuo de cartas avulsas e produtos selados cadastrados via URL direta da LigaPokémon.
-- Detecção em tempo real de estoque, menor preço ofertado, nome da loja vendedora e badge de pré-venda.
-- Notificações locais automáticas no sistema operacional quando ofertas caírem na faixa de preço desejada.
-- Atalho direto para abrir o anúncio no navegador padrão com um clique.
+### 7. Lista de Desejos (Wishlist)
+- Cadastro de cartas pretendidas com definição de faixa de preço-alvo (preço mínimo e máximo) e estado de conservação requerido.
+- Atualização dinâmica de preços de mercado em comparação com a meta desejada.
+- Organização por pastas temáticas e filtros rápidos por status de preço.
 
-### 8. Navegação Unificada e Persistência de Sessão
-- Dock inferior unificado de 4 botões (Catálogo, Radar Liga, Coleções e Menu Mais) idêntico no Windows e Android.
-- Menu "Mais Opções" estilizado para acesso imediato a WorldDex, Expansões TCG, Wishlist, Avaliador de Trocas e Ajustes.
-- Persistência total de preferências: tema escolhido (Escuro, Claro Livro Antigo, Gramado, Wurmple, Lugia, Wurmple Shiny, Lugia Shiny e Dark Lugia), idioma ativo e escalas de zoom são restaurados automaticamente ao reabrir o app.
-- Easter egg com minigame clicker para diversos Pokémon (Wurmple, Lugia, Dark Lugia), com sistema de melhorias e loja para temas usando pontos:
-  - **Wurmple Clicker**: minigame clicker em tela cheia com upgrades de Enxame, animações de partículas e loja para desbloqueio do tema Shiny Wurmple (★ #265) por pontos acumulados.
-  - **Lugia Clicker**: minigame temático acionado pelo mascote dinâmico do Lugia, com upgrades aerodinâmicos e loja para desbloqueio do tema Shiny Lugia (★ #249).
-  - **Dark Lugia Clicker**: minigame temático sombrio desbloqueado ao criar uma coleção nomeada "DarkLugia".
-  - **Gerenciador de Temas Extras nos Ajustes**: botão protegido pela senha "011" para desbloquear ou bloquear temas extras via dropdown a qualquer momento.
+### 8. Busca Semântica e DexMundial Bilíngue
+- Normalização de termos com correspondência cruzada entre Português e Inglês.
+- Consultas por nome do Pokémon, número de catálogo nacional/mundial, código de colecionador, expansão, ilustrador e raridade.
+- DexMundial completa cobrindo todas as 9 gerações com fraquezas, resistências e catálogo de lançamentos.
+
+### 9. Armazenamento Local, Backup e Privacidade
+- Persistência 100% offline em banco de dados SQLite embarcado gerenciado pelo Drift ORM.
+- Zero envio de telemetria, cookies, identificadores de publicidade ou registros de uso.
+- Rotina completa de exportação e importação de backup em formato JSON compatível com o explorador de arquivos nativo.
+- Modos de restauração por Mesclagem ou Substituição Total com validação de esquema tipado para prevenir corrupção de dados.
+
+### 10. Navegação Unificada e Persistência de Sessão
+- Dock de navegação inferior com 4 botões de acesso rápido (Catálogo, Radar Liga, Coleções, Menu Mais) idêntico no Windows Desktop e Android.
+- Menu estilizado para acesso imediato à WorldDex, Checklist de Expansões, Wishlist, Simulador de Trocas e Ajustes.
+- Persistência total de sessão: tema ativo, idioma selecionado e níveis de zoom são restaurados automaticamente ao reiniciar o aplicativo.
+
+### 11. Temas Visuais e Minigames Integrados
+- Temas integrados: Modo Escuro (Padrão), Modo Claro Estilo Papel de Livro Antigo, Gramado Botânico, Wurmple Coral, Oceanic Lugia (#249), Shiny Wurmple (#265), Shiny Lugia (#249) e Dark Lugia Secreto (Shadow XD001, desbloqueado ao criar uma coleção nomeada "DarkLugia").
+- Minigames de clique incremental para múltiplos Pokémon (Wurmple, Lugia, Dark Lugia) com sistema de upgrades e loja de desbloqueio de temas com pontos acumulados:
+  - **Wurmple Clicker**: Minigame com melhorias de Enxame, efeitos de partículas e loja para desbloqueio do tema Shiny Wurmple (#265).
+  - **Lugia Clicker**: Minigame acionado pelo mascote dinâmico do Lugia, com upgrades aerodinâmicos e loja para o tema Shiny Lugia (#249).
+  - **Dark Lugia Clicker**: Minigame sombrio secreto ativado ao criar a coleção "DarkLugia".
+  - **Gerenciador de Temas Extras nos Ajustes**: Painel protegido pela senha "011" que permite desbloquear ou bloquear novamente temas extras a qualquer instante.
 
 ---
 
@@ -131,7 +152,7 @@ Todas as cartas exibidas no aplicativo (catálogo, expansões, galeria da pokede
 
 ```
 WurmDex/
-|-- android/                         # Configurações nativas da plataforma Android
+|-- android/                         # Configuração nativa da plataforma Android
 |-- assets/
 |   |-- icons/                       # Ícone da aplicação (icon.jpg)
 |   `-- images/                      # Imagens estáticas e ilustrações
@@ -140,52 +161,55 @@ WurmDex/
 |   |-- windows/                     # Executável wurmdex.exe e dependências Win32
 |   `-- android/                     # Pacote WurmDex-release.apk
 |-- lib/
-|   |-- core/                        # Módulos transversais, banco, temas e constantes
-|   |   |-- constants/               # Proporções geométricas, URLs oficiais e padrões
-|   |   |-- database/                # Esquemas SQLite, DAOs e migrações do Drift
-|   |   |-- localization/            # Dicionário de internacionalização (pt-BR / en-US)
-|   |   |-- navigation/              # Gerenciador centralizado de rotas
-|   |   |-- network/                 # Cliente Dio com cache em memória e repetição
-|   |   |-- providers/               # Notificadores de estado Riverpod
-|   |   |-- theme/                   # Motor de temas (Escuro, Claro Papel, Gramado, Wurmple, Lugia)
-|   |   `-- widgets/                 # Componentes universais (CardGridItem, Badges)
-|   `-- features/                    # Módulos funcionais
-|       |-- card_details/            # Detalhes da carta, gráfico e modal de compras
+|   |-- core/                        # Módulos transversais, banco de dados, temas e utilitários
+|   |   |-- constants/               # Proporções geométricas, URLs oficiais e parâmetros padrão
+|   |   |-- database/                # Tabelas SQLite, DAOs e migrações do Drift ORM
+|   |   |-- localization/            # Dicionário bilíngue de internacionalização (pt-BR / en-US)
+|   |   |-- navigation/              # Roteamento centralizado da aplicação (AppNavigator)
+|   |   |-- network/                 # Cliente HTTP Dio com cache e políticas de repetição
+|   |   |-- providers/               # Provedores de estado reativo Riverpod
+|   |   |-- theme/                   # Motor de temas visuais e esquemas de cores
+|   |   `-- widgets/                 # Componentes universais de interface (CardGridItem, Badges)
+|   `-- features/                    # Módulos funcionais do sistema
+|       |-- card_details/            # Visualizador de detalhes, gráficos de preço e histórico
 |       |-- catalog/                 # Mecanismo de busca e catálogo de cartas
-|       |-- collections/             # Fichários, pastas e dashboard financeiro
-|       |-- easter_egg/              # Minigame secreto Wurmple Clicker
-|       |-- home/                    # Painel inicial, notícias e alertas de preço
-|       |-- navigation/              # Estrutura de navegação e scaffold principal
-|       |-- pokedex/                 # Índice da pokedex e galeria de cartas
-|       |-- sets/                    # Lista de expansões e checklist de Master Set
-|       |-- settings/                # Ajustes, temas, moedas, backup e aviso legal
-|       `-- trade/                   # Calculadora de trocas justas
-|-- scripts/                         # Automações de compilação para Windows e Android
+|       |-- collections/             # Fichários virtuais, pastas e dashboard financeiro
+|       |-- easter_egg/              # Minigames clicker e gerenciador de temas secretos
+|       |-- home/                    # Painel inicial, notícias TCG e alertas de mercado
+|       |-- monitoring/              # Radar de preços LigaPokémon e monitor de produtos
+|       |-- navigation/              # Scaffold principal e dock de navegação inferior
+|       |-- pokedex/                 # Índice da Pokédex e galeria de espécies
+|       |-- sets/                    # Lista de expansões oficiais e checklists de master set
+|       |-- settings/                # Ajustes gerais, moeda, backup JSON e avisos legais
+|       |-- trade/                   # Simulador e avaliador de trocas justas
+|       `-- wishlist/                # Lista de desejos com rastreamento de preço-alvo
+|-- scripts/                         # Scripts automatizados de compilação
 |-- test/                            # Bateria completa de testes automatizados
 |-- windows/                         # Runner nativo do Windows em C++ (Win32)
 |-- LICENSE                          # Licença GNU General Public License v3.0
-|-- pubspec.yaml                     # Manifesto de dependências do Flutter
-|-- README_BR.md                     # Documentação em Português [BR]
-|-- README_EN.md                     # Documentação em Inglês [EN]
-|-- SECURITY_BR.md                   # Política de Segurança em Português [BR]
-`-- SECURITY_EN.md                   # Política de Segurança em Inglês [EN]
+|-- pubspec.yaml                     # Manifesto de pacotes e dependências Flutter
+|-- README_BR.md                     # Documentação completa em Português [BR]
+|-- README_EN.md                     # Documentação completa em Inglês [EN]
+|-- README.md                        # Apresentação geral do repositório
+|-- SECURITY_BR.md                   # Política de segurança e privacidade em Português [BR]
+`-- SECURITY_EN.md                   # Política de segurança e privacidade em Inglês [EN]
 ```
 
 ---
 
 ## Instruções de Compilação e Execução
 
-### Pré-requisitos do Ambiente
+### Pré-requisitos de Desenvolvimento
 
 1. Flutter SDK versão 3.24.0 ou superior.
 2. Dart SDK versão 3.5.0 ou superior.
 3. Para compilação no Windows Desktop:
-   - Windows 10 ou 11 (64 bits).
+   - Sistema operacional Windows 10 ou Windows 11 (64 bits).
    - Visual Studio 2022 Community com a carga de trabalho "Desenvolvimento para desktop com C++" instalada.
 4. Para compilação no Android:
    - Android SDK (API 34) e Java Development Kit (JDK 17).
 
-### Instalação de Dependências
+### Obtenção de Dependências
 
 ```bash
 flutter pub get
@@ -193,43 +217,43 @@ flutter pub get
 
 ### Execução dos Testes Automatizados
 
-Valide todos os testes de unidade, widgets e arquitetura:
+Execute a bateria completa de testes de unidade, de widgets e de integração:
 
 ```bash
 flutter test
 ```
 
-### Compilação para Windows Desktop
+### Compilação de Produção para Windows Desktop
 
-Para gerar o binário de produção otimizado para Windows:
+Gere o executável nativo otimizado de 64 bits para Windows:
 
 ```bash
 flutter build windows --release
 ```
 
-O executável final estará disponível em:
+O executável compilado estará localizado em:
 `build/windows/x64/runner/Release/wurmdex.exe`
 
-### Compilação para Android
+### Compilação de Produção para Android
 
-Para gerar o pacote APK assinado de produção:
+Gere o pacote APK de distribuição:
 
 ```bash
 flutter build apk --release
 ```
 
-O arquivo de instalação estará disponível em:
+O pacote gerado estará disponível em:
 `build/app/outputs/flutter-apk/app-release.apk`
 
-### Scripts Utilitários de Compilação
+### Scripts Automatizados de Build
 
-Atalhos de automação estão disponíveis na pasta `scripts/`:
+Atalhos de compilação estão disponíveis na pasta `scripts/`:
 
 Via PowerShell:
 ```powershell
-.\scripts\build.ps1 -Platform windows
-.\scripts\build.ps1 -Platform apk
-.\scripts\build.ps1 -Platform all
+.\scripts\build.ps1 -Target windows
+.\scripts\build.ps1 -Target apk
+.\scripts\build.ps1 -Target all
 ```
 
 Via Prompt de Comando (CMD):
@@ -243,18 +267,17 @@ scripts\build.bat all
 
 ## Segurança e Política de Privacidade
 
-- Sem Telemetria: O WurmDex não contém SDKs de analytics, publicidade ou rastreamento.
-- Armazenamento Exclusivamente Local: Suas coleções e valores de compra ficam guardados somente no banco SQLite local do dispositivo.
-- Comunicação Segura: Todas as conexões externas utilizam protocolo TLS/HTTPS com validação de certificados para consulta pública de cotações e notícias.
-- Validação de Arquivos: A rotina de restauração de backup analisa o formato JSON e recusa arquivos corrompidos ou maliciosos.
+- Ausência de Telemetria: O WurmDex não inclui bibliotecas de analytics, publicidade comportamental ou rastreadores externos.
+- Custódia Estritamente Local: Todas as informações de coleções, compras registradas e anotações pessoais são mantidas exclusivamente no banco de dados SQLite local do dispositivo.
+- Comunicação de Rede Segura: Todas as conexões utilizam exclusivamente conexões criptografadas TLS/HTTPS para leitura de dados públicos de mercado, câmbio monetário e notícias.
+- Validação de Entrada de Dados: O mecanismo de restauração analisa a estrutura tipada dos arquivos JSON de backup, recusando dados malformados ou corrompidos.
 
 ---
 
-## Uso do Codigo e Contribuicoes
+## Uso do Código e Contribuições
 
-Este e um projeto pessoal desenvolvido estritamente por diversao (hobby).
+Este é um projeto pessoal desenvolvido estritamente por diversão (hobby).
 
-Por este motivo, o autor NAO procura, nao aceita e nao deseja contribuicoes externas, solicitacoes de funcionalidades (feature requests) ou pull requests.
+Por este motivo, o autor não procura, não aceita e não revisa contribuições externas, solicitações de funcionalidades (feature requests) ou pull requests.
 
-No entanto, voce esta totalmente convidado e encorajado a clonar, realizar fork do repositorio e utilizar este codigo livremente como base, inspiracao, molde ou aprendizado para os seus proprios projetos, sob os termos da licenca GNU GPL-3.0.
-
+No entanto, você está totalmente convidado a clonar, realizar fork do repositório e utilizar este código livremente como base, inspiração, referência de estudo ou template para seus próprios projetos independentes, sob os termos da licença GNU General Public License v3.0.
