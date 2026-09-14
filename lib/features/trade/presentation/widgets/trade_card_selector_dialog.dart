@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/database/database_provider.dart';
 import '../../../../core/localization/app_strings.dart';
+import '../../../../core/utils/card_pricing_helper.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/semantic_search_helper.dart';
 import '../../../../core/widgets/app_empty_state.dart';
@@ -17,7 +18,10 @@ class TradeCardItem {
   final String number;
   final String setName;
   final String imageUrl;
+  final double basePriceBrl;
   final double valueBrl;
+  final String condition;
+  final String rarity;
 
   const TradeCardItem({
     required this.id,
@@ -25,8 +29,35 @@ class TradeCardItem {
     required this.number,
     required this.setName,
     required this.imageUrl,
+    required this.basePriceBrl,
     required this.valueBrl,
+    this.condition = 'Near Mint',
+    this.rarity = '',
   });
+
+  TradeCardItem copyWith({
+    String? id,
+    String? name,
+    String? number,
+    String? setName,
+    String? imageUrl,
+    double? basePriceBrl,
+    double? valueBrl,
+    String? condition,
+    String? rarity,
+  }) {
+    return TradeCardItem(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      number: number ?? this.number,
+      setName: setName ?? this.setName,
+      imageUrl: imageUrl ?? this.imageUrl,
+      basePriceBrl: basePriceBrl ?? this.basePriceBrl,
+      valueBrl: valueBrl ?? this.valueBrl,
+      condition: condition ?? this.condition,
+      rarity: rarity ?? this.rarity,
+    );
+  }
 }
 
 Future<TradeCardItem?> showTradeCardSelector(
@@ -165,7 +196,17 @@ class _TradeCardSelectorDialogState extends ConsumerState<_TradeCardSelectorDial
           separatorBuilder: (context, index) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final card = cards[index];
-            final price = card.purchasePriceBrl > 0 ? card.purchasePriceBrl : 15.0;
+            final basePrice = CardPricingHelper.getCachedOrEstimatedPriceBrl(
+              cardApiId: card.cardApiId,
+              cardName: card.name,
+              cardNumber: card.number,
+              setName: card.setName,
+              purchasePriceBrl: card.purchasePriceBrl,
+              rarity: card.rarity,
+              condition: card.condition,
+              exchangeRate: widget.exchangeRate,
+            );
+            final price = card.purchasePriceBrl > 0 ? card.purchasePriceBrl : basePrice;
 
             return ListTile(
               dense: true,
@@ -194,16 +235,27 @@ class _TradeCardSelectorDialogState extends ConsumerState<_TradeCardSelectorDial
                 CurrencyFormatter.toBrl(price),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              onTap: () {
+              onTap: () async {
+                final realBasePrice = await CardPricingHelper.getOrFetchCardPriceBrl(
+                  cardApiId: card.cardApiId,
+                  cardName: card.name,
+                  cardNumber: card.number,
+                  setName: card.setName,
+                  exchangeRate: widget.exchangeRate,
+                );
+                final effectiveBase = card.purchasePriceBrl > 0 ? card.purchasePriceBrl : realBasePrice;
                 final item = TradeCardItem(
                   id: card.id,
                   name: card.name,
                   number: card.number,
                   setName: card.setName,
                   imageUrl: card.imageUrl,
-                  valueBrl: price,
+                  basePriceBrl: effectiveBase,
+                  valueBrl: effectiveBase,
+                  condition: card.condition.isNotEmpty ? card.condition : 'Near Mint',
+                  rarity: card.rarity,
                 );
-                Navigator.pop(context, item);
+                if (context.mounted) Navigator.pop(context, item);
               },
             );
           },
@@ -247,7 +299,10 @@ class _TradeCardSelectorDialogState extends ConsumerState<_TradeCardSelectorDial
                           number: card.number,
                           setTotal: card.setTotal,
                         );
-                        final valBrl = card.tcgMarketUsd != null ? (card.tcgMarketUsd! * widget.exchangeRate) : 10.0;
+                        final baseUsd = card.effectiveMidPriceUsd ?? 0.0;
+                        final valBrl = baseUsd > 0
+                            ? CardPricingHelper.convertUsdToRealisticBrl(baseUsd, widget.exchangeRate)
+                            : 0.0;
 
                         return ListTile(
                           dense: true,
@@ -261,19 +316,30 @@ class _TradeCardSelectorDialogState extends ConsumerState<_TradeCardSelectorDial
                           title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           subtitle: Text('${card.setName} • ${card.rarity}'),
                           trailing: Text(
-                            CurrencyFormatter.toBrl(valBrl),
+                            valBrl > 0 ? CurrencyFormatter.toBrl(valBrl) : 'R\$ --',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          onTap: () {
+                          onTap: () async {
+                            final realBasePrice = await CardPricingHelper.getOrFetchCardPriceBrl(
+                              cardApiId: card.id,
+                              cardName: card.name,
+                              cardNumber: card.number,
+                              setName: card.setName,
+                              knownMarketUsd: card.hasExplicitPrice ? card.effectiveMidPriceUsd : null,
+                              exchangeRate: widget.exchangeRate,
+                            );
                             final item = TradeCardItem(
                               id: card.id,
                               name: card.name,
                               number: card.number,
                               setName: card.setName,
                               imageUrl: card.imageUrlSmall,
-                              valueBrl: valBrl,
+                              basePriceBrl: realBasePrice,
+                              valueBrl: realBasePrice,
+                              condition: 'Near Mint',
+                              rarity: card.rarity,
                             );
-                            Navigator.pop(context, item);
+                            if (context.mounted) Navigator.pop(context, item);
                           },
                         );
                       },

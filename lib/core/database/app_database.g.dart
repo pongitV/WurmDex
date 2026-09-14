@@ -2798,6 +2798,18 @@ class $LigaPriceAlertsTable extends LigaPriceAlerts
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
+  static const VerificationMeta _folderNameMeta = const VerificationMeta(
+    'folderName',
+  );
+  @override
+  late final GeneratedColumn<String> folderName = GeneratedColumn<String>(
+    'folder_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Geral'),
+  );
   static const VerificationMeta _minTargetPriceMeta = const VerificationMeta(
     'minTargetPrice',
   );
@@ -2948,6 +2960,7 @@ class $LigaPriceAlertsTable extends LigaPriceAlerts
     imageUrl,
     collectionTag,
     languageTag,
+    folderName,
     minTargetPrice,
     maxTargetPrice,
     allowPreSale,
@@ -3015,6 +3028,12 @@ class $LigaPriceAlertsTable extends LigaPriceAlerts
           data['language_tag']!,
           _languageTagMeta,
         ),
+      );
+    }
+    if (data.containsKey('folder_name')) {
+      context.handle(
+        _folderNameMeta,
+        folderName.isAcceptableOrUnknown(data['folder_name']!, _folderNameMeta),
       );
     }
     if (data.containsKey('min_target_price')) {
@@ -3140,6 +3159,10 @@ class $LigaPriceAlertsTable extends LigaPriceAlerts
         DriftSqlType.string,
         data['${effectivePrefix}language_tag'],
       )!,
+      folderName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}folder_name'],
+      )!,
       minTargetPrice: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}min_target_price'],
@@ -3200,6 +3223,7 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
   final String imageUrl;
   final String collectionTag;
   final String languageTag;
+  final String folderName;
   final double minTargetPrice;
   final double maxTargetPrice;
   final bool allowPreSale;
@@ -3218,6 +3242,7 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
     required this.imageUrl,
     required this.collectionTag,
     required this.languageTag,
+    required this.folderName,
     required this.minTargetPrice,
     required this.maxTargetPrice,
     required this.allowPreSale,
@@ -3239,6 +3264,7 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
     map['image_url'] = Variable<String>(imageUrl);
     map['collection_tag'] = Variable<String>(collectionTag);
     map['language_tag'] = Variable<String>(languageTag);
+    map['folder_name'] = Variable<String>(folderName);
     map['min_target_price'] = Variable<double>(minTargetPrice);
     map['max_target_price'] = Variable<double>(maxTargetPrice);
     map['allow_pre_sale'] = Variable<bool>(allowPreSale);
@@ -3267,6 +3293,7 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
       imageUrl: Value(imageUrl),
       collectionTag: Value(collectionTag),
       languageTag: Value(languageTag),
+      folderName: Value(folderName),
       minTargetPrice: Value(minTargetPrice),
       maxTargetPrice: Value(maxTargetPrice),
       allowPreSale: Value(allowPreSale),
@@ -3299,6 +3326,7 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
       imageUrl: serializer.fromJson<String>(json['imageUrl']),
       collectionTag: serializer.fromJson<String>(json['collectionTag']),
       languageTag: serializer.fromJson<String>(json['languageTag']),
+      folderName: serializer.fromJson<String>(json['folderName']),
       minTargetPrice: serializer.fromJson<double>(json['minTargetPrice']),
       maxTargetPrice: serializer.fromJson<double>(json['maxTargetPrice']),
       allowPreSale: serializer.fromJson<bool>(json['allowPreSale']),
@@ -3324,6 +3352,7 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
       'imageUrl': serializer.toJson<String>(imageUrl),
       'collectionTag': serializer.toJson<String>(collectionTag),
       'languageTag': serializer.toJson<String>(languageTag),
+      'folderName': serializer.toJson<String>(folderName),
       'minTargetPrice': serializer.toJson<double>(minTargetPrice),
       'maxTargetPrice': serializer.toJson<double>(maxTargetPrice),
       'allowPreSale': serializer.toJson<bool>(allowPreSale),
@@ -3345,6 +3374,7 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
     String? imageUrl,
     String? collectionTag,
     String? languageTag,
+    String? folderName,
     double? minTargetPrice,
     double? maxTargetPrice,
     bool? allowPreSale,
@@ -3363,6 +3393,7 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
     imageUrl: imageUrl ?? this.imageUrl,
     collectionTag: collectionTag ?? this.collectionTag,
     languageTag: languageTag ?? this.languageTag,
+    folderName: folderName ?? this.folderName,
     minTargetPrice: minTargetPrice ?? this.minTargetPrice,
     maxTargetPrice: maxTargetPrice ?? this.maxTargetPrice,
     allowPreSale: allowPreSale ?? this.allowPreSale,
@@ -3393,6 +3424,9 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
       languageTag: data.languageTag.present
           ? data.languageTag.value
           : this.languageTag,
+      folderName: data.folderName.present
+          ? data.folderName.value
+          : this.folderName,
       minTargetPrice: data.minTargetPrice.present
           ? data.minTargetPrice.value
           : this.minTargetPrice,
@@ -3432,6 +3466,7 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
           ..write('imageUrl: $imageUrl, ')
           ..write('collectionTag: $collectionTag, ')
           ..write('languageTag: $languageTag, ')
+          ..write('folderName: $folderName, ')
           ..write('minTargetPrice: $minTargetPrice, ')
           ..write('maxTargetPrice: $maxTargetPrice, ')
           ..write('allowPreSale: $allowPreSale, ')
@@ -3455,6 +3490,7 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
     imageUrl,
     collectionTag,
     languageTag,
+    folderName,
     minTargetPrice,
     maxTargetPrice,
     allowPreSale,
@@ -3477,6 +3513,7 @@ class LigaPriceAlert extends DataClass implements Insertable<LigaPriceAlert> {
           other.imageUrl == this.imageUrl &&
           other.collectionTag == this.collectionTag &&
           other.languageTag == this.languageTag &&
+          other.folderName == this.folderName &&
           other.minTargetPrice == this.minTargetPrice &&
           other.maxTargetPrice == this.maxTargetPrice &&
           other.allowPreSale == this.allowPreSale &&
@@ -3497,6 +3534,7 @@ class LigaPriceAlertsCompanion extends UpdateCompanion<LigaPriceAlert> {
   final Value<String> imageUrl;
   final Value<String> collectionTag;
   final Value<String> languageTag;
+  final Value<String> folderName;
   final Value<double> minTargetPrice;
   final Value<double> maxTargetPrice;
   final Value<bool> allowPreSale;
@@ -3516,6 +3554,7 @@ class LigaPriceAlertsCompanion extends UpdateCompanion<LigaPriceAlert> {
     this.imageUrl = const Value.absent(),
     this.collectionTag = const Value.absent(),
     this.languageTag = const Value.absent(),
+    this.folderName = const Value.absent(),
     this.minTargetPrice = const Value.absent(),
     this.maxTargetPrice = const Value.absent(),
     this.allowPreSale = const Value.absent(),
@@ -3536,6 +3575,7 @@ class LigaPriceAlertsCompanion extends UpdateCompanion<LigaPriceAlert> {
     this.imageUrl = const Value.absent(),
     this.collectionTag = const Value.absent(),
     this.languageTag = const Value.absent(),
+    this.folderName = const Value.absent(),
     this.minTargetPrice = const Value.absent(),
     this.maxTargetPrice = const Value.absent(),
     this.allowPreSale = const Value.absent(),
@@ -3558,6 +3598,7 @@ class LigaPriceAlertsCompanion extends UpdateCompanion<LigaPriceAlert> {
     Expression<String>? imageUrl,
     Expression<String>? collectionTag,
     Expression<String>? languageTag,
+    Expression<String>? folderName,
     Expression<double>? minTargetPrice,
     Expression<double>? maxTargetPrice,
     Expression<bool>? allowPreSale,
@@ -3578,6 +3619,7 @@ class LigaPriceAlertsCompanion extends UpdateCompanion<LigaPriceAlert> {
       if (imageUrl != null) 'image_url': imageUrl,
       if (collectionTag != null) 'collection_tag': collectionTag,
       if (languageTag != null) 'language_tag': languageTag,
+      if (folderName != null) 'folder_name': folderName,
       if (minTargetPrice != null) 'min_target_price': minTargetPrice,
       if (maxTargetPrice != null) 'max_target_price': maxTargetPrice,
       if (allowPreSale != null) 'allow_pre_sale': allowPreSale,
@@ -3602,6 +3644,7 @@ class LigaPriceAlertsCompanion extends UpdateCompanion<LigaPriceAlert> {
     Value<String>? imageUrl,
     Value<String>? collectionTag,
     Value<String>? languageTag,
+    Value<String>? folderName,
     Value<double>? minTargetPrice,
     Value<double>? maxTargetPrice,
     Value<bool>? allowPreSale,
@@ -3622,6 +3665,7 @@ class LigaPriceAlertsCompanion extends UpdateCompanion<LigaPriceAlert> {
       imageUrl: imageUrl ?? this.imageUrl,
       collectionTag: collectionTag ?? this.collectionTag,
       languageTag: languageTag ?? this.languageTag,
+      folderName: folderName ?? this.folderName,
       minTargetPrice: minTargetPrice ?? this.minTargetPrice,
       maxTargetPrice: maxTargetPrice ?? this.maxTargetPrice,
       allowPreSale: allowPreSale ?? this.allowPreSale,
@@ -3657,6 +3701,9 @@ class LigaPriceAlertsCompanion extends UpdateCompanion<LigaPriceAlert> {
     }
     if (languageTag.present) {
       map['language_tag'] = Variable<String>(languageTag.value);
+    }
+    if (folderName.present) {
+      map['folder_name'] = Variable<String>(folderName.value);
     }
     if (minTargetPrice.present) {
       map['min_target_price'] = Variable<double>(minTargetPrice.value);
@@ -3706,6 +3753,7 @@ class LigaPriceAlertsCompanion extends UpdateCompanion<LigaPriceAlert> {
           ..write('imageUrl: $imageUrl, ')
           ..write('collectionTag: $collectionTag, ')
           ..write('languageTag: $languageTag, ')
+          ..write('folderName: $folderName, ')
           ..write('minTargetPrice: $minTargetPrice, ')
           ..write('maxTargetPrice: $maxTargetPrice, ')
           ..write('allowPreSale: $allowPreSale, ')
@@ -5302,6 +5350,7 @@ typedef $$LigaPriceAlertsTableCreateCompanionBuilder =
       Value<String> imageUrl,
       Value<String> collectionTag,
       Value<String> languageTag,
+      Value<String> folderName,
       Value<double> minTargetPrice,
       Value<double> maxTargetPrice,
       Value<bool> allowPreSale,
@@ -5323,6 +5372,7 @@ typedef $$LigaPriceAlertsTableUpdateCompanionBuilder =
       Value<String> imageUrl,
       Value<String> collectionTag,
       Value<String> languageTag,
+      Value<String> folderName,
       Value<double> minTargetPrice,
       Value<double> maxTargetPrice,
       Value<bool> allowPreSale,
@@ -5373,6 +5423,11 @@ class $$LigaPriceAlertsTableFilterComposer
 
   ColumnFilters<String> get languageTag => $composableBuilder(
     column: $table.languageTag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get folderName => $composableBuilder(
+    column: $table.folderName,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5471,6 +5526,11 @@ class $$LigaPriceAlertsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get folderName => $composableBuilder(
+    column: $table.folderName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get minTargetPrice => $composableBuilder(
     column: $table.minTargetPrice,
     builder: (column) => ColumnOrderings(column),
@@ -5555,6 +5615,11 @@ class $$LigaPriceAlertsTableAnnotationComposer
 
   GeneratedColumn<String> get languageTag => $composableBuilder(
     column: $table.languageTag,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get folderName => $composableBuilder(
+    column: $table.folderName,
     builder: (column) => column,
   );
 
@@ -5651,6 +5716,7 @@ class $$LigaPriceAlertsTableTableManager
                 Value<String> imageUrl = const Value.absent(),
                 Value<String> collectionTag = const Value.absent(),
                 Value<String> languageTag = const Value.absent(),
+                Value<String> folderName = const Value.absent(),
                 Value<double> minTargetPrice = const Value.absent(),
                 Value<double> maxTargetPrice = const Value.absent(),
                 Value<bool> allowPreSale = const Value.absent(),
@@ -5670,6 +5736,7 @@ class $$LigaPriceAlertsTableTableManager
                 imageUrl: imageUrl,
                 collectionTag: collectionTag,
                 languageTag: languageTag,
+                folderName: folderName,
                 minTargetPrice: minTargetPrice,
                 maxTargetPrice: maxTargetPrice,
                 allowPreSale: allowPreSale,
@@ -5691,6 +5758,7 @@ class $$LigaPriceAlertsTableTableManager
                 Value<String> imageUrl = const Value.absent(),
                 Value<String> collectionTag = const Value.absent(),
                 Value<String> languageTag = const Value.absent(),
+                Value<String> folderName = const Value.absent(),
                 Value<double> minTargetPrice = const Value.absent(),
                 Value<double> maxTargetPrice = const Value.absent(),
                 Value<bool> allowPreSale = const Value.absent(),
@@ -5710,6 +5778,7 @@ class $$LigaPriceAlertsTableTableManager
                 imageUrl: imageUrl,
                 collectionTag: collectionTag,
                 languageTag: languageTag,
+                folderName: folderName,
                 minTargetPrice: minTargetPrice,
                 maxTargetPrice: maxTargetPrice,
                 allowPreSale: allowPreSale,

@@ -10,6 +10,7 @@ import '../../../../core/providers/card_scale_provider.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/card_condition_helper.dart';
+import '../../../../core/utils/card_pricing_helper.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/card_scale_button.dart';
 import '../../../../core/widgets/card_shimmer_glow.dart';
@@ -980,7 +981,16 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
     // 1. Preço Total
     double totalBrl = 0;
     for (final c in widget.cards) {
-      final price = c.purchasePriceBrl > 0 ? c.purchasePriceBrl : 0.0;
+      final price = CardPricingHelper.getRealisticMarketPriceBrl(
+        cardApiId: c.cardApiId,
+        cardName: c.name,
+        cardNumber: c.number,
+        setName: c.setName,
+        purchasePriceBrl: c.purchasePriceBrl,
+        rarity: c.rarity,
+        condition: c.condition,
+        exchangeRate: exchangeRate,
+      );
       final qty = c.quantity > 0 ? c.quantity : 1;
       totalBrl += price * qty;
     }

@@ -7,6 +7,7 @@ import 'package:wurmdex/core/localization/app_strings.dart';
 import 'package:wurmdex/core/navigation/app_navigator.dart';
 import 'package:wurmdex/core/providers/currency_provider.dart';
 import 'package:wurmdex/core/theme/app_colors.dart';
+import 'package:wurmdex/core/utils/card_pricing_helper.dart';
 import 'package:wurmdex/core/utils/currency_formatter.dart';
 import 'package:wurmdex/core/utils/marketplace_url_helper.dart';
 import 'package:wurmdex/core/utils/semantic_search_helper.dart';
@@ -31,11 +32,19 @@ class BinderPocketCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currency = ref.watch(currencyProvider);
     final exchangeRate = ref.watch(exchangeRateProvider);
-    final String? priceDisplay = card.purchasePriceBrl > 0
-        ? (currency == AppCurrency.usd
-            ? CurrencyFormatter.toUsd(card.purchasePriceBrl / exchangeRate)
-            : CurrencyFormatter.toBrl(card.purchasePriceBrl))
-        : null;
+    final effectiveBrl = CardPricingHelper.getRealisticMarketPriceBrl(
+      cardApiId: card.cardApiId,
+      cardName: card.name,
+      cardNumber: card.number,
+      setName: card.setName,
+      purchasePriceBrl: card.purchasePriceBrl,
+      rarity: card.rarity,
+      condition: card.condition,
+      exchangeRate: exchangeRate,
+    );
+    final String priceDisplay = currency == AppCurrency.usd
+        ? CurrencyFormatter.toUsd(effectiveBrl / exchangeRate)
+        : CurrencyFormatter.toBrl(effectiveBrl);
 
     final title = SemanticSearchHelper.formatCardIdentifier(
       rawName: card.name,
@@ -58,7 +67,7 @@ class BinderPocketCard extends ConsumerWidget {
             types: const [],
             supertype: 'Pokémon',
             artist: '',
-            tcgMarketUsd: card.purchasePriceBrl > 0 ? (card.purchasePriceBrl / exchangeRate) : 0.0,
+            tcgMarketUsd: effectiveBrl / exchangeRate,
           );
           AppNavigator.toCardDetails(context, item, userCardId: card.id);
         },
@@ -165,17 +174,15 @@ class BinderPocketCard extends ConsumerWidget {
                             language: card.language,
                             compact: true,
                           ),
-                          if (priceDisplay != null) ...[
-                            const SizedBox(width: 3),
-                            Text(
-                              priceDisplay,
-                              style: const TextStyle(
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.profitGreen,
-                              ),
+                          const SizedBox(width: 3),
+                          Text(
+                            priceDisplay,
+                            style: const TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.profitGreen,
                             ),
-                          ],
+                          ),
                         ],
                       ),
                     ),

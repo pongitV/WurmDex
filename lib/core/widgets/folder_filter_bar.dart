@@ -45,8 +45,8 @@ class FolderFilterBar extends StatelessWidget {
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String?>(
                 value: selected,
+                isExpanded: true,
                 hint: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       Icons.folder_outlined,
@@ -54,7 +54,7 @@ class FolderFilterBar extends StatelessWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
-                    Flexible(
+                    Expanded(
                       child: Text(
                         hint,
                         overflow: TextOverflow.ellipsis,
@@ -68,12 +68,42 @@ class FolderFilterBar extends StatelessWidget {
                 items: [
                   DropdownMenuItem<String?>(
                     value: null,
-                    child: Text(allLabel),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.apps,
+                          size: 15,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            allLabel,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   ...folders.map(
                     (folder) => DropdownMenuItem<String?>(
                       value: folder,
-                      child: Text(folder),
+                      child: Row(
+                        children: [
+                          Icon(
+                            folder == 'Geral' ? Icons.folder : Icons.folder_outlined,
+                            size: 15,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              folder,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

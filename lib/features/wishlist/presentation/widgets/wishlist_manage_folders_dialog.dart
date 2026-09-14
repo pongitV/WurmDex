@@ -93,11 +93,7 @@ class _WishlistManageFoldersDialogState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              strings.isEn
-                  ? 'Folder already exists or invalid name'
-                  : 'Pasta já existe ou nome inválido',
-            ),
+            content: Text(strings.folderAlreadyExistsOrInvalid),
           ),
         );
       }
@@ -110,9 +106,7 @@ class _WishlistManageFoldersDialogState
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            strings.isEn ? 'Folder created' : 'Pasta criada com sucesso',
-          ),
+          content: Text(strings.folderCreatedSuccess),
         ),
       );
     }
@@ -201,9 +195,7 @@ class _WishlistManageFoldersDialogState
     );
 
     if (mounted) {
-      setState(() {
-        _refreshFolders();
-      });
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(strings.wishlistFolderDeleted)),
       );
@@ -236,9 +228,7 @@ class _WishlistManageFoldersDialogState
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    strings.isEn
-                        ? 'No custom folders yet.\nCards are in the General folder.'
-                        : 'Nenhuma pasta personalizada.\nAs cartas estão na pasta Geral.',
+                    strings.noWishlistCustomFoldersSubtitle,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
@@ -295,7 +285,7 @@ class _WishlistManageFoldersDialogState
       actions: [
         TextButton.icon(
           icon: const Icon(Icons.add, size: 18),
-          label: Text(strings.isEn ? 'New folder' : 'Nova pasta'),
+          label: Text(strings.newFolderAction),
           onPressed: _createFolder,
         ),
         TextButton(

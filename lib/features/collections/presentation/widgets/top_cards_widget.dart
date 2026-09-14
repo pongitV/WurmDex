@@ -3,6 +3,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/card_pricing_helper.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/condition_badge.dart';
 import '../../../../core/widgets/pokemon_card_image.dart';
@@ -10,7 +11,21 @@ import '../../../catalog/models/pokemon_card_item.dart';
 import '../../../monitoring/models/monitored_card_item.dart';
 
 double cardDisplayPriceBrl(MonitoredCardItem item) {
-  return item.card.purchasePriceBrl > 0 ? item.card.purchasePriceBrl : 15.0;
+  if (item.card.purchasePriceBrl > 0) {
+    return item.card.purchasePriceBrl;
+  }
+  if (item.estimatedCurrentPriceBrl > 0) {
+    return item.estimatedCurrentPriceBrl;
+  }
+  return CardPricingHelper.getRealisticMarketPriceBrl(
+    cardApiId: item.card.cardApiId,
+    cardName: item.card.name,
+    cardNumber: item.card.number,
+    setName: item.card.setName,
+    purchasePriceBrl: item.card.purchasePriceBrl,
+    rarity: item.card.rarity,
+    condition: item.card.condition,
+  );
 }
 
 String formatCardDisplayPrice(

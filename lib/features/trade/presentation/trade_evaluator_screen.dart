@@ -1,10 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/card_condition_helper.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_action_fab.dart';
 import '../../../../core/widgets/app_filter_modal.dart';
@@ -106,6 +106,82 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
     }
   }
 
+  void _updateCardCondition(TradeCardItem card, String newCondition, bool isYour) {
+    final updated = card.copyWith(
+      condition: newCondition,
+    );
+
+    setState(() {
+      final list = isYour ? _yourCards : _theirCards;
+      final idx = list.indexOf(card);
+      if (idx != -1) {
+        list[idx] = updated;
+      }
+    });
+  }
+
+  void _editCardPrice(
+    TradeCardItem card,
+    bool isYour,
+    AppStrings strings,
+    bool isUsd,
+    double exchangeRate,
+  ) async {
+    final currentPrice = isUsd ? (card.valueBrl / exchangeRate) : card.valueBrl;
+    final controller = TextEditingController(text: currentPrice.toStringAsFixed(2));
+
+    final newPrice = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(strings.editTradePriceTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${card.name} (${card.number.isNotEmpty ? "#${card.number}" : card.setName})',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                prefixText: isUsd ? r'$ ' : 'R\$ ',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(strings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final parsed = double.tryParse(controller.text.replaceAll(',', '.')) ?? currentPrice;
+              Navigator.pop(ctx, parsed);
+            },
+            child: Text(strings.btnSave),
+          ),
+        ],
+      ),
+    );
+
+    if (newPrice != null && newPrice > 0) {
+      final finalBrl = isUsd ? (newPrice * exchangeRate) : newPrice;
+      setState(() {
+        final list = isYour ? _yourCards : _theirCards;
+        final idx = list.indexOf(card);
+        if (idx != -1) {
+          list[idx] = card.copyWith(valueBrl: finalBrl);
+        }
+      });
+    }
+  }
+
   void _copyTradeSummary(AppStrings strings, bool isUsd, double exchangeRate) {
     final diff = _theirTotal - _yourTotal;
     final buffer = StringBuffer();
@@ -116,7 +192,9 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
       final priceStr = isUsd
           ? CurrencyFormatter.toUsd(c.valueBrl / exchangeRate)
           : CurrencyFormatter.toBrl(c.valueBrl);
-      buffer.writeln(' - ${c.name} (${c.setName}) : $priceStr');
+      final shortCond = CardConditionHelper.getShortCondition(c.condition);
+      final codeStr = c.number.isNotEmpty ? ' #${c.number}' : '';
+      buffer.writeln(' - ${c.name}$codeStr (${c.setName}) [$shortCond] : $priceStr');
     }
     final yourTotalStr = isUsd
         ? CurrencyFormatter.toUsd(_yourTotal / exchangeRate)
@@ -128,7 +206,9 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
       final priceStr = isUsd
           ? CurrencyFormatter.toUsd(c.valueBrl / exchangeRate)
           : CurrencyFormatter.toBrl(c.valueBrl);
-      buffer.writeln(' - ${c.name} (${c.setName}) : $priceStr');
+      final shortCond = CardConditionHelper.getShortCondition(c.condition);
+      final codeStr = c.number.isNotEmpty ? ' #${c.number}' : '';
+      buffer.writeln(' - ${c.name}$codeStr (${c.setName}) [$shortCond] : $priceStr');
     }
     final theirTotalStr = isUsd
         ? CurrencyFormatter.toUsd(_theirTotal / exchangeRate)
@@ -322,6 +402,7 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
                       accentColor: theme.colorScheme.primary,
                       isUsd: isUsd,
                       exchangeRate: exchangeRate,
+                      isYour: true,
                       onAdd: () => _addYourCard(exchangeRate),
                       onRemove: (idx) {
                         final sorted = _getSortedCards(_yourCards);
@@ -345,6 +426,7 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
                       accentColor: AppColors.profitGreen,
                       isUsd: isUsd,
                       exchangeRate: exchangeRate,
+                      isYour: false,
                       onAdd: () => _addTheirCard(exchangeRate),
                       onRemove: (idx) {
                         final sorted = _getSortedCards(_theirCards);
@@ -371,6 +453,7 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
     required Color accentColor,
     required bool isUsd,
     required double exchangeRate,
+    required bool isYour,
     required VoidCallback onAdd,
     required ValueChanged<int> onRemove,
   }) {
@@ -422,7 +505,7 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
         ),
         const Divider(height: 1),
 
-        // Cards List
+        // Cards List (Focused purely on Values, Names, Codes and Quality - No Images)
         Expanded(
           child: cards.isEmpty
               ? Center(
@@ -458,42 +541,104 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
 
                     return Card(
                       margin: EdgeInsets.zero,
-                      child: ListTile(
-                        dense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: CachedNetworkImage(
-                            imageUrl: card.imageUrl,
-                            width: 28,
-                            height: 38,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => const SizedBox(width: 28, height: 38),
-                            errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 20),
-                          ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(
+                          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                          width: 0.8,
                         ),
-                        title: Text(
-                          card.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          card.setName,
-                          style: TextStyle(fontSize: 10, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              cardValStr,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Line 1: Card Name and Code / Number
+                                  RichText(
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    text: TextSpan(
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12.5,
+                                      ),
+                                      children: [
+                                        TextSpan(text: card.name),
+                                        if (card.number.isNotEmpty)
+                                          TextSpan(
+                                            text: ' • #${card.number}',
+                                            style: TextStyle(
+                                              color: theme.colorScheme.primary,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 11.5,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (card.setName.isNotEmpty) ...[
+                                    const SizedBox(height: 1),
+                                    Text(
+                                      card.setName,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 4),
+
+                                  // Line 2: Card Price below Name and Code (Tap to edit custom price)
+                                  InkWell(
+                                    borderRadius: BorderRadius.circular(4),
+                                    onTap: () => _editCardPrice(card, isYour, strings, isUsd, exchangeRate),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 1),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            cardValStr,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                              color: accentColor,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.edit_outlined,
+                                            size: 11,
+                                            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+
+                                  // Line 3: Card Quality / Condition below Price (Interactive Selector)
+                                  _buildConditionSelector(
+                                    card: card,
+                                    isYour: isYour,
+                                    strings: strings,
+                                    theme: theme,
+                                  ),
+                                ],
+                              ),
                             ),
+                            // Trailing: Remove button
                             IconButton(
                               icon: const Icon(Icons.close, size: 16),
                               tooltip: strings.remove,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                               onPressed: () => onRemove(index),
                             ),
                           ],
@@ -504,6 +649,92 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
                 ),
         ),
       ],
+    );
+  }
+
+  Widget _buildConditionSelector({
+    required TradeCardItem card,
+    required bool isYour,
+    required AppStrings strings,
+    required ThemeData theme,
+  }) {
+    final short = CardConditionHelper.getShortCondition(card.condition);
+    final color = CardConditionHelper.getConditionColor(short);
+
+    final conditions = [
+      {'val': 'Mint', 'label': strings.conditionMint},
+      {'val': 'Near Mint', 'label': strings.conditionNearMint},
+      {'val': 'Slightly Played', 'label': strings.conditionSlightlyPlayed},
+      {'val': 'Moderately Played', 'label': strings.conditionModeratelyPlayed},
+      {'val': 'Heavily Played', 'label': strings.conditionHeavilyPlayed},
+      {'val': 'Damaged', 'label': strings.conditionDamaged},
+    ];
+
+    return PopupMenuButton<String>(
+      tooltip: strings.tapToChangeCondition,
+      onSelected: (newCond) {
+        _updateCardCondition(card, newCond, isYour);
+      },
+      itemBuilder: (ctx) {
+        return conditions.map((c) {
+          final cVal = c['val']!;
+          final cShort = CardConditionHelper.getShortCondition(cVal);
+          final cColor = CardConditionHelper.getConditionColor(cShort);
+          final isSelected = CardConditionHelper.getShortCondition(card.condition) == cShort;
+
+          return PopupMenuItem<String>(
+            value: cVal,
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: cColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    c['label']!,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? cColor : null,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  Icon(Icons.check, size: 14, color: cColor),
+              ],
+            ),
+          );
+        }).toList();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(5),
+          border: Border.all(color: color.withValues(alpha: 0.6), width: 0.8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${strings.labelCondition}: $short',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(width: 3),
+            Icon(Icons.arrow_drop_down, size: 14, color: color),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../database/app_database.dart';
+import 'card_pricing_helper.dart';
 import '../../features/catalog/models/catalog_filter_state.dart';
 import '../../features/catalog/models/pokemon_card_item.dart';
 
@@ -176,11 +177,35 @@ class CardSortingHelper {
         break;
 
       case CatalogSortOption.priceDesc:
-        list.sort((a, b) => b.purchasePriceBrl.compareTo(a.purchasePriceBrl));
+        list.sort((a, b) {
+          final priceA = CardPricingHelper.getRealisticMarketPriceBrl(
+            purchasePriceBrl: a.purchasePriceBrl,
+            rarity: a.rarity,
+            condition: a.condition,
+          );
+          final priceB = CardPricingHelper.getRealisticMarketPriceBrl(
+            purchasePriceBrl: b.purchasePriceBrl,
+            rarity: b.rarity,
+            condition: b.condition,
+          );
+          return priceB.compareTo(priceA);
+        });
         break;
 
       case CatalogSortOption.priceAsc:
-        list.sort((a, b) => a.purchasePriceBrl.compareTo(b.purchasePriceBrl));
+        list.sort((a, b) {
+          final priceA = CardPricingHelper.getRealisticMarketPriceBrl(
+            purchasePriceBrl: a.purchasePriceBrl,
+            rarity: a.rarity,
+            condition: a.condition,
+          );
+          final priceB = CardPricingHelper.getRealisticMarketPriceBrl(
+            purchasePriceBrl: b.purchasePriceBrl,
+            rarity: b.rarity,
+            condition: b.condition,
+          );
+          return priceA.compareTo(priceB);
+        });
         break;
 
       case CatalogSortOption.releaseDateDesc:
@@ -201,8 +226,17 @@ class CardSortingHelper {
 
       case CatalogSortOption.popularityDesc:
         list.sort((a, b) {
-          final comp = (b.quantity * (b.purchasePriceBrl > 0 ? b.purchasePriceBrl : 1.0))
-              .compareTo(a.quantity * (a.purchasePriceBrl > 0 ? a.purchasePriceBrl : 1.0));
+          final priceA = CardPricingHelper.getRealisticMarketPriceBrl(
+            purchasePriceBrl: a.purchasePriceBrl,
+            rarity: a.rarity,
+            condition: a.condition,
+          );
+          final priceB = CardPricingHelper.getRealisticMarketPriceBrl(
+            purchasePriceBrl: b.purchasePriceBrl,
+            rarity: b.rarity,
+            condition: b.condition,
+          );
+          final comp = (b.quantity * priceB).compareTo(a.quantity * priceA);
           if (comp != 0) return comp;
           return a.name.compareTo(b.name);
         });

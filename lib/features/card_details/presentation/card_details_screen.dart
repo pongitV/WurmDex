@@ -225,90 +225,131 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: isUsd ? Colors.orange : Colors.blue,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      isUsd ? 'TCGPLAYER (USD)' : 'LIGA POKÉMON (BRL)',
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: isUsd ? Colors.orange : Colors.blue,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          isUsd ? 'TCGPLAYER (USD)' : 'LIGA POKÉMON (BRL)',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
                                       ),
+                                      const SizedBox(width: 6),
+                                      const ConditionBadge(condition: 'NM', compact: true),
+                                      const SizedBox(width: 6),
+                                      LanguageFlagBadge(
+                                        language: isUsd ? 'EN' : 'PT',
+                                        compact: true,
+                                        showCode: true,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          _strings.isEn ? 'Primary Price (Mid)' : 'Preço Principal (Médio)',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    isUsd
+                                        ? CurrencyFormatter.toUsd(prices?.tcgMarketUsd ?? card.effectiveMidPriceUsd)
+                                        : CurrencyFormatter.toBrl(prices?.ligaAvgBrl ?? ((card.effectiveMidPriceUsd ?? 0.0) * effectiveExchangeRate)),
+                                    style: TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.bold,
+                                      color: isUsd ? Colors.amberAccent : AppColors.profitGreen,
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  const ConditionBadge(condition: 'NM', compact: true),
-                                  const SizedBox(width: 6),
-                                  LanguageFlagBadge(
-                                    language: isUsd ? 'EN' : 'PT',
-                                    compact: true,
-                                    showCode: true,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      _strings.isEn ? 'Primary Price (Mid)' : 'Preço Principal (Médio)',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    isUsd
+                                        ? '≈ ${CurrencyFormatter.toBrl((prices?.tcgMarketUsd ?? (card.effectiveMidPriceUsd ?? 0.0)) * effectiveExchangeRate)}'
+                                        : '≈ ${CurrencyFormatter.toUsd((prices?.ligaAvgBrl ?? ((card.effectiveMidPriceUsd ?? 0.0) * effectiveExchangeRate)) / effectiveExchangeRate)}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                isUsd
-                                    ? CurrencyFormatter.toUsd(prices?.tcgMarketUsd ?? card.effectiveMidPriceUsd)
-                                    : CurrencyFormatter.toBrl(prices?.ligaAvgBrl ?? ((card.effectiveMidPriceUsd ?? 0.0) * effectiveExchangeRate)),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surface,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: (isUsd ? Colors.orange : Colors.blue).withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                isUsd ? 'USD \$' : 'BRL R\$',
                                 style: TextStyle(
-                                  fontSize: 26,
                                   fontWeight: FontWeight.bold,
-                                  color: isUsd ? Colors.amberAccent : AppColors.profitGreen,
+                                  fontSize: 13,
+                                  color: isUsd ? Colors.orange : Colors.blue,
                                 ),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                isUsd
-                                    ? '≈ ${CurrencyFormatter.toBrl((prices?.tcgMarketUsd ?? (card.effectiveMidPriceUsd ?? 0.0)) * effectiveExchangeRate)}'
-                                    : '≈ ${CurrencyFormatter.toUsd((prices?.ligaAvgBrl ?? ((card.effectiveMidPriceUsd ?? 0.0) * effectiveExchangeRate)) / effectiveExchangeRate)}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                                ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // 3 Prices below the Preço Médio (Menor, Médio, Maior)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.15)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _pricePill(
+                                _strings.priceLow,
+                                isUsd ? (minLigaBrl / effectiveExchangeRate) : minLigaBrl,
+                                AppColors.profitGreen,
+                                isUsd: isUsd,
+                              ),
+                              Container(width: 1, height: 26, color: theme.dividerColor.withValues(alpha: 0.25)),
+                              _pricePill(
+                                _strings.priceMid,
+                                isUsd ? (baseLigaBrl / effectiveExchangeRate) : baseLigaBrl,
+                                isUsd ? Colors.orange : Colors.blue,
+                                isPrimary: true,
+                                isUsd: isUsd,
+                              ),
+                              Container(width: 1, height: 26, color: theme.dividerColor.withValues(alpha: 0.25)),
+                              _pricePill(
+                                _strings.priceHigh,
+                                isUsd ? (maxLigaBrl / effectiveExchangeRate) : maxLigaBrl,
+                                AppColors.wurmplePrimary,
+                                isUsd: isUsd,
                               ),
                             ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: (isUsd ? Colors.orange : Colors.blue).withValues(alpha: 0.3)),
-                          ),
-                          child: Text(
-                            isUsd ? 'USD \$' : 'BRL R\$',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: isUsd ? Colors.orange : Colors.blue,
-                            ),
                           ),
                         ),
                       ],

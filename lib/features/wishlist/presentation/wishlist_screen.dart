@@ -21,9 +21,12 @@ import '../../../../core/widgets/app_overflow_menu.dart';
 import '../../../../core/widgets/app_screen_title.dart';
 import '../../../../core/widgets/app_search_dialog.dart';
 import '../../../../core/widgets/app_sort_button.dart';
-import '../services/wishlist_folder_service.dart';
+import '../../../../core/widgets/condition_badge.dart';
+import '../../../../core/widgets/folder_badge.dart';
+import '../../../../core/widgets/language_flag_badge.dart';
 import '../../../../core/widgets/pokemon_card_image.dart';
 import '../../card_details/services/pricing_service.dart';
+import '../services/wishlist_folder_service.dart';
 
 import 'widgets/wishlist_background_settings_dialog.dart';
 import 'widgets/wishlist_card_tile.dart';
@@ -345,56 +348,6 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
     }
   }
 
-  Future<void> _addFolder() async {
-    final strings = getStrings(ref.read(languageProvider));
-    final controller = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(strings.dlgCreateFolderTitle),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(
-            labelText: strings.wishlistNewFolderName,
-            border: const OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(strings.cancel),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, controller.text.trim()),
-            child: Text(strings.save),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (name == null || name.isEmpty || !mounted) return;
-    final success = WishlistFolderService.addFolder(name);
-    if (!success) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              strings.isEn
-                  ? 'Folder already exists or invalid name'
-                  : 'Pasta já existe ou nome inválido',
-            ),
-          ),
-        );
-      }
-      return;
-    }
-    setState(() {
-      _createdFolders.add(name);
-      _selectedFolder = name;
-    });
-  }
 
   Future<void> _showCollectionManager(List<WishlistItem> allItems) async {
     final strings = getStrings(ref.read(languageProvider));
@@ -508,7 +461,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            strings.isEn ? 'Status & Options' : 'Status e Opções',
+                            strings.filterSectionStatusAndOptions,
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: primary,
                               fontWeight: FontWeight.bold,
@@ -534,8 +487,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                               FilterChip(
                                 showCheckmark: false,
                                 selectedColor: primary.withValues(alpha: 0.18),
-                                label: Text(
-                                    strings.isEn ? 'Pre-order' : 'Pré-venda'),
+                                  label: Text(strings.preOrderLabel),
                                 selected: _activeFilters
                                     .contains(WishlistFilterType.preSale),
                                 onSelected: (_) {
@@ -553,13 +505,13 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                                   size: 18, color: primary),
                               const SizedBox(width: 6),
                               Expanded(
-                                child: Text(
-                                  strings.isEn ? 'Folders' : 'Pastas',
-                                  style: theme.textTheme.labelMedium?.copyWith(
-                                    color: primary,
-                                    fontWeight: FontWeight.bold,
+                                  child: Text(
+                                    strings.filterSectionFolders,
+                                    style: theme.textTheme.labelMedium?.copyWith(
+                                      color: primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
                               ),
                             ],
                           ),
@@ -817,10 +769,11 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                                     onDeleted: () =>
                                         setState(() => _searchQuery = ''),
                                   ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
+
                     ],
                   ),
                 ),
@@ -868,8 +821,8 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                       availableWidth: constraints.crossAxisExtent,
                       cardScale: cardScale,
                     );
-                    final adjustedAspect = (0.70 * (1.15 / cardScale))
-                        .clamp(0.55, 1.10)
+                    final adjustedAspect = (0.64 * (1.15 / cardScale))
+                        .clamp(0.50, 1.05)
                         .toDouble();
                     return SliverPadding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
@@ -921,26 +874,20 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
             onTap: _openAddDialog,
           ),
           AppFabAction(
-            icon: Icons.create_new_folder_outlined,
-            title: strings.isEn ? 'Add folder' : 'Adicionar pasta',
-            subtitle: strings.dlgCreateFolderTitle,
-            onTap: _addFolder,
+            icon: Icons.wallpaper_outlined,
+            title: strings.radarBackgroundSettings,
+            subtitle: strings.personalizeBackgroundSubtitle,
+            onTap: () => _showBackgroundDialog(strings),
           ),
           AppFabAction(
             icon: Icons.folder_copy_outlined,
-            title: strings.isEn ? 'Manage folders' : 'Gerenciar pastas',
+            title: strings.manageFoldersTitle,
             subtitle: '${_createdFolders.length} ${strings.labelFolder}',
             onTap: () {
               final currentItems =
                   ref.read(wishlistStreamProvider).value ?? const [];
               _showCollectionManager(currentItems);
             },
-          ),
-          AppFabAction(
-            icon: Icons.wallpaper_outlined,
-            title: strings.radarBackgroundSettings,
-            subtitle: strings.isEn ? 'Personalize background' : 'Personalizar fundo',
-            onTap: () => _showBackgroundDialog(strings),
           ),
         ],
       ),
@@ -1100,6 +1047,28 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                         ),
                       ),
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Wrap(
+                spacing: 4,
+                runSpacing: 2,
+                children: [
+                  FolderBadge(
+                    folderName: item.folderName.isNotEmpty && item.folderName != 'Geral'
+                        ? item.folderName
+                        : strings.wishlistFolderDefault,
+                    compact: true,
+                  ),
+                  ConditionBadge(
+                    condition: item.condition,
+                    compact: true,
+                  ),
+                  LanguageFlagBadge(
+                    language: item.language,
+                    compact: true,
+                    showCode: true,
                   ),
                 ],
               ),

@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../core/database/app_database.dart';
-import '../../../../core/utils/card_condition_helper.dart';
+import '../../../../core/utils/card_pricing_helper.dart';
 import '../models/monitored_card_item.dart';
 
 class PriceMonitoringService {
@@ -23,17 +23,23 @@ class PriceMonitoringService {
 
       final purchasePrice = card.purchasePriceBrl > 0 ? card.purchasePriceBrl : 0.0;
 
-      // Base reference price if user hasn't specified purchase price
+      // Base reference price if user hasn't specified purchase price (Preço Médio)
       final baseReferencePrice = purchasePrice > 0
           ? purchasePrice
-          : _getEstimatedBaseRarityPrice(card.rarity);
+          : CardPricingHelper.getCachedOrEstimatedPriceBrl(
+              cardApiId: card.cardApiId,
+              cardName: card.name,
+              cardNumber: card.number,
+              setName: card.setName,
+              rarity: card.rarity,
+              condition: card.condition,
+            );
 
       // Deterministic market trend percentage based on card identifier hash
       final trendPct = _calculateCardTrendPercentage(card);
-      final conditionMultiplier = CardConditionHelper.getConditionMultiplier(card.condition);
 
-      final currentPrice = (baseReferencePrice * (1.0 + trendPct / 100.0) * conditionMultiplier)
-          .clamp(0.50, 999999.0);
+      final currentPrice = (baseReferencePrice * (1.0 + trendPct / 100.0))
+          .clamp(0.0, 999999.0);
 
       final nominalDiff = purchasePrice > 0
           ? (currentPrice - purchasePrice)
@@ -63,23 +69,6 @@ class PriceMonitoringService {
         trendDirection: direction,
       );
     }).toList();
-  }
-
-  /// Estimates a realistic base price in BRL for cards without recorded purchase price
-  static double _getEstimatedBaseRarityPrice(String rarity) {
-    final r = rarity.toLowerCase();
-    if (r.contains('special illustration') || r.contains('sir') || r.contains('alt art')) {
-      return 220.0;
-    } else if (r.contains('illustration rare') || r.contains('secret rare') || r.contains('hyper')) {
-      return 95.0;
-    } else if (r.contains('ultra rare') || r.contains('ex') || r.contains('vmax') || r.contains('vstar')) {
-      return 42.0;
-    } else if (r.contains('rare holo') || r.contains('holo') || r.contains('rare')) {
-      return 15.0;
-    } else if (r.contains('uncommon')) {
-      return 4.0;
-    }
-    return 2.50; // Common
   }
 
   /// Computes a realistic, consistent market percentage movement (-18% to +48%)

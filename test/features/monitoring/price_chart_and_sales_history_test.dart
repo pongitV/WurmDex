@@ -14,9 +14,9 @@ class MockBrlCurrencyNotifier extends CurrencyNotifier {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Universal Card Price & Rarity Baseline Tests', () {
-    test('Card with no explicit API prices provides rarity baseline so price is not --', () {
-      const cardCommon = PokemonCardItem(
+  group('Universal Card Price & Explicit Pricing Tests', () {
+    test('Card with explicit API prices returns real price and does not invent prices', () {
+      const cardUnpriced = PokemonCardItem(
         id: 'swsh1-1',
         name: 'Celebi V',
         number: '1',
@@ -30,12 +30,10 @@ void main() {
         artist: '5ban Graphics',
       );
 
-      expect(cardCommon.hasExplicitPrice, isFalse);
-      expect(cardCommon.effectiveMidPriceUsd, isNotNull);
-      expect(cardCommon.effectiveMidPriceUsd! > 0, isTrue);
-      expect(cardCommon.effectiveMidPriceUsd, equals(0.25));
+      expect(cardUnpriced.hasExplicitPrice, isFalse);
+      expect(cardUnpriced.effectiveMidPriceUsd, isNull);
 
-      const cardRare = PokemonCardItem(
+      const cardPriced = PokemonCardItem(
         id: 'swsh1-25',
         name: 'Pikachu VMAX',
         number: '25',
@@ -47,12 +45,14 @@ void main() {
         types: ['Lightning'],
         supertype: 'Pokémon',
         artist: 'aky CG Works',
+        tcgMidUsd: 6.50,
       );
 
-      expect(cardRare.effectiveMidPriceUsd, equals(6.50));
+      expect(cardPriced.hasExplicitPrice, isTrue);
+      expect(cardPriced.effectiveMidPriceUsd, equals(6.50));
     });
 
-    testWidgets('CardGridItem renders valid formatted price instead of -- for unpriced list items', (tester) async {
+    testWidgets('CardGridItem renders formatted price when priced', (tester) async {
       const card = PokemonCardItem(
         id: 'sv1-1',
         name: 'Sprigatito',
@@ -65,6 +65,7 @@ void main() {
         types: ['Grass'],
         supertype: 'Pokémon',
         artist: 'Kouki Saitou',
+        tcgMidUsd: 2.0,
       );
 
       await tester.pumpWidget(
@@ -89,9 +90,7 @@ void main() {
 
       await tester.pump();
 
-      // Ensure the price text does NOT say '--'
-      expect(find.textContaining('--'), findsNothing);
-      // R$ 0.25 * 5.50 = R$ 1,38
+      // R$ 2.00 * 5.50 = R$ 11,00
       expect(find.textContaining('R\$'), findsOneWidget);
     });
   });

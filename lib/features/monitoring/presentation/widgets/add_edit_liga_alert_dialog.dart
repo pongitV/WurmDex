@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_network_image.dart';
 import '../../services/liga_scraper_service.dart';
+import '../../services/radar_folder_service.dart';
 
 class AddEditLigaAlertDialog extends StatefulWidget {
   final AppDatabase db;
@@ -34,8 +35,9 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
   late final TextEditingController _minPriceController;
   late final TextEditingController _maxPriceController;
 
-  String _collection = '';
-  String _language = 'PT';
+  late String _collection;
+  late String _language;
+  late String _folderName;
   late bool _allowPreSale;
   bool _isLoadingPreview = false;
   String? _previewImageUrl;
@@ -69,6 +71,9 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
     _language = alert?.languageTag.isNotEmpty == true
         ? alert!.languageTag
         : 'PT';
+    _folderName = alert != null && alert.folderName.isNotEmpty
+        ? alert.folderName
+        : 'Geral';
     _allowPreSale = alert?.allowPreSale ?? true;
     _previewImageUrl = alert?.imageUrl;
     _previewLowestPrice = alert?.currentLowestPrice;
@@ -263,6 +268,7 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
       createdAt: drift.Value(widget.existingAlert?.createdAt ?? DateTime.now()),
       collectionTag: drift.Value(_collection.trim()),
       languageTag: drift.Value(_language.trim()),
+      folderName: drift.Value(_folderName.trim().isEmpty ? 'Geral' : _folderName.trim()),
     );
 
     if (isEditing) {
@@ -638,6 +644,43 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
                       ),
                       onChanged: (val) => setState(() => _allowPreSale = val),
                     ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Folder Selection Dropdown
+                  DropdownButtonFormField<String>(
+                    initialValue: _folderName,
+                    decoration: InputDecoration(
+                      labelText: widget.strings.folderFilterHint,
+                      prefixIcon: const Icon(Icons.folder_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    items: () {
+                      final folders = RadarFolderService.getAllFolders();
+                      if (!folders.contains(_folderName)) {
+                        folders.add(_folderName);
+                      }
+                      return folders.map((f) {
+                        return DropdownMenuItem(
+                          value: f,
+                          child: Row(
+                            children: [
+                              Icon(
+                                f == 'Geral' ? Icons.folder : Icons.folder_outlined,
+                                size: 16,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(f == 'Geral' ? widget.strings.wishlistFolderDefault : f),
+                            ],
+                          ),
+                        );
+                      }).toList();
+                    }(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _folderName = val);
+                    },
                   ),
 
                   const SizedBox(height: 24),

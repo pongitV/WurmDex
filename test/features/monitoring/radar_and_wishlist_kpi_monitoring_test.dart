@@ -185,6 +185,7 @@ void main() {
           isAvailableInRange: true,
           collectionTag: '151',
           languageTag: 'PT',
+          folderName: 'Geral',
           createdAt: DateTime.now(),
         ),
       ];

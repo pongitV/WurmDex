@@ -469,11 +469,16 @@ class AppStrings {
   String get priceRangeLabel => isEn ? 'Target Price Range (BRL)' : 'Faixa de Preço-Alvo (R\$)';
   String get sectionCardInfo => isEn ? 'Card Info' : 'Informações da Carta';
   String get manageWishlistFolders => isEn ? 'Manage Folders' : 'Gerenciar Pastas';
+  String get manageFoldersTitle => isEn ? 'Manage Folders' : 'Gerenciar Pastas';
   String get editWishlistFolder => isEn ? 'Rename Folder' : 'Renomear Pasta';
+  String get renameFolderTitle => isEn ? 'Rename Folder' : 'Renomear Pasta';
   String get confirmDeleteWishlistFolderTitle => isEn ? 'Delete folder?' : 'Excluir pasta?';
   String confirmDeleteWishlistFolderMsg(String folder) => isEn
       ? 'Cards in "$folder" will be moved to General.'
       : 'As cartas em "$folder" serão movidas para "Geral".';
+  String confirmDeleteRadarFolderMsg(String folder) => isEn
+      ? 'Are you sure you want to delete "$folder"? Products will be moved to General.'
+      : 'Deseja excluir a pasta "$folder"? Os produtos serão movidos para "Geral".';
   String get wishlistFolderUpdated => isEn ? 'Wishlist folders updated.' : 'Pastas da wishlist atualizadas.';
   String get wishlistDesiredCondition => isEn ? 'Desired Condition' : 'Qualidade Desejada';
   String get wishlistDesiredLanguage => isEn ? 'Desired Language' : 'Idioma Desejado';
@@ -487,6 +492,24 @@ class AppStrings {
   String get wishlistFolderRenamed => isEn ? 'Folder renamed.' : 'Pasta renomeada.';
   String get wishlistFolderDeleted => isEn ? 'Folder deleted.' : 'Pasta excluída.';
   String get wishlistNewFolderName => isEn ? 'New name' : 'Novo nome';
+  String get filterSectionStatusAndOptions => isEn ? 'Status & Options' : 'Status e Opções';
+  String get filterSectionFolders => isEn ? 'Folders' : 'Pastas';
+  String get preOrderLabel => isEn ? 'Pre-order' : 'Pré-venda';
+  String get autoPriceChecksSubtitle => isEn ? 'Automatic price checks' : 'Verificação automática';
+  String get personalizeBackgroundSubtitle => isEn ? 'Personalize background' : 'Personalizar fundo';
+  String get tooltipRename => isEn ? 'Rename' : 'Renomear';
+  String get tooltipEdit => isEn ? 'Edit' : 'Editar';
+  String get btnClose => isEn ? 'Close' : 'Fechar';
+  String get folderCreatedSuccess => isEn ? 'Folder created successfully.' : 'Pasta criada com sucesso.';
+  String get folderRenamedSuccess => isEn ? 'Folder renamed successfully.' : 'Pasta renomeada com sucesso.';
+  String get folderDeletedSuccess => isEn ? 'Folder deleted successfully.' : 'Pasta excluída com sucesso.';
+  String get folderAlreadyExistsOrInvalid => isEn ? 'Folder already exists or invalid name.' : 'Pasta já existe ou nome inválido.';
+  String get noCustomFoldersYet => isEn ? 'No custom folders yet' : 'Nenhuma pasta personalizada';
+  String get noWishlistCustomFoldersSubtitle => isEn
+      ? 'No custom folders yet.\nCards are in the General folder.'
+      : 'Nenhuma pasta personalizada.\nAs cartas estão na pasta Geral.';
+  String get newFolderAction => isEn ? 'New folder' : 'Nova pasta';
+  String folderItemsCount(int count) => isEn ? '$count items' : '$count produtos';
 
   // Card Scale Dialog
   String get scaleMenuAndCatalog => isEn ? 'Menu & Catalog' : 'Menu & Catálogo';
@@ -702,7 +725,8 @@ class AppStrings {
   String get ligaRadarSubtitle => isEn
       ? 'Target price drops & pre-orders tracking'
       : 'Monitore faixas de preço e ofertas em pré-venda';
-  String get btnAddAlert => isEn ? 'Monitor Product' : 'Monitorar Produto';
+  String get btnAddAlert => isEn ? 'Add Product' : 'Adicionar Produto';
+  String get btnAddProduct => isEn ? 'Add Product' : 'Adicionar Produto';
   String get folderFilterHint => isEn ? 'Folder' : 'Pasta';
   String get noFolderLabel => isEn ? 'No folder' : 'Sem pasta';
   String get minTargetPriceLabel => isEn ? 'Min Price' : 'Preço Mínimo';
@@ -945,6 +969,16 @@ class AppStrings {
   String get tradeSortValueDesc => isEn ? 'Highest Value' : 'Maior Valor';
   String get tradeSortValueAsc => isEn ? 'Lowest Value' : 'Menor Valor';
   String get tradeSortNameAsc => isEn ? 'Card Name (A → Z)' : 'Nome da Carta (A → Z)';
+
+  // Condition & Trade Strings
+  String get conditionMint => isEn ? 'Mint' : 'Perfeita (Mint)';
+  String get conditionNearMint => isEn ? 'Near Mint' : 'Quase Perfeita (NM)';
+  String get conditionSlightlyPlayed => isEn ? 'Slightly Played' : 'Pouco Usada (SP)';
+  String get conditionModeratelyPlayed => isEn ? 'Moderately Played' : 'Uso Moderado (MP)';
+  String get conditionHeavilyPlayed => isEn ? 'Heavily Played' : 'Muito Usada (HP)';
+  String get conditionDamaged => isEn ? 'Damaged' : 'Danificada (DMG)';
+  String get editTradePriceTitle => isEn ? 'Edit Trade Value' : 'Editar Valor de Troca';
+  String get tapToChangeCondition => isEn ? 'Tap to change condition' : 'Toque para alterar qualidade';
 }
 
 AppStrings getStrings(AppLanguage language) => AppStrings(language);

@@ -8,6 +8,7 @@ import 'package:wurmdex/core/database/database_provider.dart';
 import 'package:wurmdex/core/localization/app_strings.dart';
 import 'package:wurmdex/core/navigation/app_navigator.dart';
 import 'package:wurmdex/core/theme/app_colors.dart';
+import 'package:wurmdex/core/utils/card_pricing_helper.dart';
 import 'package:wurmdex/core/utils/currency_formatter.dart';
 import 'package:wurmdex/core/utils/marketplace_url_helper.dart';
 import 'package:wurmdex/core/utils/semantic_search_helper.dart';
@@ -342,6 +343,9 @@ class CardQuickActionSheet extends ConsumerWidget {
                           decoration: InputDecoration(
                             labelText: strings.labelPurchasePriceBrl,
                             prefixText: 'R\$ ',
+                            hintText: CurrencyFormatter.toBrl(
+                              CardPricingHelper.convertUsdToRealisticBrl(card.effectiveMidPriceUsd ?? 1.5, 5.5),
+                            ),
                           ),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           onChanged: (val) {
@@ -373,6 +377,12 @@ class CardQuickActionSheet extends ConsumerWidget {
               ),
               ElevatedButton(
                 onPressed: () async {
+                  final defaultMarketPrice = CardPricingHelper.convertUsdToRealisticBrl(
+                    card.effectiveMidPriceUsd ?? 1.5,
+                    5.5,
+                  );
+                  final finalPrice = purchasePrice > 0 ? purchasePrice : defaultMarketPrice;
+
                   await db.insertCard(
                     UserCardsCompanion(
                       id: drift.Value(const Uuid().v4()),
@@ -387,7 +397,7 @@ class CardQuickActionSheet extends ConsumerWidget {
                       language: drift.Value(language),
                       finish: drift.Value(finish),
                       quantity: drift.Value(quantity),
-                      purchasePriceBrl: drift.Value(purchasePrice),
+                      purchasePriceBrl: drift.Value(finalPrice),
                       createdAt: drift.Value(DateTime.now()),
                     ),
                   );

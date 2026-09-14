@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:wurmdex/core/utils/card_pricing_helper.dart';
 import 'package:wurmdex/features/booster_simulator/models/booster_pack_config.dart';
 import 'package:wurmdex/features/booster_simulator/services/booster_generator_service.dart';
 import 'package:wurmdex/features/catalog/models/pokemon_card_item.dart';
 import 'package:wurmdex/features/news/services/home_feed_service.dart';
+import 'package:wurmdex/features/trade/presentation/widgets/trade_card_selector_dialog.dart';
 
 void main() {
   group('BoosterGeneratorService Tests', () {
@@ -426,6 +428,53 @@ void main() {
 
       // The trending staples lists focus on their respective distinct market leaders
       expect(ligaIds.intersection(tcgIds), isEmpty);
+    });
+  });
+
+  group('Realistic Card Pricing & Trade Condition Tests', () {
+    test('convertUsdToRealisticBrl converts USD directly to BRL without artificial markups', () {
+      final brl = CardPricingHelper.convertUsdToRealisticBrl(10.0, 5.5);
+      expect(brl, equals(55.0));
+    });
+
+    test('getRealisticMarketPriceBrl respects recorded purchase price', () {
+      final price = CardPricingHelper.getRealisticMarketPriceBrl(
+        purchasePriceBrl: 45.0,
+        rarity: 'Common',
+        condition: 'Near Mint',
+      );
+      expect(price, equals(45.0));
+    });
+
+    test('getPriceForQuality returns universal Preço Médio without artificial multipliers', () {
+      const basePrice = 180.0;
+      final nmPrice = CardPricingHelper.getPriceForQuality(basePrice, 'Near Mint');
+      final spPrice = CardPricingHelper.getPriceForQuality(basePrice, 'Slightly Played');
+      final dmgPrice = CardPricingHelper.getPriceForQuality(basePrice, 'Damaged');
+      expect(nmPrice, equals(basePrice));
+      expect(spPrice, equals(basePrice));
+      expect(dmgPrice, equals(basePrice));
+    });
+
+    test('TradeCardItem allows updating condition with universal Preço Médio', () {
+      const item = TradeCardItem(
+        id: 'c1',
+        name: 'Charizard ex',
+        number: '199/165',
+        setName: '151',
+        imageUrl: 'https://example.com/c1.png',
+        basePriceBrl: 200.0,
+        valueBrl: 200.0,
+        condition: 'Near Mint',
+      );
+
+      final updated = item.copyWith(
+        condition: 'Slightly Played',
+      );
+
+      expect(updated.condition, equals('Slightly Played'));
+      expect(updated.valueBrl, equals(200.0));
+      expect(updated.number, equals('199/165'));
     });
   });
 }

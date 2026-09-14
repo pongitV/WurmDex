@@ -53,41 +53,12 @@ class PokemonCardItem {
       (tcgMarketUsd != null && tcgMarketUsd! > 0) ||
       (tcgLowUsd != null && tcgLowUsd! > 0);
 
-  /// Returns the mid/average price as the primary reference price for the card,
-  /// falling back to a realistic market baseline estimate based on rarity so the UI never displays '--'
+  /// Returns the mid/average price as the primary reference price for the card.
   double? get effectiveMidPriceUsd {
     if (tcgMidUsd != null && tcgMidUsd! > 0) return tcgMidUsd;
     if (tcgMarketUsd != null && tcgMarketUsd! > 0) return tcgMarketUsd;
     if (tcgLowUsd != null && tcgLowUsd! > 0) return tcgLowUsd;
-    return estimatedPriceUsd;
-  }
-
-  /// Estimated market baseline price in USD based on card rarity when API pricing is absent
-  double get estimatedPriceUsd {
-    final r = rarity.toLowerCase().trim();
-    if (r.contains('secret') || r.contains('hiper') || r.contains('special illustration') || r.contains('special art')) {
-      return 22.50;
-    }
-    if (r.contains('illustration') || r.contains('ilustração') || r.contains('galerie') || r.contains('trainer gallery')) {
-      return 8.90;
-    }
-    if (r.contains('ultra') || r.contains('ace spec') || r.contains('rainbow') || r.contains('ouro') || r.contains('gold')) {
-      return 6.50;
-    }
-    if (r.contains('double') || r.contains('dupla') || r.contains('radiant') || r.contains('radiante') || r.contains('amazing')) {
-      return 2.80;
-    }
-    if (r.contains('holo') || r.contains('holográfica') || r.contains('shining') || r.contains('promo')) {
-      return 1.80;
-    }
-    if (r.contains('rare') || r.contains('rara')) {
-      return 0.95;
-    }
-    if (r.contains('uncommon') || r.contains('incomum')) {
-      return 0.45;
-    }
-    // Common / Comum / Default
-    return 0.25;
+    return null;
   }
 
   PokemonCardItem copyWith({

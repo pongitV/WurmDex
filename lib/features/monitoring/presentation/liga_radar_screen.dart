@@ -19,11 +19,14 @@ import '../../../core/widgets/app_screen_title.dart';
 import '../../../core/widgets/app_search_dialog.dart';
 import '../../../core/widgets/app_sort_button.dart';
 import '../../../core/widgets/card_description_badges.dart';
+import '../../../core/widgets/folder_badge.dart';
 import '../../../core/widgets/language_flag_badge.dart';
 import '../services/liga_scraper_service.dart';
+import '../services/radar_folder_service.dart';
 import 'widgets/add_edit_liga_alert_dialog.dart';
 import 'widgets/radar_background_settings_sheet.dart';
 import 'widgets/radar_kpi_summary.dart';
+import 'widgets/radar_manage_folders_dialog.dart';
 
 enum LigaFilterType { inRange, preSale, active }
 enum LigaRadarSortOption { targetDiff, priceAsc, priceDesc, nameAsc, newest }
@@ -37,6 +40,7 @@ class LigaRadarScreen extends ConsumerStatefulWidget {
 
 class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
   final Set<LigaFilterType> _activeFilters = {};
+  String _selectedFolder = 'Todas';
   String? _collectionFilter;
   LigaRadarSortOption _sortOption = LigaRadarSortOption.targetDiff;
   final TextEditingController _searchController = TextEditingController();
@@ -134,6 +138,20 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
       builder: (_) => const RadarBackgroundSettingsSheet(),
     );
     // Refresh the toolbar icon state after the sheet closes.
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _openManageFolders(List<LigaPriceAlert> alerts) async {
+    final db = ref.read(databaseProvider);
+    final strings = getStrings(ref.read(languageProvider));
+    await RadarManageFoldersDialog.show(
+      context,
+      db: db,
+      allAlerts: alerts,
+      strings: strings,
+    );
     if (mounted) {
       setState(() {});
     }
@@ -306,7 +324,9 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
         actions: [
           AppFilterButton(
             activeFilterCount:
-                _activeFilters.length + (_collectionFilter != null ? 1 : 0),
+                _activeFilters.length +
+                (_selectedFolder != 'Todas' ? 1 : 0) +
+                (_collectionFilter != null ? 1 : 0),
             tooltip: strings.filtersAndMore,
             isFilledTonal: false,
             onPressed: () {
@@ -314,39 +334,133 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                 context: context,
                 title: strings.filtersAndMore,
                 hasActiveFilters:
-                    _activeFilters.isNotEmpty || _collectionFilter != null,
+                    _activeFilters.isNotEmpty ||
+                    _selectedFolder != 'Todas' ||
+                    _collectionFilter != null,
                 strings: strings,
                 onClear: () => setState(() {
                   _activeFilters.clear();
+                  _selectedFolder = 'Todas';
                   _collectionFilter = null;
                 }),
                 onApply: () => setState(() {}),
                 children: [
-                  Text(
-                    strings.isEn ? 'Status & Options' : 'Status e Opções',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      FilterChip(
-                        label: Text(strings.kpiInRangeTotal),
-                        selected:
-                            _activeFilters.contains(LigaFilterType.inRange),
-                        onSelected: (_) => _toggleFilter(LigaFilterType.inRange),
-                      ),
-                      FilterChip(
-                        label: Text(strings.isEn ? 'Pre-order' : 'Pré-venda'),
-                        selected:
-                            _activeFilters.contains(LigaFilterType.preSale),
-                        onSelected: (_) => _toggleFilter(LigaFilterType.preSale),
-                      ),
-                    ],
+                  StatefulBuilder(
+                    builder: (dialogContext, setDialogState) {
+                      final primary = theme.colorScheme.primary;
+                      final currentAlerts = alertsAsync.value ?? const [];
+                      final folderList =
+                          RadarFolderService.getAllFolders(alerts: currentAlerts);
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            strings.filterSectionStatusAndOptions,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              FilterChip(
+                                label: Text(strings.kpiInRangeTotal),
+                                selected:
+                                    _activeFilters.contains(LigaFilterType.inRange),
+                                onSelected: (_) {
+                                  setState(() => _toggleFilter(LigaFilterType.inRange));
+                                  setDialogState(() {});
+                                },
+                              ),
+                              FilterChip(
+                                label: Text(strings.preOrderLabel),
+                                selected:
+                                    _activeFilters.contains(LigaFilterType.preSale),
+                                onSelected: (_) {
+                                  setState(() => _toggleFilter(LigaFilterType.preSale));
+                                  setDialogState(() {});
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Icon(Icons.folder_outlined,
+                                  size: 18, color: primary),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  strings.filterSectionFolders,
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              FilterChip(
+                                showCheckmark: false,
+                                selectedColor: primary.withValues(alpha: 0.18),
+                                avatar: Icon(
+                                  Icons.apps,
+                                  size: 16,
+                                  color: _selectedFolder == 'Todas'
+                                      ? primary
+                                      : null,
+                                ),
+                                label: Text(strings.wishlistFolderAll),
+                                selected: _selectedFolder == 'Todas',
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    setState(() => _selectedFolder = 'Todas');
+                                  }
+                                  setDialogState(() {});
+                                },
+                              ),
+                              ...folderList.map((folder) {
+                                final displayName = folder == 'Geral'
+                                    ? strings.wishlistFolderDefault
+                                    : folder;
+                                final isSelected = _selectedFolder == folder;
+                                return FilterChip(
+                                  showCheckmark: false,
+                                  selectedColor:
+                                      primary.withValues(alpha: 0.18),
+                                  avatar: Icon(
+                                    folder == 'Geral'
+                                        ? Icons.folder
+                                        : Icons.folder_outlined,
+                                    size: 16,
+                                    color: isSelected ? primary : null,
+                                  ),
+                                  label: Text(displayName),
+                                  selected: isSelected,
+                                  onSelected: (selectedWithOnly) {
+                                    setState(() {
+                                      _selectedFolder = selectedWithOnly
+                                          ? folder
+                                          : 'Todas';
+                                    });
+                                    setDialogState(() {});
+                                  },
+                                );
+                              }),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               );
@@ -415,15 +529,24 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
           ),
           AppFabAction(
             icon: Icons.add_alert_outlined,
-            title: strings.btnAddAlert,
+            title: strings.btnAddProduct,
             subtitle: 'LigaPokémon',
             onTap: _openAddDialog,
           ),
           AppFabAction(
             icon: Icons.wallpaper_outlined,
             title: strings.radarBackgroundSettings,
-            subtitle: strings.isEn ? 'Automatic price checks' : 'Verificação automática',
+            subtitle: strings.autoPriceChecksSubtitle,
             onTap: _openBackgroundSettings,
+          ),
+          AppFabAction(
+            icon: Icons.folder_copy_outlined,
+            title: strings.manageFoldersTitle,
+            subtitle: strings.labelFolder,
+            onTap: () {
+              final currentAlerts = alertsAsync.value ?? const [];
+              _openManageFolders(currentAlerts);
+            },
           ),
         ],
       ),
@@ -453,6 +576,9 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
               .length;
           // Filter items
           final filtered = alerts.where((a) {
+            if (_selectedFolder != 'Todas' && a.folderName != _selectedFolder) {
+              return false;
+            }
             if (_searchQuery.isNotEmpty) {
               if (!a.title.toLowerCase().contains(_searchQuery.toLowerCase())) {
                 return false;
@@ -562,51 +688,70 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                         exchangeRate: exchangeRate,
                         strings: strings,
                       ),
-                      if (_searchQuery.isNotEmpty)
+                      if (_selectedFolder != 'Todas' || _searchQuery.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Align(
                             alignment: Alignment.centerLeft,
-                            child: InputChip(
-                              avatar: const Icon(Icons.search, size: 14),
-                              label: Text(
-                                _searchQuery,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              onDeleted: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                              },
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                if (_selectedFolder != 'Todas')
+                                  InputChip(
+                                    avatar: const Icon(Icons.folder_outlined, size: 14),
+                                    label: Text(
+                                      _selectedFolder == 'Geral'
+                                          ? strings.wishlistFolderDefault
+                                          : _selectedFolder,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    onDeleted: () =>
+                                        setState(() => _selectedFolder = 'Todas'),
+                                  ),
+                                if (_searchQuery.isNotEmpty)
+                                  InputChip(
+                                    avatar: const Icon(Icons.search, size: 14),
+                                    label: Text(
+                                      _searchQuery,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    onDeleted: () {
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
+                                    },
+                                  ),
+                              ],
                             ),
                           ),
                         ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: collections.isEmpty
-                              ? const SizedBox.shrink()
-                              : _buildFilterDropdown(
-                                  value: _collectionFilter,
-                                  icon: Icons.style_outlined,
-                                  hint: strings.filterByCollection,
-                                  items: [
-                                    DropdownMenuItem<String?>(
-                                      value: null,
-                                      child: Text(strings.filterAllCollections),
-                                    ),
-                                    ...collections.map(
-                                      (c) => DropdownMenuItem<String?>(
-                                        value: c,
-                                        child: Text(c),
-                                      ),
-                                    ),
-                                  ],
-                                  onChanged: (val) =>
-                                      setState(() => _collectionFilter = val),
+
+                      if (collections.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: _buildFilterDropdown(
+                              value: _collectionFilter,
+                              icon: Icons.style_outlined,
+                              hint: strings.filterByCollection,
+                              items: [
+                                DropdownMenuItem<String?>(
+                                  value: null,
+                                  child: Text(strings.filterAllCollections),
                                 ),
+                                ...collections.map(
+                                  (c) => DropdownMenuItem<String?>(
+                                    value: c,
+                                    child: Text(c),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (val) =>
+                                  setState(() => _collectionFilter = val),
+                            ),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -654,8 +799,8 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                       availableWidth: constraints.crossAxisExtent,
                       cardScale: cardScale,
                     );
-                    final adjustedAspect = (0.70 * (1.15 / cardScale))
-                        .clamp(0.55, 1.10)
+                    final adjustedAspect = (0.64 * (1.15 / cardScale))
+                        .clamp(0.50, 1.05)
                         .toDouble();
                     return SliverPadding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
@@ -905,6 +1050,30 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                 ],
               ),
               const SizedBox(height: 4),
+              Wrap(
+                spacing: 4,
+                runSpacing: 2,
+                children: [
+                  FolderBadge(
+                    folderName: alert.folderName.isNotEmpty && alert.folderName != 'Geral'
+                        ? alert.folderName
+                        : strings.wishlistFolderDefault,
+                    compact: true,
+                  ),
+                  if (alert.collectionTag.isNotEmpty)
+                    CollectionTagBadge(
+                      name: alert.collectionTag,
+                      compact: true,
+                    ),
+                  if (alert.languageTag.isNotEmpty)
+                    LanguageFlagBadge(
+                      language: alert.languageTag,
+                      compact: true,
+                      showCode: true,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
               // Bottom actions: refresh + monitor switch
               Row(
                 children: [
@@ -1045,7 +1214,7 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Badges: status / pre-sale / allow pre-sale / collection / language
+                  // Badges: status / pre-sale / allow pre-sale / folder / collection / language
                   Wrap(
                     alignment: WrapAlignment.center,
                     spacing: 6,
@@ -1071,6 +1240,14 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                           label: strings.preSaleAcceptedTag,
                           compact: true,
                         ),
+
+                      // Folder badge
+                      FolderBadge(
+                        folderName: alert.folderName.isNotEmpty && alert.folderName != 'Geral'
+                            ? alert.folderName
+                            : strings.wishlistFolderDefault,
+                        compact: true,
+                      ),
 
                       // Collection tag
                       if (alert.collectionTag.isNotEmpty)
@@ -1321,7 +1498,7 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                       // Edit button
                       IconButton(
                         icon: const Icon(Icons.edit_outlined, size: 20),
-                        tooltip: strings.isEn ? 'Edit' : 'Editar',
+                        tooltip: strings.tooltipEdit,
                         onPressed: () => _openEditDialog(alert),
                       ),
 

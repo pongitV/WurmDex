@@ -308,17 +308,51 @@ class AppPreferencesService {
   }
 
   static List<String> getRadarFolders() {
-    if (!_initialized) return const [];
+    if (!_initialized) return [];
     final value = _cache[_keyRadarFolders];
     return value is List
         ? value.whereType<String>().where((item) => item.isNotEmpty).toList()
-        : const [];
+        : [];
   }
 
   static void setRadarFolders(List<String> folders) {
     if (!_initialized) return;
-    _cache[_keyRadarFolders] = folders.toSet().toList()..sort();
+    _cache[_keyRadarFolders] = folders
+        .map((f) => f.trim())
+        .where((item) => item.isNotEmpty && item != 'Geral' && item != 'Todas')
+        .toSet()
+        .toList()
+      ..sort();
     _persist();
+  }
+
+  static void addRadarFolder(String folder) {
+    final clean = folder.trim();
+    if (clean.isEmpty || clean == 'Geral' || clean == 'Todas') return;
+    final current = List<String>.from(getRadarFolders());
+    if (!current.contains(clean)) {
+      current.add(clean);
+      setRadarFolders(current);
+    }
+  }
+
+  static void renameRadarFolder(String oldName, String newName) {
+    final cleanOld = oldName.trim();
+    final cleanNew = newName.trim();
+    if (cleanNew.isEmpty || cleanOld.isEmpty || cleanNew == cleanOld) return;
+    final current = List<String>.from(getRadarFolders());
+    final updated = current.map((f) => f == cleanOld ? cleanNew : f).toList();
+    if (!updated.contains(cleanNew) && cleanNew != 'Geral' && cleanNew != 'Todas') {
+      updated.add(cleanNew);
+    }
+    setRadarFolders(updated);
+  }
+
+  static void deleteRadarFolder(String folder) {
+    final clean = folder.trim();
+    final current = List<String>.from(getRadarFolders());
+    current.removeWhere((f) => f == clean);
+    setRadarFolders(current);
   }
 
   static List<String> getWishlistFolders() {

@@ -8,7 +8,7 @@ import 'package:wurmdex/core/widgets/folder_filter_bar.dart';
 import 'package:wurmdex/features/wishlist/presentation/wishlist_screen.dart';
 
 void main() {
-  testWidgets('WishlistScreen moves folder filter to filter modal and removes FolderFilterBar', (tester) async {
+  testWidgets('WishlistScreen displays FolderFilterBar and supports folder filtering', (tester) async {
     final mockItems = [
       WishlistItem(
         id: 'w1',

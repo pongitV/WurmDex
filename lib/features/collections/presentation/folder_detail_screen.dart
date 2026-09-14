@@ -11,6 +11,7 @@ import '../../../../core/providers/card_scale_provider.dart';
 import '../../../../core/providers/card_view_mode_provider.dart';
 import '../../../../core/providers/grid_composition_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/card_pricing_helper.dart';
 import '../../../../core/utils/card_sorting_helper.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/folder_icon_helper.dart';
@@ -233,9 +234,20 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
 
     int totalQty = 0;
     double totalInvested = 0.0;
+    final exchangeRate = ref.read(exchangeRateProvider);
     for (final c in cards) {
       totalQty += c.quantity;
-      totalInvested += (c.purchasePriceBrl * c.quantity);
+      final val = CardPricingHelper.getRealisticMarketPriceBrl(
+        cardApiId: c.cardApiId,
+        cardName: c.name,
+        cardNumber: c.number,
+        setName: c.setName,
+        purchasePriceBrl: c.purchasePriceBrl,
+        rarity: c.rarity,
+        condition: c.condition,
+        exchangeRate: exchangeRate,
+      );
+      totalInvested += (val * c.quantity);
     }
 
     final buffer = StringBuffer();
@@ -243,8 +255,18 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
     buffer.writeln('=== $headerName: $folderName (WurmDex) ===');
     buffer.writeln('${strings.cardsCount(totalQty)} • ${strings.labelInvested}: ${CurrencyFormatter.toBrl(totalInvested)}\n');
     for (final c in cards) {
+      final val = CardPricingHelper.getRealisticMarketPriceBrl(
+        cardApiId: c.cardApiId,
+        cardName: c.name,
+        cardNumber: c.number,
+        setName: c.setName,
+        purchasePriceBrl: c.purchasePriceBrl,
+        rarity: c.rarity,
+        condition: c.condition,
+        exchangeRate: exchangeRate,
+      );
       final line = '• ${c.name} (#${c.number}) - ${c.condition} [${c.finish}] x${c.quantity}'
-          '${c.purchasePriceBrl > 0 ? ' • ${CurrencyFormatter.toBrl(c.purchasePriceBrl)}' : ''}';
+          ' • ${CurrencyFormatter.toBrl(val)}';
       buffer.writeln(line);
     }
     buffer.writeln('\nOrganized with WurmDex');
@@ -788,15 +810,20 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
           tcgMarketUsd: card.purchasePriceBrl > 0 ? (card.purchasePriceBrl / exchangeRate) : null,
         );
 
-        final priceString = card.purchasePriceBrl > 0
-            ? (currency == AppCurrency.usd
-                ? CurrencyFormatter.toUsd(card.purchasePriceBrl / exchangeRate)
-                : CurrencyFormatter.toBrl(card.purchasePriceBrl))
-            : CurrencyFormatter.formatCardPrice(
-                usdValue: catalogCard.effectiveMidPriceUsd,
-                exchangeRate: exchangeRate,
-                currency: currency,
-              );
+        final effectiveBrl = CardPricingHelper.getRealisticMarketPriceBrl(
+          cardApiId: card.cardApiId,
+          cardName: card.name,
+          cardNumber: card.number,
+          setName: card.setName,
+          purchasePriceBrl: card.purchasePriceBrl,
+          rarity: card.rarity,
+          condition: card.condition,
+          exchangeRate: exchangeRate,
+        );
+
+        final priceString = currency == AppCurrency.usd
+            ? CurrencyFormatter.toUsd(effectiveBrl / exchangeRate)
+            : CurrencyFormatter.toBrl(effectiveBrl);
 
         final isGlowing = _highlightedCardId != null &&
             (_highlightedCardId == card.id || _highlightedCardId == card.cardApiId);
@@ -857,11 +884,16 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
               )
             : null;
 
-        final priceString = card.purchasePriceBrl > 0
-            ? (currency == AppCurrency.usd
-                ? CurrencyFormatter.toUsd(card.purchasePriceBrl / exchangeRate)
-                : CurrencyFormatter.toBrl(card.purchasePriceBrl))
-            : null;
+        final effectiveBrl = CardPricingHelper.getRealisticMarketPriceBrl(
+          purchasePriceBrl: card.purchasePriceBrl,
+          rarity: card.rarity,
+          condition: card.condition,
+          exchangeRate: exchangeRate,
+        );
+
+        final priceString = currency == AppCurrency.usd
+            ? CurrencyFormatter.toUsd(effectiveBrl / exchangeRate)
+            : CurrencyFormatter.toBrl(effectiveBrl);
 
         return Card(
           margin: EdgeInsets.zero,
@@ -922,14 +954,13 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
                           children: [
                             ConditionBadge(condition: card.condition, compact: true),
                             LanguageFlagBadge(language: card.language, compact: true),
-                            if (priceString != null)
-                              Text(
-                                priceString,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            Text(
+                              priceString,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
                               ),
+                            ),
                           ],
                         ),
                       ],

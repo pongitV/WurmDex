@@ -250,23 +250,16 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        strings.sectionFoldersAndBinders,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.0,
-                          color: theme.colorScheme.primary,
-                        ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      strings.sectionFoldersAndBinders,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                        color: theme.colorScheme.primary,
                       ),
-                      TextButton.icon(
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text(strings.btnCreateFolderAction),
-                        onPressed: () => _showCreateFolderDialog(context, ref, strings),
-                      ),
-                    ],
+                    ),
                   ),
                   if (_searchQuery.isNotEmpty)
                     Padding(

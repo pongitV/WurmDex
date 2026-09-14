@@ -102,6 +102,7 @@ class PricingService {
   }) async {
     final exchangeRate = await CurrencyService.getUsdToBrlRate();
     double? tcgUsd = initialTcgMarketUsd;
+    double? tcgLowUsd;
 
     Map<String, dynamic>? cardmarketData;
     int? tcgProductId;
@@ -116,7 +117,9 @@ class PricingService {
         );
         if (resp.statusCode == 200 && resp.data is Map<String, dynamic>) {
           final pricing = resp.data['pricing'] as Map<String, dynamic>?;
-          tcgUsd = TcgPricingParser.extractMarketPriceUsd(pricing);
+          final parsed = TcgPricingParser.parsePricing(pricing);
+          tcgUsd = parsed.market ?? parsed.mid;
+          tcgLowUsd = parsed.low;
           cardmarketData = pricing?['cardmarket'] as Map<String, dynamic>?;
 
           // Extract direct TCGPlayer productId
@@ -198,11 +201,11 @@ class PricingService {
     }
 
     // When domestic scraping is blocked or rate-limited,
-    // calculate estimated domestic market values based on international benchmarks with import parity
+    // calculate domestic market values based on direct currency conversion
     if (ligaAvg == null && tcgBrl != null) {
-      ligaAvg = (tcgBrl * 1.15);
-      ligaMin = (ligaAvg * 0.85);
-      ligaMax = (ligaAvg * 1.35);
+      ligaAvg = tcgBrl;
+      ligaMin = (tcgLowUsd != null ? tcgLowUsd * exchangeRate : tcgBrl * 0.85);
+      ligaMax = (tcgBrl * 1.35);
     }
 
     final effectiveBaseBrl = ligaAvg ?? tcgBrl;
@@ -286,32 +289,32 @@ class PricingService {
           PricePoint(
             date: now.subtract(const Duration(days: 30)),
             priceUsd: p30Usd,
-            priceBrl: p30Usd * exchangeRate * 1.15,
+            priceBrl: p30Usd * exchangeRate,
           ),
           PricePoint(
             date: now.subtract(const Duration(days: 20)),
             priceUsd: (p30Usd * 0.67 + p7Usd * 0.33),
-            priceBrl: (p30Usd * 0.67 + p7Usd * 0.33) * exchangeRate * 1.15,
+            priceBrl: (p30Usd * 0.67 + p7Usd * 0.33) * exchangeRate,
           ),
           PricePoint(
             date: now.subtract(const Duration(days: 14)),
             priceUsd: (p30Usd * 0.33 + p7Usd * 0.67),
-            priceBrl: (p30Usd * 0.33 + p7Usd * 0.67) * exchangeRate * 1.15,
+            priceBrl: (p30Usd * 0.33 + p7Usd * 0.67) * exchangeRate,
           ),
           PricePoint(
             date: now.subtract(const Duration(days: 7)),
             priceUsd: p7Usd,
-            priceBrl: p7Usd * exchangeRate * 1.15,
+            priceBrl: p7Usd * exchangeRate,
           ),
           PricePoint(
             date: now.subtract(const Duration(days: 2)),
             priceUsd: p1Usd,
-            priceBrl: p1Usd * exchangeRate * 1.15,
+            priceBrl: p1Usd * exchangeRate,
           ),
           PricePoint(
             date: now,
             priceUsd: pNowUsd,
-            priceBrl: (baseBrl ?? (pNowUsd * exchangeRate * 1.15)),
+            priceBrl: (baseBrl ?? (pNowUsd * exchangeRate)),
           ),
         ];
         result[PriceTimeRange.month1m] = monthPoints;
