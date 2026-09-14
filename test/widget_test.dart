@@ -28,8 +28,8 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify search bar is directly visible at the top of the menu
-    expect(find.byType(TextField), findsOneWidget);
+    // Catalog search is opened from its floating action button.
+    expect(find.byType(FloatingActionButton), findsOneWidget);
     // Verify My Collections button has been removed from menu
     expect(find.text('View Collection'), findsNothing);
 
@@ -43,8 +43,12 @@ void main() {
     expect(find.byType(FilterChip), findsNothing);
     expect(find.byType(ChoiceChip), findsNothing);
 
-    // Enter search text to activate search mode
+    // Enter search text after opening search mode.
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(TextField), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'Charizard');
+    await tester.tap(find.byType(FilledButton).last);
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Home'), findsOneWidget);
@@ -53,7 +57,7 @@ void main() {
     await tester.tap(find.text('Home'));
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsOneWidget);
     await tester.pump(const Duration(seconds: 2));
   });
 
@@ -67,12 +71,17 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 500));
 
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(TextField), findsOneWidget);
+    await tester.tap(find.byType(TextButton).last);
+    await tester.pump(const Duration(milliseconds: 300));
 
     container.read(languageProvider.notifier).setLanguage(AppLanguage.ptBr);
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsOneWidget);
     expect(find.text('NOTÍCIAS & CENÁRIO DO POKÉMON TCG'), findsOneWidget);
   });
 

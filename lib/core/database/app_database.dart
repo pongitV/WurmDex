@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
 part 'app_database.g.dart';
@@ -53,9 +54,17 @@ class WishlistItems extends Table {
   TextColumn get setName => text().withDefault(const Constant(''))();
   TextColumn get imageUrl => text()();
   RealColumn get targetPriceBrl => real().withDefault(const Constant(0.0))();
+  RealColumn get minTargetPriceBrl => real().withDefault(const Constant(0.0))();
+  // Mint, Near Mint, Slightly Played, Moderately Played, Heavily Played, Damaged
+  TextColumn get condition => text().withDefault(const Constant('Near Mint'))();
   // Baixa, Média, Alta
   TextColumn get priority => text().withDefault(const Constant('Média'))();
   TextColumn get folderName => text().withDefault(const Constant('Geral'))();
+  TextColumn get language => text().withDefault(const Constant('PT'))();
+  BoolColumn get isPreSale => boolean().withDefault(const Constant(false))();
+  // Last known market price (LigaPokémon min/average) and when it was checked.
+  RealColumn get currentPriceBrl => real().nullable()();
+  DateTimeColumn get lastCheckedAt => dateTime().nullable()();
   TextColumn get notes => text().withDefault(const Constant(''))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
@@ -101,10 +110,11 @@ class LigaPriceAlerts extends Table {
 
 @DriftDatabase(tables: [Folders, UserCards, WishlistItems, PriceSnapshots, LigaPriceAlerts])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
+  AppDatabase.forTesting([QueryExecutor? executor]) : super(executor ?? NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -125,6 +135,20 @@ class AppDatabase extends _$AppDatabase {
       if (from < 5) {
         await m.addColumn(ligaPriceAlerts, ligaPriceAlerts.collectionTag);
         await m.addColumn(ligaPriceAlerts, ligaPriceAlerts.languageTag);
+      }
+      if (from < 6) {
+        await m.addColumn(wishlistItems, wishlistItems.language);
+      }
+      if (from < 7) {
+        await m.addColumn(wishlistItems, wishlistItems.isPreSale);
+      }
+      if (from < 8) {
+        await m.addColumn(wishlistItems, wishlistItems.currentPriceBrl);
+        await m.addColumn(wishlistItems, wishlistItems.lastCheckedAt);
+      }
+      if (from < 9) {
+        await m.addColumn(wishlistItems, wishlistItems.minTargetPriceBrl);
+        await m.addColumn(wishlistItems, wishlistItems.condition);
       }
       await _createIndexes();
     },

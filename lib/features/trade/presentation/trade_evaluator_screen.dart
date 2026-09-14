@@ -6,8 +6,15 @@ import '../../../../core/localization/app_strings.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/app_action_fab.dart';
+import '../../../../core/widgets/app_filter_modal.dart';
 import '../../../../core/widgets/app_overflow_menu.dart';
+import '../../../../core/widgets/app_screen_title.dart';
+import '../../../../core/widgets/app_sort_button.dart';
 import 'widgets/trade_card_selector_dialog.dart';
+
+enum TradeFilterMode { all, yourOnly, theirOnly }
+enum TradeSortMode { valueDesc, valueAsc, nameAsc }
 
 class TradeEvaluatorScreen extends ConsumerStatefulWidget {
   const TradeEvaluatorScreen({super.key});
@@ -19,6 +26,68 @@ class TradeEvaluatorScreen extends ConsumerStatefulWidget {
 class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
   final List<TradeCardItem> _yourCards = [];
   final List<TradeCardItem> _theirCards = [];
+  TradeFilterMode _filterMode = TradeFilterMode.all;
+  TradeSortMode _sortMode = TradeSortMode.valueDesc;
+
+  List<TradeCardItem> _getSortedCards(List<TradeCardItem> cards) {
+    final list = List<TradeCardItem>.from(cards);
+    switch (_sortMode) {
+      case TradeSortMode.valueDesc:
+        list.sort((a, b) => b.valueBrl.compareTo(a.valueBrl));
+        break;
+      case TradeSortMode.valueAsc:
+        list.sort((a, b) => a.valueBrl.compareTo(b.valueBrl));
+        break;
+      case TradeSortMode.nameAsc:
+        list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        break;
+    }
+    return list;
+  }
+
+  void _showFilterDialog(AppStrings strings) {
+    TradeFilterMode tempMode = _filterMode;
+    AppFilterModalDialog.show(
+      context: context,
+      title: strings.tradeFilterTitle,
+      hasActiveFilters: _filterMode != TradeFilterMode.all,
+      strings: strings,
+      onClear: () => setState(() => _filterMode = TradeFilterMode.all),
+      onApply: () => setState(() => _filterMode = tempMode),
+      children: [
+        StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilterChip(
+                      label: Text(strings.tradeFilterAll),
+                      selected: tempMode == TradeFilterMode.all,
+                      onSelected: (_) => setModalState(() => tempMode = TradeFilterMode.all),
+                    ),
+                    FilterChip(
+                      label: Text(strings.tradeFilterYour),
+                      selected: tempMode == TradeFilterMode.yourOnly,
+                      onSelected: (_) => setModalState(() => tempMode = TradeFilterMode.yourOnly),
+                    ),
+                    FilterChip(
+                      label: Text(strings.tradeFilterTheir),
+                      selected: tempMode == TradeFilterMode.theirOnly,
+                      onSelected: (_) => setModalState(() => tempMode = TradeFilterMode.theirOnly),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
 
   double get _yourTotal => _yourCards.fold(0.0, (acc, c) => acc + c.valueBrl);
   double get _theirTotal => _theirCards.fold(0.0, (acc, c) => acc + c.valueBrl);
@@ -122,29 +191,85 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(strings.tradesTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: AppScreenTitle(title: strings.tradesTitle),
         actions: [
+          AppFilterButton(
+            activeFilterCount: _filterMode != TradeFilterMode.all ? 1 : 0,
+            tooltip: strings.tradeFilterTitle,
+            isFilledTonal: false,
+            onPressed: () => _showFilterDialog(strings),
+          ),
+          AppSortButton<TradeSortMode>(
+            currentOption: _sortMode,
+            isCompact: true,
+            tooltip: strings.tradeSortTitle,
+            onSelected: (val) => setState(() => _sortMode = val),
+            options: [
+              SortOptionItem(
+                value: TradeSortMode.valueDesc,
+                label: strings.tradeSortValueDesc,
+                icon: Icons.arrow_downward,
+              ),
+              SortOptionItem(
+                value: TradeSortMode.valueAsc,
+                label: strings.tradeSortValueAsc,
+                icon: Icons.arrow_upward,
+              ),
+              SortOptionItem(
+                value: TradeSortMode.nameAsc,
+                label: strings.tradeSortNameAsc,
+                icon: Icons.sort_by_alpha,
+              ),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: strings.refreshTooltip,
+            onPressed: () {
+              setState(() {});
+              ref.read(exchangeRateProvider.notifier).refreshRate();
+            },
+          ),
           const AppOverflowMenu(showCurrency: true),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(Icons.copy_all_outlined),
-            tooltip: strings.copyTradeSummaryTooltip,
-            onPressed: (_yourCards.isEmpty && _theirCards.isEmpty)
-                ? null
-                : () => _copyTradeSummary(strings, isUsd, exchangeRate),
+          const SizedBox(width: 8),
+        ],
+      ),
+      floatingActionButton: AppActionFab(
+        tooltip: strings.tradesTitle,
+        sheetTitle: strings.tradesTitle,
+        actions: [
+          AppFabAction(
+            icon: Icons.add_circle_outline,
+            title: strings.isEn ? 'Add to Your Offer' : 'Adicionar ao que Você Envia',
+            subtitle: strings.youSendTitle,
+            onTap: () => _addYourCard(exchangeRate),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_sweep_outlined),
-            tooltip: strings.btnClearTrade,
-            onPressed: (_yourCards.isNotEmpty || _theirCards.isNotEmpty)
-                ? () {
-                    setState(() {
-                      _yourCards.clear();
-                      _theirCards.clear();
-                    });
-                  }
-                : null,
+          AppFabAction(
+            icon: Icons.add_circle,
+            title: strings.isEn ? 'Add to What You Get' : 'Adicionar ao que Você Recebe',
+            subtitle: strings.youGetTitle,
+            onTap: () => _addTheirCard(exchangeRate),
           ),
+          if (_yourCards.isNotEmpty || _theirCards.isNotEmpty) ...[
+            AppFabAction(
+              icon: Icons.copy_all_outlined,
+              title: strings.btnCopyTrade,
+              subtitle: strings.copyTradeSummaryTooltip,
+              onTap: () => _copyTradeSummary(strings, isUsd, exchangeRate),
+            ),
+            AppFabAction(
+              icon: Icons.delete_sweep_outlined,
+              title: strings.btnClearTrade,
+              subtitle: strings.reset,
+              isDestructive: true,
+              onTap: () {
+                setState(() {
+                  _yourCards.clear();
+                  _theirCards.clear();
+                });
+              },
+            ),
+          ],
         ],
       ),
       body: Column(
@@ -185,38 +310,49 @@ class _TradeEvaluatorScreenState extends ConsumerState<TradeEvaluatorScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Left Column: You Send (Cartas a enviar)
-                Expanded(
-                  child: _buildTradeColumn(
-                    context: context,
-                    strings: strings,
-                    title: strings.youSendTitle,
-                    subtitle: strings.youSendSubtitle,
-                    total: _yourTotal,
-                    cards: _yourCards,
-                    accentColor: theme.colorScheme.primary,
-                    isUsd: isUsd,
-                    exchangeRate: exchangeRate,
-                    onAdd: () => _addYourCard(exchangeRate),
-                    onRemove: (idx) => setState(() => _yourCards.removeAt(idx)),
+                if (_filterMode != TradeFilterMode.theirOnly)
+                  Expanded(
+                    child: _buildTradeColumn(
+                      context: context,
+                      strings: strings,
+                      title: strings.youSendTitle,
+                      subtitle: strings.youSendSubtitle,
+                      total: _yourTotal,
+                      cards: _getSortedCards(_yourCards),
+                      accentColor: theme.colorScheme.primary,
+                      isUsd: isUsd,
+                      exchangeRate: exchangeRate,
+                      onAdd: () => _addYourCard(exchangeRate),
+                      onRemove: (idx) {
+                        final sorted = _getSortedCards(_yourCards);
+                        final item = sorted[idx];
+                        setState(() => _yourCards.remove(item));
+                      },
+                    ),
                   ),
-                ),
-                const VerticalDivider(width: 1, thickness: 1),
+                if (_filterMode == TradeFilterMode.all)
+                  const VerticalDivider(width: 1, thickness: 1),
                 // Right Column: You Receive (Cartas a ganhar)
-                Expanded(
-                  child: _buildTradeColumn(
-                    context: context,
-                    strings: strings,
-                    title: strings.youGetTitle,
-                    subtitle: strings.youGetSubtitle,
-                    total: _theirTotal,
-                    cards: _theirCards,
-                    accentColor: AppColors.profitGreen,
-                    isUsd: isUsd,
-                    exchangeRate: exchangeRate,
-                    onAdd: () => _addTheirCard(exchangeRate),
-                    onRemove: (idx) => setState(() => _theirCards.removeAt(idx)),
+                if (_filterMode != TradeFilterMode.yourOnly)
+                  Expanded(
+                    child: _buildTradeColumn(
+                      context: context,
+                      strings: strings,
+                      title: strings.youGetTitle,
+                      subtitle: strings.youGetSubtitle,
+                      total: _theirTotal,
+                      cards: _getSortedCards(_theirCards),
+                      accentColor: AppColors.profitGreen,
+                      isUsd: isUsd,
+                      exchangeRate: exchangeRate,
+                      onAdd: () => _addTheirCard(exchangeRate),
+                      onRemove: (idx) {
+                        final sorted = _getSortedCards(_theirCards);
+                        final item = sorted[idx];
+                        setState(() => _theirCards.remove(item));
+                      },
+                    ),
                   ),
-                ),
               ],
             ),
           ),

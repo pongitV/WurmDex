@@ -13,11 +13,12 @@ class AppPreferencesService {
   static File? _file;
   static bool _initialized = false;
 
-  /// Test helper to supply a directory or file without calling path_provider
+  /// Test helper to supply a directory or file without calling path_provider.
+  ///
+  /// This only points the service at a file; the file is (re)loaded by [init].
   @visibleForTesting
   static void setMockDirectory(Directory directory) {
     _file = File('${directory.path}/$_settingsFileName');
-    _initialized = true;
   }
 
   @visibleForTesting
@@ -28,13 +29,18 @@ class AppPreferencesService {
   }
 
   /// Initializes the service by reading stored preferences from disk.
+  ///
+  /// Re-reads the settings file whenever it is invoked so values written by a
+  /// previous session (e.g. empty wishlist folders) are reloaded even if the
+  /// service was mocked with [setMockDirectory] and there is no cached state.
   static Future<void> init() async {
-    if (_initialized) return;
     try {
-      final directory = await getApplicationSupportDirectory();
-      _file = File('${directory.path}/$_settingsFileName');
-      if (await _file!.exists()) {
-        final content = await _file!.readAsString();
+      if (_file == null) {
+        final directory = await getApplicationSupportDirectory();
+        _file = File('${directory.path}/$_settingsFileName');
+      }
+      if (_file!.existsSync()) {
+        final content = _file!.readAsStringSync();
         if (content.trim().isNotEmpty) {
           final decoded = jsonDecode(content);
           if (decoded is Map<String, dynamic>) {
@@ -42,20 +48,26 @@ class AppPreferencesService {
           }
         }
       }
-      _initialized = true;
     } catch (e) {
       debugPrint('AppPreferencesService init error: $e');
       _cache = {};
+    } finally {
+      // Keep the service usable in-memory even if disk access failed, so
+      // setting values never silently no-op because it was never initialized.
+      _initialized = true;
     }
   }
 
-  static Future<void> _persist() async {
+  /// Persists the current cache synchronously.
+  ///
+  /// A synchronous write guarantees every value is durable by the time a setter
+  /// returns, so folders and preferences are never lost to a missing flush or a
+  /// fire-and-forget write racing with a restart.
+  static void _persist() {
+    final file = _file;
+    if (file == null) return;
     try {
-      if (_file == null) {
-        final directory = await getApplicationSupportDirectory();
-        _file = File('${directory.path}/$_settingsFileName');
-      }
-      await _file!.writeAsString(jsonEncode(_cache), flush: true);
+      file.writeAsStringSync(jsonEncode(_cache), flush: true);
     } catch (e) {
       debugPrint('AppPreferencesService write error: $e');
     }
@@ -256,6 +268,9 @@ class AppPreferencesService {
   // --- Liga Radar Background Monitoring Preferences ---
   static const String _keyLigaBackgroundEnabled = 'liga_radar_background_enabled';
   static const String _keyLigaBackgroundInterval = 'liga_radar_background_interval_minutes';
+  static const String _keyWishlistBackgroundEnabled = 'wishlist_background_enabled';
+  static const String _keyRadarFolders = 'liga_radar_folders';
+  static const String _keyWishlistFolders = 'wishlist_folders';
 
   static bool isBackgroundLigaMonitoringEnabled() {
     if (!_initialized) return false;
@@ -279,6 +294,91 @@ class AppPreferencesService {
     if (!_initialized) return;
     _cache[_keyLigaBackgroundInterval] = minutes;
     _persist();
+  }
+
+  static bool isBackgroundWishlistScanEnabled() {
+    if (!_initialized) return false;
+    return _cache[_keyWishlistBackgroundEnabled] == true;
+  }
+
+  static void setBackgroundWishlistScanEnabled(bool enabled) {
+    if (!_initialized) return;
+    _cache[_keyWishlistBackgroundEnabled] = enabled;
+    _persist();
+  }
+
+  static List<String> getRadarFolders() {
+    if (!_initialized) return const [];
+    final value = _cache[_keyRadarFolders];
+    return value is List
+        ? value.whereType<String>().where((item) => item.isNotEmpty).toList()
+        : const [];
+  }
+
+  static void setRadarFolders(List<String> folders) {
+    if (!_initialized) return;
+    _cache[_keyRadarFolders] = folders.toSet().toList()..sort();
+    _persist();
+  }
+
+  static List<String> getWishlistFolders() {
+    if (!_initialized) return [];
+    final value = _cache[_keyWishlistFolders];
+    if (value is List) {
+      return value.whereType<String>().where((item) => item.isNotEmpty).toList();
+    }
+    // Fallback: se ainda não houver salvo especificamente na nova chave,
+    // verifica se há pastas salvas na chave anterior para não perder dados do usuário.
+    final legacy = _cache[_keyRadarFolders];
+    if (legacy is List) {
+      final list = legacy.whereType<String>().where((item) => item.isNotEmpty).toList();
+      if (list.isNotEmpty) {
+        _cache[_keyWishlistFolders] = list;
+        _persist();
+        return list;
+      }
+    }
+    return [];
+  }
+
+  static void setWishlistFolders(List<String> folders) {
+    if (!_initialized) return;
+    _cache[_keyWishlistFolders] = folders
+        .map((f) => f.trim())
+        .where((item) => item.isNotEmpty && item != 'Geral' && item != 'Todas')
+        .toSet()
+        .toList()
+      ..sort();
+    _persist();
+  }
+
+  static void addWishlistFolder(String folder) {
+    final clean = folder.trim();
+    if (clean.isEmpty || clean == 'Geral' || clean == 'Todas') return;
+    final current = getWishlistFolders();
+    if (!current.contains(clean)) {
+      current.add(clean);
+      setWishlistFolders(current);
+    }
+  }
+
+  static void renameWishlistFolder(String oldName, String newName) {
+    final cleanOld = oldName.trim();
+    final cleanNew = newName.trim();
+    if (cleanNew.isEmpty || cleanOld.isEmpty || cleanNew == cleanOld) return;
+    final current = getWishlistFolders();
+    final updated = current.map((f) => f == cleanOld ? cleanNew : f).toList();
+    if (!updated.contains(cleanNew) && cleanNew != 'Geral' && cleanNew != 'Todas') {
+      updated.add(cleanNew);
+    }
+    setWishlistFolders(updated);
+  }
+
+  static void deleteWishlistFolder(String folder) {
+    final clean = folder.trim();
+    final current = getWishlistFolders();
+    current.removeWhere((f) => f == clean);
+    setWishlistFolders(current);
   }
 }
 

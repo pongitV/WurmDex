@@ -12,12 +12,16 @@ import '../../../../core/utils/card_sorting_helper.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/semantic_search_helper.dart';
 import '../../../../core/navigation/app_navigator.dart';
+import '../../../../core/widgets/app_action_fab.dart';
 import '../../../../core/widgets/app_empty_state.dart';
+import '../../../../core/widgets/app_filter_modal.dart';
 import '../../../../core/widgets/app_network_image.dart';
 import '../../../../core/widgets/app_overflow_menu.dart';
+import '../../../../core/widgets/app_screen_title.dart';
+import '../../../../core/widgets/app_search_dialog.dart';
 import '../../../../core/widgets/card_grid_skeleton.dart';
-import '../../../../core/widgets/card_sort_button.dart';
-import '../../../../core/widgets/wobbly_menu_icon.dart';
+import '../../../../core/widgets/app_sort_button.dart';
+import '../../news/models/news_filter_state.dart';
 import '../../news/presentation/widgets/tcg_news_widget.dart';
 import '../models/catalog_filter_state.dart';
 import '../models/pokemon_card_item.dart';
@@ -55,6 +59,8 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   List<PokemonCardItem> _cards = [];
   String? _searchLanguage;
   CatalogFilterState _filterState = const CatalogFilterState();
+  NewsFilterState _newsFilterState = const NewsFilterState();
+  final GlobalKey<TcgNewsWidgetState> _newsKey = GlobalKey<TcgNewsWidgetState>();
 
   List<PokemonCardItem> get _filteredAndSortedCards {
     List<PokemonCardItem> list = List.from(_cards);
@@ -136,37 +142,14 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
   Future<void> _openSearchDialog() async {
     final strings = getStrings(ref.read(languageProvider));
-    final controller = TextEditingController(text: _searchController.text);
-    final query = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(strings.btnSearchCards),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textInputAction: TextInputAction.search,
-          onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
-          decoration: InputDecoration(
-            hintText: strings.searchHint,
-            prefixIcon: const Icon(Icons.search),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(strings.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
-            child: Text(strings.btnSearchCards),
-          ),
-        ],
-      ),
+    final query = await AppSearchDialog.show(
+      context,
+      initialQuery: _searchController.text,
+      strings: strings,
     );
-    controller.dispose();
     if (query == null || !mounted) return;
     _searchController.text = query;
-    setState(() => _isSearching = true);
+    setState(() => _isSearching = query.isNotEmpty);
     _onSearchChanged(query);
   }
 
@@ -195,6 +178,117 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       _searchLanguage = null;
     });
     _onSearchChanged(_searchController.text);
+  }
+
+  void _showNewsFilterDialog(AppStrings strings) {
+    String tempSource = _newsFilterState.selectedSource;
+    String tempCategory = _newsFilterState.selectedCategory;
+
+    AppFilterModalDialog.show(
+      context: context,
+      title: strings.newsFilterTitle,
+      hasActiveFilters: _newsFilterState.hasActiveFilters,
+      strings: strings,
+      onClear: () {
+        setState(() {
+          _newsFilterState = _newsFilterState.copyWith(
+            selectedSource: 'ALL',
+            selectedCategory: 'ALL',
+          );
+        });
+      },
+      onApply: () {
+        setState(() {
+          _newsFilterState = _newsFilterState.copyWith(
+            selectedSource: tempSource,
+            selectedCategory: tempCategory,
+          );
+        });
+      },
+      children: [
+        StatefulBuilder(
+          builder: (dialogCtx, setModalState) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  strings.newsSourcesSection,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilterChip(
+                      label: Text(strings.chipAll),
+                      selected: tempSource == 'ALL',
+                      onSelected: (_) => setModalState(() => tempSource = 'ALL'),
+                    ),
+                    FilterChip(
+                      avatar: const Icon(Icons.verified_outlined, size: 14, color: Color(0xFFEF4444)),
+                      label: Text(strings.chipPokemonOfficial),
+                      selected: tempSource == 'Pokemon.com',
+                      onSelected: (_) => setModalState(() => tempSource = 'Pokemon.com'),
+                    ),
+                    FilterChip(
+                      avatar: const Icon(Icons.inventory_2_outlined, size: 14, color: Color(0xFF8B5CF6)),
+                      label: Text(strings.chipBillsArchive),
+                      selected: tempSource == "Bill's Archive",
+                      onSelected: (_) => setModalState(() => tempSource = "Bill's Archive"),
+                    ),
+                    FilterChip(
+                      avatar: const Icon(Icons.emoji_events_outlined, size: 14, color: Color(0xFFF59E0B)),
+                      label: Text(strings.chipTcgScene),
+                      selected: tempSource == 'Scene',
+                      onSelected: (_) => setModalState(() => tempSource = 'Scene'),
+                    ),
+                    FilterChip(
+                      avatar: const Icon(Icons.forum_outlined, size: 14, color: Color(0xFF06B6D4)),
+                      label: const Text('TCGTalk'),
+                      selected: tempSource == 'TCGTalk',
+                      onSelected: (_) => setModalState(() => tempSource = 'TCGTalk'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  strings.newsCategoriesSection,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilterChip(
+                      label: Text(strings.newsCategoryAll),
+                      selected: tempCategory == 'ALL',
+                      onSelected: (_) => setModalState(() => tempCategory = 'ALL'),
+                    ),
+                    FilterChip(
+                      label: Text(strings.newsCategorySets),
+                      selected: tempCategory == 'SETS_PRODUCTS',
+                      onSelected: (_) => setModalState(() => tempCategory = 'SETS_PRODUCTS'),
+                    ),
+                    FilterChip(
+                      label: Text(strings.newsCategoryCompetitive),
+                      selected: tempCategory == 'COMPETITIVE',
+                      onSelected: (_) => setModalState(() => tempCategory = 'COMPETITIVE'),
+                    ),
+                    FilterChip(
+                      label: Text(strings.newsCategoryCommunity),
+                      selected: tempCategory == 'COMMUNITY',
+                      onSelected: (_) => setModalState(() => tempCategory = 'COMMUNITY'),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
   }
 
   void _exitSearch() {
@@ -244,58 +338,124 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 12,
         title: widget.targetFolder != null
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    strings.selectCard,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  Text(
-                    '${strings.labelFolder}: ${widget.targetFolder!.name}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ],
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const WobblyMenuIcon(
-                    size: 26,
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      strings.appTitle,
-                      style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-
+            ? AppScreenTitle(title: '${strings.selectCard} - ${widget.targetFolder!.name}')
+            : AppScreenTitle(title: strings.appTitle),
         actions: [
-          // Secondary controls condensed into a single overflow menu so the
-          // search bar below keeps its full width (filter/sort stay visible).
-          AppOverflowMenu(
-            scaleTarget: CardScaleTarget.menu,
-            showCurrency: true,
-            showRefresh: true,
-            onRefresh: () {
+          if (showSearchResults) ...[
+            AppFilterButton(
+              activeFilterCount: _filterState.activeFilterCount,
+              tooltip: strings.filtersAndMore,
+              isFilledTonal: false,
+              onPressed: () {
+                showCatalogFilterDialog(
+                  context,
+                  currentState: _filterState,
+                  strings: strings,
+                  onApply: (newState) => _applyFilter(newState, strings),
+                );
+              },
+            ),
+            AppSortButton<CatalogSortOption>(
+              currentOption: _filterState.sortOption,
+              isCompact: true,
+              tooltip: strings.isEn ? 'Sort Cards' : 'Ordenar Cartas',
+              onSelected: (option) {
+                setState(() {
+                  _filterState = _filterState.copyWith(sortOption: option);
+                });
+              },
+              options: [
+                SortOptionItem(
+                  value: CatalogSortOption.nameAsc,
+                  label: strings.isEn ? 'Name (A → Z)' : 'Nome (A → Z)',
+                  icon: Icons.sort_by_alpha,
+                ),
+                SortOptionItem(
+                  value: CatalogSortOption.nameDesc,
+                  label: strings.isEn ? 'Name (Z → A)' : 'Nome (Z → A)',
+                  icon: Icons.sort_by_alpha,
+                ),
+                SortOptionItem(
+                  value: CatalogSortOption.numberAsc,
+                  label: strings.isEn ? 'Card Number' : 'Número da Carta',
+                  icon: Icons.tag,
+                ),
+                SortOptionItem(
+                  value: CatalogSortOption.priceAsc,
+                  label: strings.isEn ? 'Lowest Price' : 'Menor Preço',
+                  icon: Icons.arrow_upward,
+                ),
+                SortOptionItem(
+                  value: CatalogSortOption.priceDesc,
+                  label: strings.isEn ? 'Highest Price' : 'Maior Preço',
+                  icon: Icons.arrow_downward,
+                ),
+                SortOptionItem(
+                  value: CatalogSortOption.releaseDateDesc,
+                  label: strings.isEn ? 'Release Date: Newest' : 'Lançamento: Mais Recentes',
+                  icon: Icons.event,
+                ),
+                SortOptionItem(
+                  value: CatalogSortOption.popularityDesc,
+                  label: strings.isEn ? 'Popularity' : 'Popularidade',
+                  icon: Icons.local_fire_department,
+                ),
+              ],
+            ),
+          ] else ...[
+            AppFilterButton(
+              activeFilterCount: _newsFilterState.activeFilterCount,
+              tooltip: strings.newsFilterTitle,
+              isFilledTonal: false,
+              onPressed: () => _showNewsFilterDialog(strings),
+            ),
+            AppSortButton<NewsSortOption>(
+              currentOption: _newsFilterState.sortOption,
+              isCompact: true,
+              tooltip: strings.newsSortTitle,
+              onSelected: (val) => setState(() => _newsFilterState = _newsFilterState.copyWith(sortOption: val)),
+              options: [
+                SortOptionItem(
+                  value: NewsSortOption.newest,
+                  label: strings.newsSortNewest,
+                  icon: Icons.access_time,
+                ),
+                SortOptionItem(
+                  value: NewsSortOption.oldest,
+                  label: strings.newsSortOldest,
+                  icon: Icons.history,
+                ),
+                SortOptionItem(
+                  value: NewsSortOption.titleAsc,
+                  label: strings.newsSortTitleAsc,
+                  icon: Icons.sort_by_alpha,
+                ),
+                SortOptionItem(
+                  value: NewsSortOption.source,
+                  label: strings.newsSortSource,
+                  icon: Icons.newspaper,
+                ),
+              ],
+            ),
+          ],
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: strings.refreshTooltip,
+            onPressed: () {
               ref.read(exchangeRateProvider.notifier).refreshRate();
               if (showSearchResults) {
                 _onSearchChanged(_searchController.text);
+              } else {
+                _newsKey.currentState?.refreshNews();
               }
             },
           ),
-          const SizedBox(width: 4),
+          const AppOverflowMenu(
+            scaleTarget: CardScaleTarget.menu,
+            showCurrency: true,
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
@@ -335,42 +495,28 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               ),
             ),
           ),
-          // Toolbar with Filter and Sort (kept visible) + Home
+          // Toolbar with active Query and Filter Chips
           if (showSearchResults)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Row(
                 children: [
-                  // Filter button
-                  IconButton.filledTonal(
-                    icon: Badge(
-                      isLabelVisible: _filterState.hasActiveFilters,
-                      label: Text('${_filterState.activeFilterCount}'),
-                      child: const Icon(Icons.tune, size: 20),
+                  if (_searchController.text.isNotEmpty) ...[
+                    InputChip(
+                      avatar: const Icon(Icons.search, size: 14),
+                      label: Text(
+                        _searchController.text,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      onDeleted: _exitSearch,
                     ),
-                    tooltip: strings.filtersAndMore,
-                    onPressed: () {
-                      showCatalogFilterBottomSheet(
-                        context,
-                        currentState: _filterState,
-                        strings: strings,
-                        onApply: (newState) {
-                          _applyFilter(newState, strings);
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  // Quick Sort button
-                  CardSortButton(
-                    currentOption: _filterState.sortOption,
-                    isEn: strings.isEn,
-                    onSelected: (option) {
-                      setState(() {
-                        _filterState = _filterState.copyWith(sortOption: option);
-                      });
-                    },
-                  ),
+                    const SizedBox(width: 8),
+                  ],
+                  if (_filterState.activeFilterCount > 0)
+                    Chip(
+                      label: Text('${_filterState.activeFilterCount} ${strings.filtersAndMore}'),
+                      backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                    ),
                   const Spacer(),
                   TextButton(
                     onPressed: _exitSearch,
@@ -475,10 +621,38 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
         ],
       ),
       floatingActionButton: widget.targetFolder == null
-          ? FloatingActionButton(
-              onPressed: _openSearchDialog,
-              tooltip: strings.searchHint,
-              child: const Icon(Icons.search),
+          ? AppActionFab(
+              tooltip: strings.searchActionTitle,
+              sheetTitle: strings.navCatalog,
+              actions: [
+                AppFabAction(
+                  icon: Icons.search,
+                  title: strings.searchActionTitle,
+                  subtitle: strings.searchHint,
+                  onTap: _openSearchDialog,
+                ),
+                if (showSearchResults)
+                  AppFabAction(
+                    icon: Icons.newspaper,
+                    title: strings.sectionNews,
+                    subtitle: strings.btnHome,
+                    onTap: _exitSearch,
+                  ),
+                if (_searchController.text.isNotEmpty || _filterState.activeFilterCount > 0)
+                  AppFabAction(
+                    icon: Icons.clear_all,
+                    title: strings.btnClearFilters,
+                    subtitle: strings.reset,
+                    isDestructive: true,
+                    onTap: () {
+                      _searchController.clear();
+                      setState(() {
+                        _filterState = const CatalogFilterState();
+                      });
+                      _exitSearch();
+                    },
+                  ),
+              ],
             )
           : null,
     );
@@ -487,9 +661,12 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   Widget _buildHomeDashboard(ThemeData theme) {
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
-      children: const [
+      children: [
         // Notícias & Lançamentos Oficiais do Pokémon TCG
-        TcgNewsWidget(),
+        TcgNewsWidget(
+          key: _newsKey,
+          filterState: _newsFilterState,
+        ),
       ],
     );
   }

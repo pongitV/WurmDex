@@ -18,14 +18,17 @@ import '../../../../core/utils/marketplace_url_helper.dart';
 import '../../../../core/utils/semantic_search_helper.dart';
 import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/navigation/app_navigator.dart';
+import '../../../../core/widgets/app_action_fab.dart';
 import '../../../../core/widgets/app_empty_state.dart';
+import '../../../../core/widgets/app_filter_modal.dart';
 import '../../../../core/widgets/app_network_image.dart';
 import '../../../../core/widgets/app_overflow_menu.dart';
-import '../../../../core/widgets/app_search_bar.dart';
+import '../../../../core/widgets/app_screen_title.dart';
+import '../../../../core/widgets/app_search_dialog.dart';
+import '../../../../core/widgets/app_sort_button.dart';
 import '../../../../core/widgets/bottom_sheet_drag_handle.dart';
 import '../../../../core/widgets/card_grid_skeleton.dart';
 import '../../../../core/widgets/card_shimmer_glow.dart';
-import '../../../../core/widgets/card_sort_button.dart';
 import '../../../../core/widgets/condition_badge.dart';
 import '../../../../core/widgets/language_flag_badge.dart';
 import '../../catalog/models/catalog_filter_state.dart';
@@ -45,11 +48,26 @@ class FolderDetailScreen extends ConsumerStatefulWidget {
 class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
   late String _displayMode;
   CatalogSortOption _sortOption = CatalogSortOption.nameAsc;
-  final TextEditingController _searchController = TextEditingController();
   final GlobalKey<VirtualBinderViewState> _binderKey = GlobalKey<VirtualBinderViewState>();
   final ScrollController _gridScrollController = ScrollController();
   String? _highlightedCardId;
   String _searchQuery = '';
+  String? _selectedCondition;
+  String? _selectedLanguage;
+  String? _selectedFinish;
+
+  int get _activeFilterCount =>
+      (_selectedCondition != null ? 1 : 0) +
+      (_selectedLanguage != null ? 1 : 0) +
+      (_selectedFinish != null ? 1 : 0);
+
+  void _clearFilters() {
+    setState(() {
+      _selectedCondition = null;
+      _selectedLanguage = null;
+      _selectedFinish = null;
+    });
+  }
 
   @override
   void initState() {
@@ -59,9 +77,135 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
 
   @override
   void dispose() {
-    _searchController.dispose();
     _gridScrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _showSearchDialog(List<UserCard> cards) async {
+    final strings = getStrings(ref.read(languageProvider));
+    final query = await AppSearchDialog.show(
+      context,
+      initialQuery: _searchQuery,
+      hintText: strings.searchCardInFolderHint,
+      strings: strings,
+      suggestions: cards.take(8).map((c) => c.name).toSet().toList(),
+    );
+    if (query != null && mounted) {
+      setState(() => _searchQuery = query.trim());
+      final matching = cards.where((c) {
+        final q = query.toLowerCase().trim();
+        return c.name.toLowerCase().contains(q) ||
+            c.number.toLowerCase() == q ||
+            '#${c.number.toLowerCase()}' == q ||
+            c.setName.toLowerCase().contains(q);
+      }).toList();
+      if (matching.isNotEmpty) {
+        _onCardSelected(matching.first, cards);
+      }
+    }
+  }
+
+  void _showFilterDialog(AppStrings strings) {
+    String? tempCondition = _selectedCondition;
+    String? tempLanguage = _selectedLanguage;
+    String? tempFinish = _selectedFinish;
+
+    AppFilterModalDialog.show(
+      context: context,
+      title: strings.filtersAndMore,
+      hasActiveFilters: _activeFilterCount > 0,
+      strings: strings,
+      onClear: () {
+        _clearFilters();
+      },
+      onApply: () {
+        setState(() {
+          _selectedCondition = tempCondition;
+          _selectedLanguage = tempLanguage;
+          _selectedFinish = tempFinish;
+        });
+      },
+      children: [
+        StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  strings.isEn ? 'Condition' : 'Estado de Conservação',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: ['NM', 'SP', 'MP', 'HP', 'DMG'].map((cond) {
+                    final isSelected = tempCondition == cond;
+                    return FilterChip(
+                      label: Text(cond),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setDialogState(() {
+                          tempCondition = selected ? cond : null;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  strings.isEn ? 'Language' : 'Idioma',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ('EN', strings.isEn ? 'English (EN)' : 'Inglês (EN)'),
+                    ('PT', strings.isEn ? 'Portuguese (PT)' : 'Português (PT)'),
+                    ('JP', strings.isEn ? 'Japanese (JP)' : 'Japonês (JP)'),
+                  ].map((lang) {
+                    final isSelected = tempLanguage == lang.$1;
+                    return FilterChip(
+                      label: Text(lang.$2),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setDialogState(() {
+                          tempLanguage = selected ? lang.$1 : null;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  strings.cardFinishes,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: ['Regular', 'Foil', 'Reverse Foil'].map((finish) {
+                    final isSelected = tempFinish == finish;
+                    return FilterChip(
+                      label: Text(finish),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setDialogState(() {
+                          tempFinish = selected ? finish : null;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
   }
 
   void _toggleDisplayMode() {
@@ -173,17 +317,63 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const SizedBox.shrink(),
+        title: AppScreenTitle(title: folderName),
         actions: [
-          // Sorta always stays visible (never hidden in menus), plus the
-          // always-present "three dots" overflow with all secondary actions.
-          CardSortButton(
+          AppFilterButton(
+            activeFilterCount: _activeFilterCount,
+            tooltip: strings.filtersAndMore,
+            isFilledTonal: false,
+            onPressed: () => _showFilterDialog(strings),
+          ),
+          AppSortButton<CatalogSortOption>(
             currentOption: _sortOption,
-            isEn: strings.isEn,
-            onSelected: (option) {
-              setState(() {
-                _sortOption = option;
-              });
+            isCompact: true,
+            tooltip: strings.isEn ? 'Sort Cards' : 'Ordenar Cartas',
+            onSelected: (option) => setState(() => _sortOption = option),
+            options: [
+              SortOptionItem(
+                value: CatalogSortOption.nameAsc,
+                label: strings.isEn ? 'Name (A → Z)' : 'Nome (A → Z)',
+                icon: Icons.sort_by_alpha,
+              ),
+              SortOptionItem(
+                value: CatalogSortOption.nameDesc,
+                label: strings.isEn ? 'Name (Z → A)' : 'Nome (Z → A)',
+                icon: Icons.sort_by_alpha,
+              ),
+              SortOptionItem(
+                value: CatalogSortOption.numberAsc,
+                label: strings.isEn ? 'Card Number' : 'Número da Carta',
+                icon: Icons.tag,
+              ),
+              SortOptionItem(
+                value: CatalogSortOption.priceAsc,
+                label: strings.isEn ? 'Lowest Price' : 'Menor Preço',
+                icon: Icons.arrow_upward,
+              ),
+              SortOptionItem(
+                value: CatalogSortOption.priceDesc,
+                label: strings.isEn ? 'Highest Price' : 'Maior Preço',
+                icon: Icons.arrow_downward,
+              ),
+              SortOptionItem(
+                value: CatalogSortOption.releaseDateDesc,
+                label: strings.isEn ? 'Release Date: Newest' : 'Lançamento: Mais Recentes',
+                icon: Icons.event,
+              ),
+              SortOptionItem(
+                value: CatalogSortOption.popularityDesc,
+                label: strings.isEn ? 'Popularity' : 'Popularidade',
+                icon: Icons.local_fire_department,
+              ),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: strings.refreshTooltip,
+            onPressed: () {
+              ref.invalidate(folderCardsProvider(folderId));
+              ref.read(exchangeRateProvider.notifier).refreshRate();
             },
           ),
           AppOverflowMenu(
@@ -226,6 +416,39 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
               }
             },
           ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      floatingActionButton: AppActionFab(
+        tooltip: strings.searchActionTitle,
+        sheetTitle: folderName,
+        actions: [
+          AppFabAction(
+            icon: Icons.search,
+            title: strings.searchActionTitle,
+            subtitle: strings.searchCardInFolderHint,
+            onTap: () => _showSearchDialog(cards),
+          ),
+          AppFabAction(
+            icon: Icons.add_card_outlined,
+            title: strings.btnAddCard,
+            subtitle: strings.searchCardsPlaceholder,
+            onTap: () => AppNavigator.toCatalog(context, targetFolder: widget.folder),
+          ),
+          AppFabAction(
+            icon: Icons.share_outlined,
+            title: strings.tooltipShareFolder,
+            subtitle: strings.btnShareBinder,
+            onTap: () => _shareFolder(cards, folderName, strings),
+          ),
+          AppFabAction(
+            icon: _displayMode == 'grid' ? Icons.book : Icons.grid_view,
+            title: _displayMode == 'grid'
+                ? strings.viewAsBinder
+                : strings.viewAsGrid,
+            subtitle: strings.scaleLayoutTooltip,
+            onTap: _toggleDisplayMode,
+          ),
         ],
       ),
       body: cardsAsync.when(
@@ -247,23 +470,25 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
 
           final sortedCards = CardSortingHelper.sortUserCards(cards, _sortOption);
 
-          // Matching cards for search suggestions / selection
-          final matchingCards = _searchQuery.trim().isEmpty
-              ? <UserCard>[]
-              : sortedCards.where((c) {
-                  final q = _searchQuery.toLowerCase().trim();
-                  return c.name.toLowerCase().contains(q) ||
-                      c.number.toLowerCase() == q ||
-                      '#${c.number.toLowerCase()}' == q ||
-                      c.setName.toLowerCase().contains(q);
-                }).toList();
+          final displayedCards = sortedCards.where((c) {
+            if (_selectedCondition != null && c.condition != _selectedCondition) return false;
+            if (_selectedLanguage != null && c.language != _selectedLanguage) return false;
+            if (_selectedFinish != null && c.finish != _selectedFinish) return false;
+            if (_searchQuery.isNotEmpty) {
+              final q = _searchQuery.toLowerCase().trim();
+              return c.name.toLowerCase().contains(q) ||
+                  c.number.toLowerCase() == q ||
+                  '#${c.number.toLowerCase()}' == q ||
+                  c.setName.toLowerCase().contains(q);
+            }
+            return true;
+          }).toList();
 
           return Column(
             children: [
               // Collection title header: shows the full name (no ellipsis)
-              // above the search bar so buttons/icons never hide it.
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -290,7 +515,7 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            strings.cardsCount(cards.length),
+                            strings.cardsCount(displayedCards.length),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -301,81 +526,87 @@ class _FolderDetailScreenState extends ConsumerState<FolderDetailScreen> {
                   ],
                 ),
               ),
-              // Top Search Bar to locate and animate card reveal in binder or grid
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-                child: Column(
-                  children: [
-                    AppSearchBar(
-                      controller: _searchController,
-                      padding: EdgeInsets.zero,
-                      hintText: strings.searchCardInFolderHint,
-                      onChanged: (val) {
-                        setState(() {
-                          _searchQuery = val;
-                        });
-                      },
-                      onSubmitted: (val) {
-                        if (matchingCards.isNotEmpty) {
-                          _onCardSelected(matchingCards.first, sortedCards);
-                          FocusScope.of(context).unfocus();
-                        }
-                      },
-                      onClear: () {
-                        setState(() => _searchQuery = '');
-                      },
+
+              // Active Filters & Search chips bar (compact, dismissible)
+              if (_searchQuery.isNotEmpty || _activeFilterCount > 0)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+                  child: SizedBox(
+                    height: 32,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        if (_searchQuery.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: InputChip(
+                              avatar: const Icon(Icons.search, size: 14),
+                              label: Text(_searchQuery, style: const TextStyle(fontSize: 12)),
+                              onDeleted: () => setState(() => _searchQuery = ''),
+                            ),
+                          ),
+                        if (_selectedCondition != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: InputChip(
+                              label: Text('Condition: $_selectedCondition', style: const TextStyle(fontSize: 12)),
+                              onDeleted: () => setState(() => _selectedCondition = null),
+                            ),
+                          ),
+                        if (_selectedLanguage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: InputChip(
+                              label: Text('Language: $_selectedLanguage', style: const TextStyle(fontSize: 12)),
+                              onDeleted: () => setState(() => _selectedLanguage = null),
+                            ),
+                          ),
+                        if (_selectedFinish != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: InputChip(
+                              label: Text('Finish: $_selectedFinish', style: const TextStyle(fontSize: 12)),
+                              onDeleted: () => setState(() => _selectedFinish = null),
+                            ),
+                          ),
+                      ],
                     ),
-                    // Quick suggestion pills when searching
-                    if (matchingCards.isNotEmpty && _searchQuery.isNotEmpty)
-                      Container(
-                        margin: const EdgeInsets.only(top: 6),
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: theme.cardColor,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
-                        ),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: matchingCards.take(4).map((c) {
-                            return ActionChip(
-                              avatar: const Icon(Icons.auto_awesome, size: 14, color: Colors.amber),
-                              label: Text('${c.name} #${c.number}'),
-                              onPressed: () {
-                                _onCardSelected(c, sortedCards);
-                                FocusScope.of(context).unfocus();
-                              },
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
-              ),
 
               // Content: 3D Binder, List or Grid (Card) View
               Expanded(
-                child: _displayMode == 'binder'
-                    ? VirtualBinderView(
-                        key: _binderKey,
-                        cards: sortedCards,
-                        folderName: folderName,
-                        highlightedCardId: _highlightedCardId,
-                        onAddCard: () {
-                          // Bug fix: unfocus the binder's keyboard listener before
-                          // navigating to catalog so the search field gets focus properly
-                          FocusScope.of(context).unfocus();
-                          AppNavigator.toCatalog(
-                            context,
-                            targetFolder: widget.folder,
-                            autoFocusSearch: true,
-                          );
+                child: displayedCards.isEmpty
+                    ? AppEmptyState(
+                        icon: Icons.filter_alt_off,
+                        title: strings.noFilterMatch,
+                        buttonLabel: strings.btnClearFilters,
+                        buttonIcon: Icons.filter_alt,
+                        onAction: () {
+                          setState(() {
+                            _searchQuery = '';
+                            _clearFilters();
+                          });
                         },
                       )
-                    : viewMode == CardViewMode.list
-                        ? _buildListView(context, sortedCards, strings, currency, exchangeRate)
-                        : _buildGridView(context, sortedCards, strings, currency, exchangeRate),
+                    : _displayMode == 'binder'
+                        ? VirtualBinderView(
+                            key: _binderKey,
+                            cards: displayedCards,
+                            folderName: folderName,
+                            highlightedCardId: _highlightedCardId,
+                            onAddCard: () {
+                              FocusScope.of(context).unfocus();
+                              AppNavigator.toCatalog(
+                                context,
+                                targetFolder: widget.folder,
+                                autoFocusSearch: true,
+                              );
+                            },
+                          )
+                        : viewMode == CardViewMode.list
+                            ? _buildListView(context, displayedCards, strings, currency, exchangeRate)
+                            : _buildGridView(context, displayedCards, strings, currency, exchangeRate),
               ),
             ],
           );

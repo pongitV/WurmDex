@@ -1,12 +1,9 @@
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/localization/app_strings.dart';
+import '../../services/wishlist_folder_service.dart';
 
-/// Full-screen dialog to manage (rename / delete) wishlist folders.
-///
-/// Derives the folder list from the current wishlist items (since folders
-/// are stored inline, not as separate table rows).
+/// Full-screen dialog to manage (create / rename / delete) wishlist folders.
 class WishlistManageFoldersDialog extends StatefulWidget {
   final AppDatabase db;
   final List<WishlistItem> allItems;
@@ -47,105 +44,78 @@ class _WishlistManageFoldersDialogState
   @override
   void initState() {
     super.initState();
-    _folders = _extractFolders();
+    _refreshFolders();
   }
 
-  List<String> _extractFolders() {
-    final folders = <String>{};
-    for (final item in widget.allItems) {
-      final f = item.folderName.isNotEmpty ? item.folderName : 'Geral';
-      if (f != 'Geral') folders.add(f);
-    }
-    return folders.toList()..sort();
+  void _refreshFolders() {
+    _folders = WishlistFolderService.getAllFolders(items: widget.allItems)
+        .where((f) => f != 'Geral')
+        .toList();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  Future<void> _createFolder() async {
     final strings = widget.strings;
+    final controller = TextEditingController();
 
-    return AlertDialog(
-      title: Row(
-        children: [
-          const Icon(Icons.folder_copy_outlined, size: 22),
-          const SizedBox(width: 8),
-          Text(strings.manageWishlistFolders),
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(strings.dlgCreateFolderTitle),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: strings.wishlistNewFolderName,
+            border: const OutlineInputBorder(),
+            isDense: true,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(strings.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final text = controller.text.trim();
+              Navigator.pop(ctx, text.isNotEmpty ? text : null);
+            },
+            child: Text(strings.save),
+          ),
         ],
       ),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: _folders.isEmpty
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.folder_off_outlined,
-                      size: 48,
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.3)),
-                  const SizedBox(height: 12),
-                  Text(
-                    strings.isEn
-                        ? 'No custom folders yet.\nCards are in the General folder.'
-                        : 'Nenhuma pasta personalizada.\nAs cartas estão na pasta Geral.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-              )
-            : ListView.separated(
-                shrinkWrap: true,
-                itemCount: _folders.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (ctx, index) {
-                  final folder = _folders[index];
-                  final count = widget.allItems
-                      .where((i) =>
-                          (i.folderName.isNotEmpty
-                              ? i.folderName
-                              : 'Geral') ==
-                          folder)
-                      .length;
-                  return ListTile(
-                    leading: const Icon(Icons.folder_outlined, size: 20),
-                    title: Text(folder),
-                    subtitle:
-                        Text(strings.cardsCountLabel(count)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Rename
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 18),
-                          tooltip: strings.editWishlistFolder,
-                          onPressed: () =>
-                              _renameFolder(folder),
-                        ),
-                        // Delete
-                        IconButton(
-                          icon: Icon(Icons.delete_outline,
-                              size: 18,
-                              color: theme.colorScheme.error),
-                          tooltip: strings.confirmDeleteWishlistFolderTitle,
-                          onPressed: () =>
-                              _deleteFolder(folder),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(strings.close),
-        ),
-      ],
     );
+
+    if (newName == null || !mounted) return;
+
+    final success = WishlistFolderService.addFolder(newName);
+    if (!success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              strings.isEn
+                  ? 'Folder already exists or invalid name'
+                  : 'Pasta já existe ou nome inválido',
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _refreshFolders();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            strings.isEn ? 'Folder created' : 'Pasta criada com sucesso',
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _renameFolder(String oldName) async {
@@ -183,21 +153,15 @@ class _WishlistManageFoldersDialogState
 
     if (newName == null || newName == oldName || !mounted) return;
 
-    // Rename all wishlist items in this folder
-    final itemsInFolder =
-        widget.allItems.where((i) => i.folderName == oldName);
-    for (final item in itemsInFolder) {
-      await (widget.db.update(widget.db.wishlistItems)
-            ..where((t) => t.id.equals(item.id)))
-          .write(
-        WishlistItemsCompanion(folderName: drift.Value(newName)),
-      );
-    }
+    await WishlistFolderService.renameFolder(
+      db: widget.db,
+      oldName: oldName,
+      newName: newName,
+    );
 
     if (mounted) {
       setState(() {
-        final idx = _folders.indexOf(oldName);
-        if (idx >= 0) _folders[idx] = newName;
+        _refreshFolders();
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(strings.wishlistFolderRenamed)),
@@ -231,22 +195,114 @@ class _WishlistManageFoldersDialogState
 
     if (confirm != true || !mounted) return;
 
-    // Move all items in this folder to 'Geral'
-    final itemsInFolder =
-        widget.allItems.where((i) => i.folderName == folderName);
-    for (final item in itemsInFolder) {
-      await (widget.db.update(widget.db.wishlistItems)
-            ..where((t) => t.id.equals(item.id)))
-          .write(
-        const WishlistItemsCompanion(folderName: drift.Value('Geral')),
-      );
-    }
+    await WishlistFolderService.deleteFolder(
+      db: widget.db,
+      folderName: folderName,
+    );
 
     if (mounted) {
-      setState(() => _folders.remove(folderName));
+      setState(() {
+        _refreshFolders();
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(strings.wishlistFolderDeleted)),
       );
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final strings = widget.strings;
+
+    return AlertDialog(
+      title: Row(
+        children: [
+          const Icon(Icons.folder_copy_outlined, size: 22),
+          const SizedBox(width: 8),
+          Expanded(child: Text(strings.manageWishlistFolders)),
+        ],
+      ),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: _folders.isEmpty
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.folder_off_outlined,
+                    size: 48,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    strings.isEn
+                        ? 'No custom folders yet.\nCards are in the General folder.'
+                        : 'Nenhuma pasta personalizada.\nAs cartas estão na pasta Geral.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              )
+            : ListView.separated(
+                shrinkWrap: true,
+                itemCount: _folders.length,
+                separatorBuilder: (_, _) => const Divider(height: 1),
+                itemBuilder: (ctx, index) {
+                  final folder = _folders[index];
+                  final count = widget.allItems
+                      .where(
+                        (i) =>
+                            (i.folderName.isNotEmpty
+                                ? i.folderName
+                                : 'Geral') ==
+                            folder,
+                      )
+                      .length;
+                  return ListTile(
+                    leading: const Icon(Icons.folder_outlined, size: 20),
+                    title: Text(folder),
+                    subtitle: Text(strings.cardsCountLabel(count)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Rename
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 18),
+                          tooltip: strings.editWishlistFolder,
+                          onPressed: () => _renameFolder(folder),
+                        ),
+                        // Delete
+                        IconButton(
+                          icon: Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: theme.colorScheme.error,
+                          ),
+                          tooltip: strings.confirmDeleteWishlistFolderTitle,
+                          onPressed: () => _deleteFolder(folder),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+      ),
+      actions: [
+        TextButton.icon(
+          icon: const Icon(Icons.add, size: 18),
+          label: Text(strings.isEn ? 'New folder' : 'Nova pasta'),
+          onPressed: _createFolder,
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(strings.close),
+        ),
+      ],
+    );
   }
 }

@@ -5,12 +5,13 @@ import 'core/services/app_preferences_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/monitoring/services/liga_radar_background_service.dart';
-import 'features/navigation/presentation/main_scaffold.dart';
+import 'features/shell/presentation/main_scaffold.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppPreferencesService.init();
   await NotificationService.initialize();
+  await LigaRadarBackgroundService.initializeWorkManager();
   runApp(
     const ProviderScope(
       child: WurmDexApp(),

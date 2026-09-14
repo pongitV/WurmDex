@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../../core/localization/app_strings.dart';
-import '../../../../core/widgets/bottom_sheet_drag_handle.dart';
 import '../../models/catalog_filter_state.dart';
 
-void showCatalogFilterBottomSheet(
+void showCatalogFilterDialog(
   BuildContext context, {
   required CatalogFilterState currentState,
   required ValueChanged<CatalogFilterState> onApply,
   required AppStrings strings,
 }) {
-  showAppModalBottomSheet(
+  showDialog(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Theme.of(context).cardColor,
-    builder: (ctx) => CatalogFilterBottomSheet(
+    builder: (ctx) => CatalogFilterDialog(
       initialState: currentState,
       onApply: onApply,
       strings: strings,
@@ -21,12 +18,25 @@ void showCatalogFilterBottomSheet(
   );
 }
 
-class CatalogFilterBottomSheet extends StatefulWidget {
+/// Backward-compatible alias
+void showCatalogFilterBottomSheet(
+  BuildContext context, {
+  required CatalogFilterState currentState,
+  required ValueChanged<CatalogFilterState> onApply,
+  required AppStrings strings,
+}) => showCatalogFilterDialog(
+  context,
+  currentState: currentState,
+  onApply: onApply,
+  strings: strings,
+);
+
+class CatalogFilterDialog extends StatefulWidget {
   final CatalogFilterState initialState;
   final ValueChanged<CatalogFilterState> onApply;
   final AppStrings strings;
 
-  const CatalogFilterBottomSheet({
+  const CatalogFilterDialog({
     super.key,
     required this.initialState,
     required this.onApply,
@@ -34,10 +44,10 @@ class CatalogFilterBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<CatalogFilterBottomSheet> createState() => _CatalogFilterBottomSheetState();
+  State<CatalogFilterDialog> createState() => _CatalogFilterDialogState();
 }
 
-class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
+class _CatalogFilterDialogState extends State<CatalogFilterDialog> {
   late CatalogFilterState _state;
 
   List<Map<String, String>> _getTypes(bool isEn) => [
@@ -90,185 +100,213 @@ class _CatalogFilterBottomSheetState extends State<CatalogFilterBottomSheet> {
     final types = _getTypes(isEn);
     final rarities = _getRarities(isEn);
     final languages = _getLanguages(isEn);
+    final size = MediaQuery.of(context).size;
 
-    return SafeArea(
-      child: Container(
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxWidth: 480,
+          maxHeight: size.height * 0.82,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const BottomSheetDragHandle(bottomPadding: 14),
-
             // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  strings.filtersAndMore,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+                border: Border(
+                  bottom: BorderSide(
+                    color: theme.dividerColor.withValues(alpha: 0.3),
                   ),
                 ),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _state = const CatalogFilterState();
-                    });
-                  },
-                  child: Text(isEn ? 'Clear All' : 'Limpar Tudo'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            Expanded(
-              child: ListView(
+              ),
+              child: Row(
                 children: [
-                  // Section: Ordenação
-                  Text(
-                    isEn ? 'SORT BY' : 'ORDENAR POR',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
-                      color: theme.colorScheme.primary,
+                  Icon(Icons.tune, color: theme.colorScheme.primary, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      strings.filtersAndMore,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildSortChip(isEn ? 'Highest Price' : 'Maior Preço', CatalogSortOption.priceDesc),
-                      _buildSortChip(isEn ? 'Lowest Price' : 'Menor Preço', CatalogSortOption.priceAsc),
-                      _buildSortChip(isEn ? 'Most Popular' : 'Mais Vendidas', CatalogSortOption.popularityDesc),
-                      _buildSortChip(isEn ? 'Release (Newest)' : 'Lançamento (Recentes)', CatalogSortOption.releaseDateDesc),
-                      _buildSortChip(isEn ? 'Release (Oldest)' : 'Lançamento (Antigas)', CatalogSortOption.releaseDateAsc),
-                      _buildSortChip(isEn ? 'Name (A-Z)' : 'Nome (A-Z)', CatalogSortOption.nameAsc),
-                      _buildSortChip(isEn ? 'Name (Z-A)' : 'Nome (Z-A)', CatalogSortOption.nameDesc),
-                      _buildSortChip(isEn ? 'Card Number (#)' : 'Número (#)', CatalogSortOption.numberAsc),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Section: Tipo de Energia / Supertipo
-                  Text(
-                    isEn ? 'ENERGY TYPE / CATEGORY' : 'TIPO DE ENERGIA / CATEGORIA',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
-                      color: theme.colorScheme.primary,
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _state = const CatalogFilterState();
+                      });
+                    },
+                    child: Text(
+                      strings.btnClearFilters,
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: types.map((t) {
-                      final isSelected = _state.selectedType == t['value'];
-                      return FilterChip(
-                        label: Text(t['label']!),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            _state = _state.copyWith(
-                              selectedType: selected ? t['value'] : null,
-                              clearType: !selected,
-                            );
-                          });
-                        },
-                      );
-                    }).toList(),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Section: Raridade
-                  Text(
-                    isEn ? 'RARITY' : 'RARIDADE',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: rarities.map((r) {
-                      final isSelected = _state.selectedRarity == r['value'];
-                      return FilterChip(
-                        label: Text(r['label']!),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            _state = _state.copyWith(
-                              selectedRarity: selected ? r['value'] : null,
-                              clearRarity: !selected,
-                            );
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Section: Idioma da Carta
-                  Text(
-                    isEn ? 'CARD LANGUAGE' : 'IDIOMA DA CARTA',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: languages.map((l) {
-                      final isSelected = _state.selectedLanguage == l['value'];
-                      return FilterChip(
-                        label: Text(l['label']!),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            _state = _state.copyWith(
-                              selectedLanguage: selected ? l['value'] : null,
-                              clearLanguage: !selected,
-                            );
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 16),
                 ],
               ),
             ),
 
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
+            // Scrollable Content
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // --- SORT OPTIONS ---
+                    Text(
+                      strings.labelSortBy,
+                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildSortChip(isEn ? 'Number (Asc)' : 'Número (Crescente)', CatalogSortOption.numberAsc),
+                        _buildSortChip(isEn ? 'Price (High to Low)' : 'Preço (Maior)', CatalogSortOption.priceDesc),
+                        _buildSortChip(isEn ? 'Price (Low to High)' : 'Preço (Menor)', CatalogSortOption.priceAsc),
+                        _buildSortChip(isEn ? 'Name (A-Z)' : 'Nome (A-Z)', CatalogSortOption.nameAsc),
+                        _buildSortChip(isEn ? 'Name (Z-A)' : 'Nome (Z-A)', CatalogSortOption.nameDesc),
+                        _buildSortChip(isEn ? 'Release Date' : 'Lançamento', CatalogSortOption.releaseDateDesc),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 12),
+
+                    // --- ENERGY TYPE ---
+                    Text(
+                      strings.filterTypeLabel.replaceAll(': ', ''),
+                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: types.map((t) {
+                        final val = t['value']!;
+                        final isSelected = _state.selectedType == val;
+                        return FilterChip(
+                          label: Text(t['label']!),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _state = _state.copyWith(
+                                selectedType: selected ? val : null,
+                                clearType: !selected,
+                              );
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 12),
+
+                    // --- RARITY ---
+                    Text(
+                      strings.filterRarityLabel.replaceAll(': ', ''),
+                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: rarities.map((r) {
+                        final val = r['value']!;
+                        final isSelected = _state.selectedRarity == val;
+                        return FilterChip(
+                          label: Text(r['label']!),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _state = _state.copyWith(
+                                selectedRarity: selected ? val : null,
+                                clearRarity: !selected,
+                              );
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 12),
+
+                    // --- LANGUAGE ---
+                    Text(
+                      strings.languageLabel.replaceAll(': ', ''),
+                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: languages.map((l) {
+                        final val = l['value']!;
+                        final isSelected = _state.selectedLanguage == val;
+                        return FilterChip(
+                          label: Text(l['label']!),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _state = _state.copyWith(
+                                selectedLanguage: selected ? val : null,
+                                clearLanguage: !selected,
+                              );
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+
+            // Footer Action Buttons
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                border: Border(
+                  top: BorderSide(
+                    color: theme.dividerColor.withValues(alpha: 0.3),
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text(strings.cancel),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
+                  const SizedBox(width: 10),
+                  FilledButton.icon(
+                    icon: const Icon(Icons.check, size: 18),
                     onPressed: () {
                       widget.onApply(_state);
                       Navigator.pop(context);
                     },
-                    child: Text(isEn ? 'Apply Filters' : 'Aplicar Filtros'),
+                    label: Text(isEn ? 'Apply Filters' : 'Aplicar Filtros'),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

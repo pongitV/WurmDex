@@ -21,25 +21,26 @@ class AppStrings {
 
   // Navigation
   String get navCatalog => isEn ? 'Catalog' : 'Catálogo';
-  String get navPokedex => isEn ? 'WorldDex' : 'DexMundial';
-  String get navSets => isEn ? 'Expansions' : 'Coleções TCG';
-  String get navCollections => isEn ? 'Collections' : 'Coleções';
-  String get navCollection => isEn ? 'Collection' : 'Coleção';
-  String get navMonitoring => isEn ? 'Monitoring' : 'Monitoramento';
+  String get navPokedex => 'WorldDex';
+  String get navSets => 'Expansions';
+  String get navCollections => 'My Collection';
+  String get navCollection => 'My Collection';
+  String get navMonitoring => 'LigaRadar';
   String get emptySlot => isEn ? 'Empty Slot' : 'Espaço Vazio';
-  String get navTrades => isEn ? 'Trades' : 'Trocas';
+  String get navTrades => 'Trades';
   String get navWishlist => 'Wishlist';
-  String get navLigaRadar => isEn ? 'Liga Radar' : 'Radar Liga';
+  String get navLigaRadar => 'LigaRadar';
   String get navSettings => isEn ? 'Settings' : 'Ajustes';
   String get navMore => isEn ? 'More' : 'Mais';
   String get moreOptionsTitle => isEn ? 'More Features' : 'Mais Opções';
   String get moreOptionsSubtitle => isEn ? 'Select a section to navigate' : 'Selecione uma seção para navegar';
-  String get descPokedex => isEn ? 'All Pokémon generations' : 'WorldDex de todas as gerações';
-  String get descSets => isEn ? 'TCG sets and releases' : 'Expansões & lançamentos TCG';
-  String get descCollections => isEn ? 'Binders, folders & cards' : 'Pastas, fichários e cartas';
-  String get descTrades => isEn ? 'Trade evaluator' : 'Avaliador de trocas TCG';
-  String get descWishlist => isEn ? 'Target prices and cards' : 'Cartas desejadas e metas';
-  String get descSettings => isEn ? 'Theme, backup & language' : 'Tema, backup e preferências';
+  String get descPokedex => isEn ? 'All Pokémon generations' : 'Enciclopédia de todas as gerações';
+  String get descSets => isEn ? 'TCG sets and expansions' : 'Coleções e expansões TCG';
+  String get descCollections => isEn ? 'Binders, folders and your cards' : 'Pastas, fichários e suas cartas';
+  String get descTrades => isEn ? 'Trade evaluator and balance' : 'Avaliador e gestão de trocas';
+  String get descWishlist => isEn ? 'Target prices and cards' : 'Metas de cartas e compras';
+  String get descLigaRadar => isEn ? 'LigaPokemon price alert radar' : 'Alertas de menor preço LigaPokémon';
+  String get descSettings => isEn ? 'Theme, backup and preferences' : 'Temas, backup e preferências';
 
   // WorldDex Screen
   String get pokedexTitle => isEn ? 'WorldDex' : 'DexMundial';
@@ -51,7 +52,7 @@ class AppStrings {
   String get pokedexLoadingCards => isEn ? 'Loading cards...' : 'Carregando cartas...';
 
   // Sets & Expansions Screen
-  String get setsTitle => isEn ? 'TCG Expansions & Releases' : 'Expansões & Lançamentos TCG';
+  String get setsTitle => 'Expansions';
   String get tabReleasedSets => isEn ? 'Released Sets' : 'Coleções Lançadas';
   String get tabUpcomingReleases => isEn ? 'Upcoming Releases' : 'Futuros Lançamentos';
   String get tabSetProducts => isEn ? 'Set Products' : 'Produtos da Coleção';
@@ -91,6 +92,7 @@ class AppStrings {
   String get noPriceChanges => isEn
       ? 'No price fluctuations detected in your collection.'
       : 'Nenhuma oscilação relevante detectada na sua coleção.';
+  String get searchActionTitle => isEn ? 'Search' : 'Buscar';
   String get searchHint => isEn
       ? 'Type card name, suffix or #number...'
       : 'Digite o nome da carta, sufixo ou #número...';
@@ -303,7 +305,7 @@ class AppStrings {
         'Agradecemos a todos os mantenedores desses projetos abertos que viabilizam o gerenciamento de coleções pela comunidade.';
 
   // Collections Screen
-  String get collectionsTitle => isEn ? 'My Folders & Collections' : 'Meus Fichários e Coleções';
+  String get collectionsTitle => 'My Collection';
   String get sectionFoldersAndBinders => isEn ? 'FOLDERS & BINDERS' : 'FICHÁRIOS E PASTAS';
   String get btnCreateFolder => isEn ? 'New Folder' : 'Novo Fichário';
   String get btnCreateFolderAction => isEn ? 'Create Folder' : 'Criar Pasta';
@@ -407,7 +409,7 @@ class AppStrings {
       : 'Deseja remover $name da sua coleção?';
 
   // Trades
-  String get tradesTitle => isEn ? 'Fair Trade Calculator' : 'Calculadora de Trocas Justas';
+  String get tradesTitle => 'Trades';
   String get tradeYouSend => isEn ? 'You Send' : 'Você Envia';
   String get tradeYouReceive => isEn ? 'You Receive' : 'Você Recebe';
   String get tradeFair => isEn ? 'Fair Trade' : 'Troca Justa';
@@ -696,11 +698,21 @@ class AppStrings {
   String get sortingMenuTooltip => isEn ? 'Sort Cards' : 'Ordenar Cartas';
 
   // Liga Radar & Pre-Sale Strings
-  String get ligaRadarTitle => isEn ? 'LigaPokémon Radar' : 'Radar LigaPokémon';
+  String get ligaRadarTitle => 'LigaRadar';
   String get ligaRadarSubtitle => isEn
       ? 'Target price drops & pre-orders tracking'
       : 'Monitore faixas de preço e ofertas em pré-venda';
   String get btnAddAlert => isEn ? 'Monitor Product' : 'Monitorar Produto';
+  String get folderFilterHint => isEn ? 'Folder' : 'Pasta';
+  String get noFolderLabel => isEn ? 'No folder' : 'Sem pasta';
+  String get minTargetPriceLabel => isEn ? 'Min Price' : 'Preço Mínimo';
+  String get maxTargetPriceLabel => isEn ? 'Max Price' : 'Preço Máximo';
+  String get radarSortTitle => isEn ? 'Sort Radar' : 'Ordenar Radar';
+  String get radarSortTargetDiff => isEn ? 'Best Price Drop / Discount' : 'Maior Desconto / Queda %';
+  String get radarSortNewest => isEn ? 'Recently Added' : 'Mais Recentes';
+  String get radarSortPriceAsc => isEn ? 'Current Price: Low to High' : 'Preço Atual: Menor para Maior';
+  String get radarSortPriceDesc => isEn ? 'Current Price: High to Low' : 'Preço Atual: Maior para Menor';
+  String get radarSortNameAsc => isEn ? 'Product Name (A - Z)' : 'Nome do Produto (A - Z)';
   String get btnCheckAllNow => isEn ? 'Check Prices Now' : 'Verificar Preços Agora';
   String get checkingAlerts => isEn ? 'Checking LigaPokémon...' : 'Consultando LigaPokémon...';
   String alertsCheckedSuccess(int count) => isEn
@@ -776,6 +788,11 @@ class AppStrings {
   String get kpiMonitoredTotal => isEn ? 'Monitored' : 'Monitorados';
   String get kpiInRangeTotal => isEn ? 'In Range' : 'Na Faixa';
   String get kpiPreSaleTotal => isEn ? 'Pre-Orders' : 'Em Pré-Venda';
+  String get kpiInRangePrice => isEn ? 'In-range value' : 'Preço na faixa';
+  String get kpiTotalPrice => isEn ? 'Total value' : 'Preço total';
+  String get kpiQuantityProducts => isEn ? 'Products' : 'Produtos';
+  String get kpiQuantityCards => isEn ? 'Cards' : 'Cartas';
+  String get kpiUpdatedToday => isEn ? 'Updated today' : 'Atualizados hoje';
   String get lastCheckedPrefix => isEn ? 'Checked: ' : 'Checado: ';
   String get neverChecked => isEn ? 'Never' : 'Nunca';
   String get lowestPricePrefix => isEn ? 'Lowest: ' : 'Menor: ';
@@ -889,6 +906,45 @@ class AppStrings {
           };
     return labels[key] ?? labels['folder']!;
   }
+
+  String get btnApplyFilters => isEn ? 'Apply Filters' : 'Aplicar Filtros';
+  String get labelSortBy => isEn ? 'Sort by' : 'Ordenar por';
+
+  // Screen-specific Filters & Sorts
+  String get newsFilterTitle => isEn ? 'News Filters' : 'Filtros de Notícias';
+  String get newsSourcesSection => isEn ? 'News Sources' : 'Fontes de Notícias';
+  String get newsCategoriesSection => isEn ? 'Categories' : 'Categorias';
+  String get newsSortTitle => isEn ? 'Sort News' : 'Ordenar Notícias';
+  String get newsSortNewest => isEn ? 'Newest First' : 'Mais Recentes';
+  String get newsSortOldest => isEn ? 'Oldest First' : 'Mais Antigas';
+  String get newsSortTitleAsc => isEn ? 'Title (A → Z)' : 'Título (A → Z)';
+  String get newsSortSource => isEn ? 'By Source' : 'Por Veículo / Fonte';
+  String get newsCategoryAll => isEn ? 'All Categories' : 'Todas as Categorias';
+  String get newsCategorySets => isEn ? 'Expansions & Products' : 'Expansões & Produtos';
+  String get newsCategoryCompetitive => isEn ? 'Competitive & Scene' : 'Cenário & Competitivo';
+  String get newsCategoryCommunity => isEn ? 'Community & Talk' : 'Comunidade & Debates';
+
+  String get collectionsFilterTitle => isEn ? 'Filter Folders' : 'Filtrar Pastas';
+  String get collectionsFilterAll => isEn ? 'All Folders' : 'Todas as Pastas';
+  String get collectionsFilterNonEmpty => isEn ? 'Non-Empty Folders Only' : 'Apenas Pastas com Cartas';
+  String get collectionsFilterVisibility => isEn ? 'Visibility' : 'Visibilidade';
+  String get collectionsFilterShowGeneral => isEn ? 'Show General Collection' : 'Exibir Coleção Geral';
+  String get collectionsSortTitle => isEn ? 'Sort Folders' : 'Ordenar Pastas';
+  String get collectionsSortNameAsc => isEn ? 'Folder Name (A → Z)' : 'Nome da Pasta (A → Z)';
+  String get collectionsSortNameDesc => isEn ? 'Folder Name (Z → A)' : 'Nome da Pasta (Z → A)';
+  String get collectionsSortCountDesc => isEn ? 'Most Cards' : 'Mais Cartas';
+  String get collectionsSortCountAsc => isEn ? 'Fewest Cards' : 'Menos Cartas';
+  String get collectionsSortNewest => isEn ? 'Recently Created' : 'Criadas Recentemente';
+  String get collectionsSortOldest => isEn ? 'Oldest Created' : 'Mais Antigas';
+
+  String get tradeFilterTitle => isEn ? 'Filter Trade Cards' : 'Filtrar Cartas da Troca';
+  String get tradeFilterAll => isEn ? 'All Trade Cards' : 'Todas as Cartas';
+  String get tradeFilterYour => isEn ? 'Only Your Offer' : 'Apenas o que Você Envia';
+  String get tradeFilterTheir => isEn ? 'Only What You Receive' : 'Apenas o que Você Recebe';
+  String get tradeSortTitle => isEn ? 'Sort Trade Cards' : 'Ordenar Cartas da Troca';
+  String get tradeSortValueDesc => isEn ? 'Highest Value' : 'Maior Valor';
+  String get tradeSortValueAsc => isEn ? 'Lowest Value' : 'Menor Valor';
+  String get tradeSortNameAsc => isEn ? 'Card Name (A → Z)' : 'Nome da Carta (A → Z)';
 }
 
 AppStrings getStrings(AppLanguage language) => AppStrings(language);

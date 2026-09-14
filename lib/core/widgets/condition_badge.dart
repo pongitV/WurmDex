@@ -17,7 +17,13 @@ class ConditionBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final language = ref.watch(languageProvider);
+    AppLanguage language;
+    try {
+      language = ref.watch(languageProvider);
+    } catch (_) {
+      // Keep this reusable widget safe in isolated MaterialApp previews/tests.
+      language = AppLanguage.ptBr;
+    }
     final strings = getStrings(language);
     final short = CardConditionHelper.getShortCondition(condition, gradedShortLabel: strings.gradedShortLabel);
     final color = CardConditionHelper.getConditionColor(short);

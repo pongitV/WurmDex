@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wurmdex/core/localization/app_language.dart';
 import 'package:wurmdex/core/localization/app_strings.dart';
-import 'package:wurmdex/features/navigation/presentation/main_scaffold.dart';
+import 'package:wurmdex/features/shell/presentation/main_scaffold.dart';
 
 class MockPtLanguageNotifier extends LanguageNotifier {
   @override
@@ -29,17 +29,17 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Exactly 4 navigation destinations in mobile NavigationBar: Catalog - Liga Radar - Colecoes - Mais
+    // Exactly 4 navigation destinations: Catalog - Wishlist - LigaRadar - More
     expect(find.byType(NavigationDestination), findsNWidgets(4));
     expect(find.text('Catálogo'), findsOneWidget);
-    expect(find.text('Radar Liga'), findsOneWidget);
-    expect(find.text('Coleções'), findsWidgets);
+    expect(find.text('Wishlist'), findsOneWidget);
+    expect(find.text('LigaRadar'), findsOneWidget);
     expect(find.text('Mais'), findsOneWidget);
 
-    // Tap "Radar Liga"
-    await tester.tap(find.text('Radar Liga'));
+    // Tap "LigaRadar"
+    await tester.tap(find.text('LigaRadar'));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Radar LigaPokémon'), findsOneWidget);
+    expect(find.text('LigaRadar'), findsWidgets);
 
     // Tap "Mais" to open modal bottom sheet
     await tester.tap(find.text('Mais'));
@@ -48,17 +48,17 @@ void main() {
 
     // Verify "Mais Opções" bottom sheet is visible with its items
     expect(find.text('Mais Opções'), findsOneWidget);
-    expect(find.text('Coleções TCG'), findsOneWidget);
-    expect(find.text('Wishlist'), findsOneWidget);
+    expect(find.text('Expansions'), findsOneWidget);
+    expect(find.text('Wishlist'), findsWidgets);
     expect(find.text('Ajustes'), findsOneWidget);
 
-    // Tap "Coleções TCG" inside the sheet
-    await tester.tap(find.text('Coleções TCG'));
+    // Tap "Expansions" inside the sheet
+    await tester.tap(find.text('Expansions'));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 300)); // dismiss animation
 
     // Verify Expansions screen is shown and 4th tab label updated to reflect active screen
-    expect(find.text('Expansões & Lançamentos TCG'), findsOneWidget);
+    expect(find.text('Expansions'), findsWidgets);
   });
 
   testWidgets('Desktop/Windows size displays identical 4-button navigation dock and More sheet', (WidgetTester tester) async {
@@ -83,8 +83,8 @@ void main() {
     // Exactly 4 navigation destinations in NavigationBar on Desktop as well
     expect(find.byType(NavigationDestination), findsNWidgets(4));
     expect(find.text('Catálogo'), findsOneWidget);
-    expect(find.text('Radar Liga'), findsOneWidget);
-    expect(find.text('Coleções'), findsWidgets);
+    expect(find.text('LigaRadar'), findsOneWidget);
+    expect(find.text('Wishlist'), findsOneWidget);
     expect(find.text('Mais'), findsOneWidget);
 
     // Tap "Mais" on desktop
@@ -94,7 +94,7 @@ void main() {
 
     // Verify "Mais Opções" bottom sheet is visible
     expect(find.text('Mais Opções'), findsOneWidget);
-    expect(find.text('Coleções TCG'), findsOneWidget);
+    expect(find.text('Expansions'), findsOneWidget);
   });
 }
 

@@ -2,21 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/localization/app_strings.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_network_image.dart';
+import '../../models/news_filter_state.dart';
 import '../../models/tcg_news_item.dart';
 import '../../services/tcg_news_service.dart';
 
 class TcgNewsWidget extends ConsumerStatefulWidget {
-  const TcgNewsWidget({super.key});
+  final NewsFilterState? filterState;
+  final ValueChanged<String>? onSourceChanged;
+
+  const TcgNewsWidget({
+    super.key,
+    this.filterState,
+    this.onSourceChanged,
+  });
 
   @override
-  ConsumerState<TcgNewsWidget> createState() => _TcgNewsWidgetState();
+  ConsumerState<TcgNewsWidget> createState() => TcgNewsWidgetState();
 }
 
-class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
+class TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
   late Future<List<TcgNewsItem>> _newsFuture;
-  String _selectedSource = 'ALL';
+  final String _selectedSource = 'ALL';
 
   @override
   void initState() {
@@ -24,7 +31,7 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
     _newsFuture = TcgNewsService.fetchLiveNews();
   }
 
-  void _refreshNews() {
+  void refreshNews() {
     final isEn = ref.read(languageProvider) == AppLanguage.enUs;
     setState(() {
       _newsFuture = TcgNewsService.fetchLiveNews(forceRefresh: true, isEn: isEn);
@@ -60,6 +67,10 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
     }
   }
 
+  String get effectiveSource => widget.filterState?.selectedSource ?? _selectedSource;
+  String get effectiveCategory => widget.filterState?.selectedCategory ?? 'ALL';
+  NewsSortOption get effectiveSort => widget.filterState?.sortOption ?? NewsSortOption.newest;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -71,58 +82,17 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Icon(Icons.feed_outlined, size: 18, color: theme.colorScheme.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        strings.sectionNews,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.0,
-                          color: theme.colorScheme.primary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh, size: 18),
-                tooltip: strings.btnRefreshNews,
-                onPressed: _refreshNews,
-              ),
-            ],
-          ),
-        ),
-        // Source Filter Chips
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip(strings.chipAll, filterKey: 'ALL'),
-                const SizedBox(width: 8),
-                _buildFilterChip(strings.chipPokemonOfficial, filterKey: 'Pokemon.com'),
-                const SizedBox(width: 8),
-                _buildFilterChip(strings.chipBillsArchive, filterKey: "Bill's Archive"),
-                const SizedBox(width: 8),
-                _buildFilterChip(strings.chipTcgScene, filterKey: 'Scene'),
-                const SizedBox(width: 8),
-                _buildFilterChip('TCGTalk', filterKey: 'TCGTalk'),
-              ],
+          child: Text(
+            strings.sectionNews,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.0,
+              color: theme.colorScheme.primary,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(height: 6),
         FutureBuilder<List<TcgNewsItem>>(
           future: _newsFuture,
           builder: (context, snapshot) {
@@ -160,7 +130,7 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
                       OutlinedButton.icon(
                         icon: const Icon(Icons.refresh, size: 16),
                         label: Text(strings.tapRefreshNews),
-                        onPressed: _refreshNews,
+                        onPressed: refreshNews,
                       ),
                     ],
                   ),
@@ -168,27 +138,65 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
               );
             }
 
-            // Filter news based on selected source
-            final filtered = allNews.where((item) {
-              if (_selectedSource == 'ALL') return true;
-              if (_selectedSource == "Bill's Archive") {
-                return item.id.startsWith('bills_') || item.source.contains("Bill's Archive");
+            // Filter news based on selected source & category
+            List<TcgNewsItem> filtered = allNews.where((item) {
+              if (effectiveSource != 'ALL') {
+                if (effectiveSource == "Bill's Archive") {
+                  if (!(item.id.startsWith('bills_') || item.source.contains("Bill's Archive"))) {
+                    return false;
+                  }
+                } else if (effectiveSource == 'Pokemon.com') {
+                  if (!(item.id.startsWith('pokemon_') || item.source.contains('Pokemon.com'))) {
+                    return false;
+                  }
+                } else if (effectiveSource == 'Scene') {
+                  if (!(item.id.startsWith('scene_') ||
+                      item.source.contains('Scene') ||
+                      item.source.contains('Cenário') ||
+                      item.category == 'COMPETITIVE' ||
+                      item.category == 'MERCADO')) {
+                    return false;
+                  }
+                } else if (effectiveSource == 'TCGTalk') {
+                  if (!(item.id.startsWith('tcgtalk_') || item.source.contains('TCGTalk'))) {
+                    return false;
+                  }
+                }
               }
-              if (_selectedSource == 'Pokemon.com') {
-                return item.id.startsWith('pokemon_') || item.source.contains('Pokemon.com');
-              }
-              if (_selectedSource == 'Scene') {
-                return item.id.startsWith('scene_') ||
-                    item.source.contains('Scene') ||
-                    item.source.contains('Cenário') ||
-                    item.category == 'COMPETITIVE' ||
-                    item.category == 'MERCADO';
-              }
-              if (_selectedSource == 'TCGTalk') {
-                return item.id.startsWith('tcgtalk_') || item.source.contains('TCGTalk');
+
+              if (effectiveCategory != 'ALL') {
+                final cat = item.category.toUpperCase();
+                if (effectiveCategory == 'SETS_PRODUCTS') {
+                  if (!cat.contains('EXPAN') && !cat.contains('SET') && !cat.contains('PROD')) {
+                    return false;
+                  }
+                } else if (effectiveCategory == 'COMPETITIVE') {
+                  if (!cat.contains('COMPET') && !cat.contains('SCENE') && !cat.contains('MERCADO')) {
+                    return false;
+                  }
+                } else if (effectiveCategory == 'COMMUNITY') {
+                  if (!cat.contains('TALK') && !cat.contains('COMUNIDADE') && !cat.contains('COMMUNITY')) {
+                    return false;
+                  }
+                }
               }
               return true;
             }).toList();
+
+            // Apply Sort
+            switch (effectiveSort) {
+              case NewsSortOption.newest:
+                break;
+              case NewsSortOption.oldest:
+                filtered = filtered.reversed.toList();
+                break;
+              case NewsSortOption.titleAsc:
+                filtered.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+                break;
+              case NewsSortOption.source:
+                filtered.sort((a, b) => a.source.toLowerCase().compareTo(b.source.toLowerCase()));
+                break;
+            }
 
             return ListView.separated(
               shrinkWrap: true,
@@ -207,60 +215,24 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
     );
   }
 
-  Widget _buildFilterChip(String label, {String? filterKey}) {
-    final key = filterKey ?? label;
-    final isSelected = _selectedSource == key;
-    final theme = Theme.of(context);
+  static (Color, IconData) getSourceStyle(String source, String id) {
+    final lowerSource = source.toLowerCase();
+    final lowerId = id.toLowerCase();
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: () {
-        setState(() {
-          _selectedSource = key;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.colorScheme.primary.withValues(alpha: 0.22)
-              : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outline.withValues(alpha: 0.25),
-            width: isSelected ? 1.4 : 1.0,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
-    );
+    if (lowerId.startsWith('bills_') || lowerSource.contains("bill's archive")) {
+      return (const Color(0xFF8B5CF6), Icons.inventory_2_outlined);
+    } else if (lowerId.startsWith('scene_') || lowerSource.contains('scene') || lowerSource.contains('cenário')) {
+      return (const Color(0xFFF59E0B), Icons.emoji_events_outlined);
+    } else if (lowerId.startsWith('tcgtalk_') || lowerSource.contains('tcgtalk')) {
+      return (const Color(0xFF06B6D4), Icons.forum_outlined);
+    } else if (lowerId.startsWith('pokemon_') || lowerSource.contains('pokemon.com') || lowerSource.contains('oficial')) {
+      return (const Color(0xFFEF4444), Icons.verified_outlined);
+    }
+    return (const Color(0xFF3B82F6), Icons.newspaper);
   }
 
   Widget _buildNewsCard(BuildContext context, TcgNewsItem item, ThemeData theme) {
-    final isBills = item.id.startsWith('bills_') || item.source.contains("Bill's Archive");
-    final isScene = item.id.startsWith('scene_') || item.source.contains('Scene') || item.source.contains('Cenário');
-    final isPt = item.source.contains('Oficial') || item.source.contains('PT-BR');
-
-    final Color sourceColor;
-    if (isBills) {
-      sourceColor = const Color(0xFF9B6DFF);
-    } else if (isScene) {
-      sourceColor = const Color(0xFFF59E0B);
-    } else if (isPt) {
-      sourceColor = AppColors.profitGreen;
-    } else {
-      sourceColor = const Color(0xFF38BDF8);
-    }
+    final (sourceColor, sourceIcon) = getSourceStyle(item.source, item.id);
 
     return Card(
       elevation: 2,
@@ -292,21 +264,28 @@ class _TcgNewsWidgetState extends ConsumerState<TcgNewsWidget> {
                   children: [
                     Row(
                       children: [
-                        // Source Badge
+                        // Source Badge with distinct icon & color
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                           decoration: BoxDecoration(
-                            color: sourceColor.withValues(alpha: 0.18),
+                            color: sourceColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(color: sourceColor.withValues(alpha: 0.4)),
                           ),
-                          child: Text(
-                            item.source,
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: sourceColor,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(sourceIcon, size: 11, color: sourceColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                item.source,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: sourceColor,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 6),

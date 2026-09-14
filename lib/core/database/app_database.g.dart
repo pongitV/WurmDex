@@ -1331,6 +1331,31 @@ class $WishlistItemsTable extends WishlistItems
     requiredDuringInsert: false,
     defaultValue: const Constant(0.0),
   );
+  static const VerificationMeta _minTargetPriceBrlMeta = const VerificationMeta(
+    'minTargetPriceBrl',
+  );
+  @override
+  late final GeneratedColumn<double> minTargetPriceBrl =
+      GeneratedColumn<double>(
+        'min_target_price_brl',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0.0),
+      );
+  static const VerificationMeta _conditionMeta = const VerificationMeta(
+    'condition',
+  );
+  @override
+  late final GeneratedColumn<String> condition = GeneratedColumn<String>(
+    'condition',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Near Mint'),
+  );
   static const VerificationMeta _priorityMeta = const VerificationMeta(
     'priority',
   );
@@ -1355,6 +1380,56 @@ class $WishlistItemsTable extends WishlistItems
     requiredDuringInsert: false,
     defaultValue: const Constant('Geral'),
   );
+  static const VerificationMeta _languageMeta = const VerificationMeta(
+    'language',
+  );
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+    'language',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('PT'),
+  );
+  static const VerificationMeta _isPreSaleMeta = const VerificationMeta(
+    'isPreSale',
+  );
+  @override
+  late final GeneratedColumn<bool> isPreSale = GeneratedColumn<bool>(
+    'is_pre_sale',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pre_sale" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _currentPriceBrlMeta = const VerificationMeta(
+    'currentPriceBrl',
+  );
+  @override
+  late final GeneratedColumn<double> currentPriceBrl = GeneratedColumn<double>(
+    'current_price_brl',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastCheckedAtMeta = const VerificationMeta(
+    'lastCheckedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastCheckedAt =
+      GeneratedColumn<DateTime>(
+        'last_checked_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -1386,8 +1461,14 @@ class $WishlistItemsTable extends WishlistItems
     setName,
     imageUrl,
     targetPriceBrl,
+    minTargetPriceBrl,
+    condition,
     priority,
     folderName,
+    language,
+    isPreSale,
+    currentPriceBrl,
+    lastCheckedAt,
     notes,
     createdAt,
   ];
@@ -1453,6 +1534,21 @@ class $WishlistItemsTable extends WishlistItems
         ),
       );
     }
+    if (data.containsKey('min_target_price_brl')) {
+      context.handle(
+        _minTargetPriceBrlMeta,
+        minTargetPriceBrl.isAcceptableOrUnknown(
+          data['min_target_price_brl']!,
+          _minTargetPriceBrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('condition')) {
+      context.handle(
+        _conditionMeta,
+        condition.isAcceptableOrUnknown(data['condition']!, _conditionMeta),
+      );
+    }
     if (data.containsKey('priority')) {
       context.handle(
         _priorityMeta,
@@ -1463,6 +1559,36 @@ class $WishlistItemsTable extends WishlistItems
       context.handle(
         _folderNameMeta,
         folderName.isAcceptableOrUnknown(data['folder_name']!, _folderNameMeta),
+      );
+    }
+    if (data.containsKey('language')) {
+      context.handle(
+        _languageMeta,
+        language.isAcceptableOrUnknown(data['language']!, _languageMeta),
+      );
+    }
+    if (data.containsKey('is_pre_sale')) {
+      context.handle(
+        _isPreSaleMeta,
+        isPreSale.isAcceptableOrUnknown(data['is_pre_sale']!, _isPreSaleMeta),
+      );
+    }
+    if (data.containsKey('current_price_brl')) {
+      context.handle(
+        _currentPriceBrlMeta,
+        currentPriceBrl.isAcceptableOrUnknown(
+          data['current_price_brl']!,
+          _currentPriceBrlMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_checked_at')) {
+      context.handle(
+        _lastCheckedAtMeta,
+        lastCheckedAt.isAcceptableOrUnknown(
+          data['last_checked_at']!,
+          _lastCheckedAtMeta,
+        ),
       );
     }
     if (data.containsKey('notes')) {
@@ -1514,6 +1640,14 @@ class $WishlistItemsTable extends WishlistItems
         DriftSqlType.double,
         data['${effectivePrefix}target_price_brl'],
       )!,
+      minTargetPriceBrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}min_target_price_brl'],
+      )!,
+      condition: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}condition'],
+      )!,
       priority: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}priority'],
@@ -1522,6 +1656,22 @@ class $WishlistItemsTable extends WishlistItems
         DriftSqlType.string,
         data['${effectivePrefix}folder_name'],
       )!,
+      language: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}language'],
+      )!,
+      isPreSale: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pre_sale'],
+      )!,
+      currentPriceBrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}current_price_brl'],
+      ),
+      lastCheckedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_checked_at'],
+      ),
       notes: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
@@ -1547,8 +1697,14 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
   final String setName;
   final String imageUrl;
   final double targetPriceBrl;
+  final double minTargetPriceBrl;
+  final String condition;
   final String priority;
   final String folderName;
+  final String language;
+  final bool isPreSale;
+  final double? currentPriceBrl;
+  final DateTime? lastCheckedAt;
   final String notes;
   final DateTime createdAt;
   const WishlistItem({
@@ -1559,8 +1715,14 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
     required this.setName,
     required this.imageUrl,
     required this.targetPriceBrl,
+    required this.minTargetPriceBrl,
+    required this.condition,
     required this.priority,
     required this.folderName,
+    required this.language,
+    required this.isPreSale,
+    this.currentPriceBrl,
+    this.lastCheckedAt,
     required this.notes,
     required this.createdAt,
   });
@@ -1574,8 +1736,18 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
     map['set_name'] = Variable<String>(setName);
     map['image_url'] = Variable<String>(imageUrl);
     map['target_price_brl'] = Variable<double>(targetPriceBrl);
+    map['min_target_price_brl'] = Variable<double>(minTargetPriceBrl);
+    map['condition'] = Variable<String>(condition);
     map['priority'] = Variable<String>(priority);
     map['folder_name'] = Variable<String>(folderName);
+    map['language'] = Variable<String>(language);
+    map['is_pre_sale'] = Variable<bool>(isPreSale);
+    if (!nullToAbsent || currentPriceBrl != null) {
+      map['current_price_brl'] = Variable<double>(currentPriceBrl);
+    }
+    if (!nullToAbsent || lastCheckedAt != null) {
+      map['last_checked_at'] = Variable<DateTime>(lastCheckedAt);
+    }
     map['notes'] = Variable<String>(notes);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -1590,8 +1762,18 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
       setName: Value(setName),
       imageUrl: Value(imageUrl),
       targetPriceBrl: Value(targetPriceBrl),
+      minTargetPriceBrl: Value(minTargetPriceBrl),
+      condition: Value(condition),
       priority: Value(priority),
       folderName: Value(folderName),
+      language: Value(language),
+      isPreSale: Value(isPreSale),
+      currentPriceBrl: currentPriceBrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currentPriceBrl),
+      lastCheckedAt: lastCheckedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastCheckedAt),
       notes: Value(notes),
       createdAt: Value(createdAt),
     );
@@ -1610,8 +1792,14 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
       setName: serializer.fromJson<String>(json['setName']),
       imageUrl: serializer.fromJson<String>(json['imageUrl']),
       targetPriceBrl: serializer.fromJson<double>(json['targetPriceBrl']),
+      minTargetPriceBrl: serializer.fromJson<double>(json['minTargetPriceBrl']),
+      condition: serializer.fromJson<String>(json['condition']),
       priority: serializer.fromJson<String>(json['priority']),
       folderName: serializer.fromJson<String>(json['folderName']),
+      language: serializer.fromJson<String>(json['language']),
+      isPreSale: serializer.fromJson<bool>(json['isPreSale']),
+      currentPriceBrl: serializer.fromJson<double?>(json['currentPriceBrl']),
+      lastCheckedAt: serializer.fromJson<DateTime?>(json['lastCheckedAt']),
       notes: serializer.fromJson<String>(json['notes']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -1627,8 +1815,14 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
       'setName': serializer.toJson<String>(setName),
       'imageUrl': serializer.toJson<String>(imageUrl),
       'targetPriceBrl': serializer.toJson<double>(targetPriceBrl),
+      'minTargetPriceBrl': serializer.toJson<double>(minTargetPriceBrl),
+      'condition': serializer.toJson<String>(condition),
       'priority': serializer.toJson<String>(priority),
       'folderName': serializer.toJson<String>(folderName),
+      'language': serializer.toJson<String>(language),
+      'isPreSale': serializer.toJson<bool>(isPreSale),
+      'currentPriceBrl': serializer.toJson<double?>(currentPriceBrl),
+      'lastCheckedAt': serializer.toJson<DateTime?>(lastCheckedAt),
       'notes': serializer.toJson<String>(notes),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -1642,8 +1836,14 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
     String? setName,
     String? imageUrl,
     double? targetPriceBrl,
+    double? minTargetPriceBrl,
+    String? condition,
     String? priority,
     String? folderName,
+    String? language,
+    bool? isPreSale,
+    Value<double?> currentPriceBrl = const Value.absent(),
+    Value<DateTime?> lastCheckedAt = const Value.absent(),
     String? notes,
     DateTime? createdAt,
   }) => WishlistItem(
@@ -1654,8 +1854,18 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
     setName: setName ?? this.setName,
     imageUrl: imageUrl ?? this.imageUrl,
     targetPriceBrl: targetPriceBrl ?? this.targetPriceBrl,
+    minTargetPriceBrl: minTargetPriceBrl ?? this.minTargetPriceBrl,
+    condition: condition ?? this.condition,
     priority: priority ?? this.priority,
     folderName: folderName ?? this.folderName,
+    language: language ?? this.language,
+    isPreSale: isPreSale ?? this.isPreSale,
+    currentPriceBrl: currentPriceBrl.present
+        ? currentPriceBrl.value
+        : this.currentPriceBrl,
+    lastCheckedAt: lastCheckedAt.present
+        ? lastCheckedAt.value
+        : this.lastCheckedAt,
     notes: notes ?? this.notes,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -1670,10 +1880,22 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
       targetPriceBrl: data.targetPriceBrl.present
           ? data.targetPriceBrl.value
           : this.targetPriceBrl,
+      minTargetPriceBrl: data.minTargetPriceBrl.present
+          ? data.minTargetPriceBrl.value
+          : this.minTargetPriceBrl,
+      condition: data.condition.present ? data.condition.value : this.condition,
       priority: data.priority.present ? data.priority.value : this.priority,
       folderName: data.folderName.present
           ? data.folderName.value
           : this.folderName,
+      language: data.language.present ? data.language.value : this.language,
+      isPreSale: data.isPreSale.present ? data.isPreSale.value : this.isPreSale,
+      currentPriceBrl: data.currentPriceBrl.present
+          ? data.currentPriceBrl.value
+          : this.currentPriceBrl,
+      lastCheckedAt: data.lastCheckedAt.present
+          ? data.lastCheckedAt.value
+          : this.lastCheckedAt,
       notes: data.notes.present ? data.notes.value : this.notes,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -1689,8 +1911,14 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
           ..write('setName: $setName, ')
           ..write('imageUrl: $imageUrl, ')
           ..write('targetPriceBrl: $targetPriceBrl, ')
+          ..write('minTargetPriceBrl: $minTargetPriceBrl, ')
+          ..write('condition: $condition, ')
           ..write('priority: $priority, ')
           ..write('folderName: $folderName, ')
+          ..write('language: $language, ')
+          ..write('isPreSale: $isPreSale, ')
+          ..write('currentPriceBrl: $currentPriceBrl, ')
+          ..write('lastCheckedAt: $lastCheckedAt, ')
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1706,8 +1934,14 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
     setName,
     imageUrl,
     targetPriceBrl,
+    minTargetPriceBrl,
+    condition,
     priority,
     folderName,
+    language,
+    isPreSale,
+    currentPriceBrl,
+    lastCheckedAt,
     notes,
     createdAt,
   );
@@ -1722,8 +1956,14 @@ class WishlistItem extends DataClass implements Insertable<WishlistItem> {
           other.setName == this.setName &&
           other.imageUrl == this.imageUrl &&
           other.targetPriceBrl == this.targetPriceBrl &&
+          other.minTargetPriceBrl == this.minTargetPriceBrl &&
+          other.condition == this.condition &&
           other.priority == this.priority &&
           other.folderName == this.folderName &&
+          other.language == this.language &&
+          other.isPreSale == this.isPreSale &&
+          other.currentPriceBrl == this.currentPriceBrl &&
+          other.lastCheckedAt == this.lastCheckedAt &&
           other.notes == this.notes &&
           other.createdAt == this.createdAt);
 }
@@ -1736,8 +1976,14 @@ class WishlistItemsCompanion extends UpdateCompanion<WishlistItem> {
   final Value<String> setName;
   final Value<String> imageUrl;
   final Value<double> targetPriceBrl;
+  final Value<double> minTargetPriceBrl;
+  final Value<String> condition;
   final Value<String> priority;
   final Value<String> folderName;
+  final Value<String> language;
+  final Value<bool> isPreSale;
+  final Value<double?> currentPriceBrl;
+  final Value<DateTime?> lastCheckedAt;
   final Value<String> notes;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -1749,8 +1995,14 @@ class WishlistItemsCompanion extends UpdateCompanion<WishlistItem> {
     this.setName = const Value.absent(),
     this.imageUrl = const Value.absent(),
     this.targetPriceBrl = const Value.absent(),
+    this.minTargetPriceBrl = const Value.absent(),
+    this.condition = const Value.absent(),
     this.priority = const Value.absent(),
     this.folderName = const Value.absent(),
+    this.language = const Value.absent(),
+    this.isPreSale = const Value.absent(),
+    this.currentPriceBrl = const Value.absent(),
+    this.lastCheckedAt = const Value.absent(),
     this.notes = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1763,8 +2015,14 @@ class WishlistItemsCompanion extends UpdateCompanion<WishlistItem> {
     this.setName = const Value.absent(),
     required String imageUrl,
     this.targetPriceBrl = const Value.absent(),
+    this.minTargetPriceBrl = const Value.absent(),
+    this.condition = const Value.absent(),
     this.priority = const Value.absent(),
     this.folderName = const Value.absent(),
+    this.language = const Value.absent(),
+    this.isPreSale = const Value.absent(),
+    this.currentPriceBrl = const Value.absent(),
+    this.lastCheckedAt = const Value.absent(),
     this.notes = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1780,8 +2038,14 @@ class WishlistItemsCompanion extends UpdateCompanion<WishlistItem> {
     Expression<String>? setName,
     Expression<String>? imageUrl,
     Expression<double>? targetPriceBrl,
+    Expression<double>? minTargetPriceBrl,
+    Expression<String>? condition,
     Expression<String>? priority,
     Expression<String>? folderName,
+    Expression<String>? language,
+    Expression<bool>? isPreSale,
+    Expression<double>? currentPriceBrl,
+    Expression<DateTime>? lastCheckedAt,
     Expression<String>? notes,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -1794,8 +2058,14 @@ class WishlistItemsCompanion extends UpdateCompanion<WishlistItem> {
       if (setName != null) 'set_name': setName,
       if (imageUrl != null) 'image_url': imageUrl,
       if (targetPriceBrl != null) 'target_price_brl': targetPriceBrl,
+      if (minTargetPriceBrl != null) 'min_target_price_brl': minTargetPriceBrl,
+      if (condition != null) 'condition': condition,
       if (priority != null) 'priority': priority,
       if (folderName != null) 'folder_name': folderName,
+      if (language != null) 'language': language,
+      if (isPreSale != null) 'is_pre_sale': isPreSale,
+      if (currentPriceBrl != null) 'current_price_brl': currentPriceBrl,
+      if (lastCheckedAt != null) 'last_checked_at': lastCheckedAt,
       if (notes != null) 'notes': notes,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -1810,8 +2080,14 @@ class WishlistItemsCompanion extends UpdateCompanion<WishlistItem> {
     Value<String>? setName,
     Value<String>? imageUrl,
     Value<double>? targetPriceBrl,
+    Value<double>? minTargetPriceBrl,
+    Value<String>? condition,
     Value<String>? priority,
     Value<String>? folderName,
+    Value<String>? language,
+    Value<bool>? isPreSale,
+    Value<double?>? currentPriceBrl,
+    Value<DateTime?>? lastCheckedAt,
     Value<String>? notes,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -1824,8 +2100,14 @@ class WishlistItemsCompanion extends UpdateCompanion<WishlistItem> {
       setName: setName ?? this.setName,
       imageUrl: imageUrl ?? this.imageUrl,
       targetPriceBrl: targetPriceBrl ?? this.targetPriceBrl,
+      minTargetPriceBrl: minTargetPriceBrl ?? this.minTargetPriceBrl,
+      condition: condition ?? this.condition,
       priority: priority ?? this.priority,
       folderName: folderName ?? this.folderName,
+      language: language ?? this.language,
+      isPreSale: isPreSale ?? this.isPreSale,
+      currentPriceBrl: currentPriceBrl ?? this.currentPriceBrl,
+      lastCheckedAt: lastCheckedAt ?? this.lastCheckedAt,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -1856,11 +2138,29 @@ class WishlistItemsCompanion extends UpdateCompanion<WishlistItem> {
     if (targetPriceBrl.present) {
       map['target_price_brl'] = Variable<double>(targetPriceBrl.value);
     }
+    if (minTargetPriceBrl.present) {
+      map['min_target_price_brl'] = Variable<double>(minTargetPriceBrl.value);
+    }
+    if (condition.present) {
+      map['condition'] = Variable<String>(condition.value);
+    }
     if (priority.present) {
       map['priority'] = Variable<String>(priority.value);
     }
     if (folderName.present) {
       map['folder_name'] = Variable<String>(folderName.value);
+    }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
+    }
+    if (isPreSale.present) {
+      map['is_pre_sale'] = Variable<bool>(isPreSale.value);
+    }
+    if (currentPriceBrl.present) {
+      map['current_price_brl'] = Variable<double>(currentPriceBrl.value);
+    }
+    if (lastCheckedAt.present) {
+      map['last_checked_at'] = Variable<DateTime>(lastCheckedAt.value);
     }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
@@ -1884,8 +2184,14 @@ class WishlistItemsCompanion extends UpdateCompanion<WishlistItem> {
           ..write('setName: $setName, ')
           ..write('imageUrl: $imageUrl, ')
           ..write('targetPriceBrl: $targetPriceBrl, ')
+          ..write('minTargetPriceBrl: $minTargetPriceBrl, ')
+          ..write('condition: $condition, ')
           ..write('priority: $priority, ')
           ..write('folderName: $folderName, ')
+          ..write('language: $language, ')
+          ..write('isPreSale: $isPreSale, ')
+          ..write('currentPriceBrl: $currentPriceBrl, ')
+          ..write('lastCheckedAt: $lastCheckedAt, ')
           ..write('notes: $notes, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -4278,8 +4584,14 @@ typedef $$WishlistItemsTableCreateCompanionBuilder =
       Value<String> setName,
       required String imageUrl,
       Value<double> targetPriceBrl,
+      Value<double> minTargetPriceBrl,
+      Value<String> condition,
       Value<String> priority,
       Value<String> folderName,
+      Value<String> language,
+      Value<bool> isPreSale,
+      Value<double?> currentPriceBrl,
+      Value<DateTime?> lastCheckedAt,
       Value<String> notes,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -4293,8 +4605,14 @@ typedef $$WishlistItemsTableUpdateCompanionBuilder =
       Value<String> setName,
       Value<String> imageUrl,
       Value<double> targetPriceBrl,
+      Value<double> minTargetPriceBrl,
+      Value<String> condition,
       Value<String> priority,
       Value<String> folderName,
+      Value<String> language,
+      Value<bool> isPreSale,
+      Value<double?> currentPriceBrl,
+      Value<DateTime?> lastCheckedAt,
       Value<String> notes,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -4344,6 +4662,16 @@ class $$WishlistItemsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<double> get minTargetPriceBrl => $composableBuilder(
+    column: $table.minTargetPriceBrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get condition => $composableBuilder(
+    column: $table.condition,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get priority => $composableBuilder(
     column: $table.priority,
     builder: (column) => ColumnFilters(column),
@@ -4351,6 +4679,26 @@ class $$WishlistItemsTableFilterComposer
 
   ColumnFilters<String> get folderName => $composableBuilder(
     column: $table.folderName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get language => $composableBuilder(
+    column: $table.language,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPreSale => $composableBuilder(
+    column: $table.isPreSale,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get currentPriceBrl => $composableBuilder(
+    column: $table.currentPriceBrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4409,6 +4757,16 @@ class $$WishlistItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get minTargetPriceBrl => $composableBuilder(
+    column: $table.minTargetPriceBrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get condition => $composableBuilder(
+    column: $table.condition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get priority => $composableBuilder(
     column: $table.priority,
     builder: (column) => ColumnOrderings(column),
@@ -4416,6 +4774,26 @@ class $$WishlistItemsTableOrderingComposer
 
   ColumnOrderings<String> get folderName => $composableBuilder(
     column: $table.folderName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get language => $composableBuilder(
+    column: $table.language,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPreSale => $composableBuilder(
+    column: $table.isPreSale,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get currentPriceBrl => $composableBuilder(
+    column: $table.currentPriceBrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4462,11 +4840,35 @@ class $$WishlistItemsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<double> get minTargetPriceBrl => $composableBuilder(
+    column: $table.minTargetPriceBrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get condition =>
+      $composableBuilder(column: $table.condition, builder: (column) => column);
+
   GeneratedColumn<String> get priority =>
       $composableBuilder(column: $table.priority, builder: (column) => column);
 
   GeneratedColumn<String> get folderName => $composableBuilder(
     column: $table.folderName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPreSale =>
+      $composableBuilder(column: $table.isPreSale, builder: (column) => column);
+
+  GeneratedColumn<double> get currentPriceBrl => $composableBuilder(
+    column: $table.currentPriceBrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastCheckedAt => $composableBuilder(
+    column: $table.lastCheckedAt,
     builder: (column) => column,
   );
 
@@ -4515,8 +4917,14 @@ class $$WishlistItemsTableTableManager
                 Value<String> setName = const Value.absent(),
                 Value<String> imageUrl = const Value.absent(),
                 Value<double> targetPriceBrl = const Value.absent(),
+                Value<double> minTargetPriceBrl = const Value.absent(),
+                Value<String> condition = const Value.absent(),
                 Value<String> priority = const Value.absent(),
                 Value<String> folderName = const Value.absent(),
+                Value<String> language = const Value.absent(),
+                Value<bool> isPreSale = const Value.absent(),
+                Value<double?> currentPriceBrl = const Value.absent(),
+                Value<DateTime?> lastCheckedAt = const Value.absent(),
                 Value<String> notes = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -4528,8 +4936,14 @@ class $$WishlistItemsTableTableManager
                 setName: setName,
                 imageUrl: imageUrl,
                 targetPriceBrl: targetPriceBrl,
+                minTargetPriceBrl: minTargetPriceBrl,
+                condition: condition,
                 priority: priority,
                 folderName: folderName,
+                language: language,
+                isPreSale: isPreSale,
+                currentPriceBrl: currentPriceBrl,
+                lastCheckedAt: lastCheckedAt,
                 notes: notes,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -4543,8 +4957,14 @@ class $$WishlistItemsTableTableManager
                 Value<String> setName = const Value.absent(),
                 required String imageUrl,
                 Value<double> targetPriceBrl = const Value.absent(),
+                Value<double> minTargetPriceBrl = const Value.absent(),
+                Value<String> condition = const Value.absent(),
                 Value<String> priority = const Value.absent(),
                 Value<String> folderName = const Value.absent(),
+                Value<String> language = const Value.absent(),
+                Value<bool> isPreSale = const Value.absent(),
+                Value<double?> currentPriceBrl = const Value.absent(),
+                Value<DateTime?> lastCheckedAt = const Value.absent(),
                 Value<String> notes = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -4556,8 +4976,14 @@ class $$WishlistItemsTableTableManager
                 setName: setName,
                 imageUrl: imageUrl,
                 targetPriceBrl: targetPriceBrl,
+                minTargetPriceBrl: minTargetPriceBrl,
+                condition: condition,
                 priority: priority,
                 folderName: folderName,
+                language: language,
+                isPreSale: isPreSale,
+                currentPriceBrl: currentPriceBrl,
+                lastCheckedAt: lastCheckedAt,
                 notes: notes,
                 createdAt: createdAt,
                 rowid: rowid,

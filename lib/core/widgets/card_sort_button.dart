@@ -18,7 +18,7 @@ class CardSortButton extends StatelessWidget {
     required this.currentOption,
     required this.onSelected,
     required this.isEn,
-    this.isCompact = false,
+    this.isCompact = true,
   });
 
   @override

@@ -8,6 +8,7 @@ import '../../../../core/utils/semantic_search_helper.dart';
 import '../../../../core/navigation/app_navigator.dart';
 import '../../../../core/widgets/condition_badge.dart';
 import '../../../../core/widgets/language_flag_badge.dart';
+import '../../../../core/widgets/folder_badge.dart';
 import '../../../../core/widgets/pokemon_card_image.dart';
 import '../../../catalog/models/pokemon_card_item.dart';
 import '../../models/monitored_card_item.dart';
@@ -167,24 +168,10 @@ class MonitoredCardTile extends StatelessWidget {
                         ],
                         if (showFolderTag && item.folderName != null) ...[
                           const SizedBox(width: 6),
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: (item.folderColor ?? theme.colorScheme.primary).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                item.folderName!,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: item.folderColor ?? theme.colorScheme.primary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
+                          FolderBadge(
+                            folderName: item.folderName!,
+                            color: item.folderColor,
+                            compact: true,
                           ),
                         ],
                       ],

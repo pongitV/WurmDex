@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,18 +6,27 @@ import '../../../core/database/database_provider.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/providers/card_scale_provider.dart';
 import '../../../core/providers/card_view_mode_provider.dart';
+import '../../../core/providers/currency_provider.dart';
 import '../../../core/providers/grid_composition_provider.dart';
-import '../../../core/services/app_preferences_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../core/utils/marketplace_url_helper.dart';
+import '../../../core/widgets/app_action_fab.dart';
 import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_filter_modal.dart';
 import '../../../core/widgets/app_network_image.dart';
 import '../../../core/widgets/app_overflow_menu.dart';
+import '../../../core/widgets/app_screen_title.dart';
+import '../../../core/widgets/app_search_dialog.dart';
+import '../../../core/widgets/app_sort_button.dart';
+import '../../../core/widgets/card_description_badges.dart';
+import '../../../core/widgets/language_flag_badge.dart';
 import '../services/liga_scraper_service.dart';
 import 'widgets/add_edit_liga_alert_dialog.dart';
 import 'widgets/radar_background_settings_sheet.dart';
+import 'widgets/radar_kpi_summary.dart';
 
 enum LigaFilterType { inRange, preSale, active }
+enum LigaRadarSortOption { targetDiff, priceAsc, priceDesc, nameAsc, newest }
 
 class LigaRadarScreen extends ConsumerStatefulWidget {
   const LigaRadarScreen({super.key});
@@ -30,6 +38,7 @@ class LigaRadarScreen extends ConsumerStatefulWidget {
 class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
   final Set<LigaFilterType> _activeFilters = {};
   String? _collectionFilter;
+  LigaRadarSortOption _sortOption = LigaRadarSortOption.targetDiff;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isCheckingAll = false;
@@ -45,7 +54,7 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
 
   Future<void> _autoCheckStaleAlerts() async {
     final db = ref.read(databaseProvider);
-    final alerts = await db.getAllActiveLigaAlerts();
+    final alerts = await db.getAllLigaAlerts();
     final stale = alerts
         .where(
           (a) =>
@@ -65,6 +74,22 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _showSearchDialog() async {
+    final strings = getStrings(ref.read(languageProvider));
+    final query = await AppSearchDialog.show(
+      context,
+      initialQuery: _searchQuery,
+      hintText: strings.filterProductsHint,
+      strings: strings,
+    );
+    if (query != null && mounted) {
+      setState(() {
+        _searchQuery = query.trim();
+        _searchController.text = _searchQuery;
+      });
+    }
   }
 
   Future<void> _openAddDialog() async {
@@ -219,14 +244,6 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
     }
   }
 
-  Future<void> _toggleActive(LigaPriceAlert alert) async {
-    final db = ref.read(databaseProvider);
-    final updated = alert
-        .toCompanion(true)
-        .copyWith(isActive: drift.Value(!alert.isActive));
-    await db.updateLigaAlert(updated);
-  }
-
   void _toggleFilter(LigaFilterType filter) {
     setState(() {
       if (!_activeFilters.add(filter)) {
@@ -279,34 +296,135 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
     final cardScale = ref.watch(collectionCardScaleProvider);
     ref.watch(gridCompositionProvider);
     final viewMode = ref.watch(cardViewModeProvider);
+    final currency = ref.watch(currencyProvider);
+    final isUsd = currency == AppCurrency.usd;
+    final exchangeRate = ref.watch(exchangeRateProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              strings.ligaRadarTitle,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
+        title: AppScreenTitle(title: strings.ligaRadarTitle),
         actions: [
-          AppOverflowMenu(
-            scaleTarget: CardScaleTarget.collection,
-            showCurrency: false,
+          AppFilterButton(
+            activeFilterCount:
+                _activeFilters.length + (_collectionFilter != null ? 1 : 0),
+            tooltip: strings.filtersAndMore,
+            isFilledTonal: false,
+            onPressed: () {
+              AppFilterModalDialog.show(
+                context: context,
+                title: strings.filtersAndMore,
+                hasActiveFilters:
+                    _activeFilters.isNotEmpty || _collectionFilter != null,
+                strings: strings,
+                onClear: () => setState(() {
+                  _activeFilters.clear();
+                  _collectionFilter = null;
+                }),
+                onApply: () => setState(() {}),
+                children: [
+                  Text(
+                    strings.isEn ? 'Status & Options' : 'Status e Opções',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      FilterChip(
+                        label: Text(strings.kpiInRangeTotal),
+                        selected:
+                            _activeFilters.contains(LigaFilterType.inRange),
+                        onSelected: (_) => _toggleFilter(LigaFilterType.inRange),
+                      ),
+                      FilterChip(
+                        label: Text(strings.isEn ? 'Pre-order' : 'Pré-venda'),
+                        selected:
+                            _activeFilters.contains(LigaFilterType.preSale),
+                        onSelected: (_) => _toggleFilter(LigaFilterType.preSale),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+          AppSortButton<LigaRadarSortOption>(
+            currentOption: _sortOption,
+            isCompact: true,
+            tooltip: strings.radarSortTitle,
+            onSelected: (val) => setState(() => _sortOption = val),
+            options: [
+              SortOptionItem(
+                value: LigaRadarSortOption.targetDiff,
+                label: strings.radarSortTargetDiff,
+                icon: Icons.trending_down,
+              ),
+              SortOptionItem(
+                value: LigaRadarSortOption.priceAsc,
+                label: strings.radarSortPriceAsc,
+                icon: Icons.arrow_upward,
+              ),
+              SortOptionItem(
+                value: LigaRadarSortOption.priceDesc,
+                label: strings.radarSortPriceDesc,
+                icon: Icons.arrow_downward,
+              ),
+              SortOptionItem(
+                value: LigaRadarSortOption.nameAsc,
+                label: strings.radarSortNameAsc,
+                icon: Icons.sort_by_alpha,
+              ),
+              SortOptionItem(
+                value: LigaRadarSortOption.newest,
+                label: strings.radarSortNewest,
+                icon: Icons.access_time,
+              ),
+            ],
           ),
           IconButton(
-            icon: Icon(
-              Icons.add_circle,
-              color: theme.colorScheme.primary,
-              size: 28,
-            ),
-            tooltip: strings.btnAddAlert,
-            onPressed: _openAddDialog,
+            icon: _isCheckingAll
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh),
+            tooltip: strings.refreshTooltip,
+            onPressed: _isCheckingAll ? null : _checkAllItems,
+          ),
+          const AppOverflowMenu(
+            scaleTarget: CardScaleTarget.collection,
+            showCurrency: true,
           ),
           const SizedBox(width: 8),
+        ],
+      ),
+      floatingActionButton: AppActionFab(
+        tooltip: strings.searchActionTitle,
+        sheetTitle: strings.ligaRadarTitle,
+        actions: [
+          AppFabAction(
+            icon: Icons.search,
+            title: strings.searchActionTitle,
+            subtitle: strings.filterProductsHint,
+            onTap: _showSearchDialog,
+          ),
+          AppFabAction(
+            icon: Icons.add_alert_outlined,
+            title: strings.btnAddAlert,
+            subtitle: 'LigaPokémon',
+            onTap: _openAddDialog,
+          ),
+          AppFabAction(
+            icon: Icons.wallpaper_outlined,
+            title: strings.radarBackgroundSettings,
+            subtitle: strings.isEn ? 'Automatic price checks' : 'Verificação automática',
+            onTap: _openBackgroundSettings,
+          ),
         ],
       ),
       body: alertsAsync.when(
@@ -330,12 +448,9 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
           }
 
           // Compute KPIs
-          final totalMonitored = alerts.where((a) => a.isActive).length;
           final totalInRange = alerts
               .where((a) => a.isAvailableInRange && a.isActive)
               .length;
-          final totalPreSale = alerts.where((a) => a.isPreSale).length;
-
           // Filter items
           final filtered = alerts.where((a) {
             if (_searchQuery.isNotEmpty) {
@@ -363,6 +478,33 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
             return true;
           }).toList();
 
+          // Apply Sorting
+          switch (_sortOption) {
+            case LigaRadarSortOption.targetDiff:
+              filtered.sort((a, b) {
+                final diffA = a.currentLowestPrice != null && a.maxTargetPrice > 0
+                    ? (a.maxTargetPrice - a.currentLowestPrice!) / a.maxTargetPrice
+                    : -999.0;
+                final diffB = b.currentLowestPrice != null && b.maxTargetPrice > 0
+                    ? (b.maxTargetPrice - b.currentLowestPrice!) / b.maxTargetPrice
+                    : -999.0;
+                return diffB.compareTo(diffA);
+              });
+              break;
+            case LigaRadarSortOption.priceAsc:
+              filtered.sort((a, b) => (a.currentLowestPrice ?? 999999).compareTo(b.currentLowestPrice ?? 999999));
+              break;
+            case LigaRadarSortOption.priceDesc:
+              filtered.sort((a, b) => (b.currentLowestPrice ?? 0).compareTo(a.currentLowestPrice ?? 0));
+              break;
+            case LigaRadarSortOption.nameAsc:
+              filtered.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+              break;
+            case LigaRadarSortOption.newest:
+              filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+              break;
+          }
+
           // Distinct collections for the dropdown filter
           final collections =
               alerts
@@ -372,137 +514,72 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                   .toList()
                 ..sort();
 
+          final totalPrice = filtered.fold<double>(
+            0,
+            (sum, a) =>
+                sum +
+                (a.currentLowestPrice != null && a.currentLowestPrice! > 0
+                    ? a.currentLowestPrice!
+                    : (a.maxTargetPrice > 0
+                        ? a.maxTargetPrice
+                        : a.minTargetPrice)),
+          );
+
+          final now = DateTime.now();
+          final updatedToday = filtered
+              .where(
+                (a) =>
+                    a.lastCheckedAt != null &&
+                    a.lastCheckedAt!.year == now.year &&
+                    a.lastCheckedAt!.month == now.month &&
+                    a.lastCheckedAt!.day == now.day,
+              )
+              .length;
+
           return CustomScrollView(
             slivers: [
-              // Search bar at the top, below the title/buttons
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                   child: Column(
                     children: [
-                      TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: strings.filterProductsHint,
-                          prefixIcon: const Icon(Icons.search, size: 20),
-                          suffixIcon: _searchQuery.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear, size: 18),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                  },
-                                )
-                              : null,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      RadarKpiSummary(
+                        totalInRange: totalInRange,
+                        totalPrice: totalPrice,
+                        updatedToday: updatedToday,
+                        totalProducts: filtered.length,
+                        isInRangeSelected: _activeFilters.contains(
+                          LigaFilterType.inRange,
+                        ),
+                        isProductsSelected: _activeFilters.contains(
+                          LigaFilterType.active,
+                        ),
+                        onToggleInRange: () =>
+                            _toggleFilter(LigaFilterType.inRange),
+                        onToggleProducts: () =>
+                            _toggleFilter(LigaFilterType.active),
+                        isUsd: isUsd,
+                        exchangeRate: exchangeRate,
+                        strings: strings,
+                      ),
+                      if (_searchQuery.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: InputChip(
+                              avatar: const Icon(Icons.search, size: 14),
+                              label: Text(
+                                _searchQuery,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              onDeleted: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                            ),
                           ),
                         ),
-                        onChanged: (val) =>
-                            setState(() => _searchQuery = val.trim()),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8, bottom: 4),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildKpiCard(
-                                theme: theme,
-                                label: strings.kpiMonitoredTotal,
-                                value: '$totalMonitored',
-                                icon: Icons.bookmark_outline,
-                                color: theme.colorScheme.primary,
-                                selected: _activeFilters.contains(
-                                  LigaFilterType.active,
-                                ),
-                                onTap: () =>
-                                    _toggleFilter(LigaFilterType.active),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildKpiCard(
-                                theme: theme,
-                                label: strings.kpiInRangeTotal,
-                                value: '$totalInRange',
-                                icon: Icons.check_circle_outline,
-                                color: Colors.green,
-                                selected: _activeFilters.contains(
-                                  LigaFilterType.inRange,
-                                ),
-                                onTap: () =>
-                                    _toggleFilter(LigaFilterType.inRange),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildKpiCard(
-                                theme: theme,
-                                label: strings.kpiPreSaleTotal,
-                                value: '$totalPreSale',
-                                icon: Icons.calendar_today_outlined,
-                                color: Colors.deepPurple,
-                                selected: _activeFilters.contains(
-                                  LigaFilterType.preSale,
-                                ),
-                                onTap: () =>
-                                    _toggleFilter(LigaFilterType.preSale),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              icon: _isCheckingAll
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.sync, size: 18),
-                              label: Text(strings.btnCheckAllNow),
-                              onPressed: _isCheckingAll ? null : _checkAllItems,
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(48),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              icon: Icon(
-                                Icons.schedule,
-                                size: 18,
-                                color:
-                                    AppPreferencesService.isBackgroundLigaMonitoringEnabled()
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.onSurfaceVariant,
-                              ),
-                              label: Text(strings.radarBackgroundSettings),
-                              onPressed: _openBackgroundSettings,
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(48),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Align(
@@ -634,6 +711,7 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String?>(
           value: value,
+          isExpanded: true,
           hint: hint != null
               ? Row(
                   mainAxisSize: MainAxisSize.min,
@@ -664,63 +742,6 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
     );
   }
 
-  Widget _buildKpiCard({
-    required ThemeData theme,
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected
-              ? color.withValues(alpha: 0.18)
-              : color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? color : color.withValues(alpha: 0.3),
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: color,
-                    ),
-                  ),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   (Color, String) _resolveStatus(
     LigaPriceAlert alert,
@@ -744,19 +765,6 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
     );
   }
 
-  String _languageFlag(String language) {
-    switch (language.toUpperCase()) {
-      case 'PT':
-        return '🇧🇷';
-      case 'EN':
-        return '🇺🇸';
-      case 'JP':
-        return '🇯🇵';
-      default:
-        return '🌐';
-    }
-  }
-
   Widget _buildAlertGridCard(
     ThemeData theme,
     AppStrings strings,
@@ -772,19 +780,26 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
               : strings.statusOutOfStock);
     final (statusColor, statusText) = _resolveStatus(alert, price, strings);
 
+    final isGreen = alert.isAvailableInRange;
+    final tinted = isGreen || alert.isActive;
+
     return Card(
       margin: EdgeInsets.zero,
-      color: alert.isActive
-          ? theme.colorScheme.primary.withValues(alpha: 0.12)
-          : null,
-      elevation: alert.isActive ? 3 : 1,
+      color: isGreen
+          ? Colors.green.withValues(alpha: 0.12)
+          : alert.isActive
+              ? theme.colorScheme.primary.withValues(alpha: 0.12)
+              : null,
+      elevation: tinted ? 3 : 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: alert.isActive
-              ? theme.colorScheme.primary
-              : theme.colorScheme.outlineVariant,
-          width: alert.isActive ? 1.5 : 1,
+          color: isGreen
+              ? Colors.green
+              : alert.isActive
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outlineVariant,
+          width: tinted ? 1.5 : 1,
         ),
       ),
       clipBehavior: Clip.antiAlias,
@@ -913,11 +928,14 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                         : () => _checkSingleItem(alert),
                   ),
                   const Spacer(),
-                  _RadarActiveToggle(
-                    value: alert.isActive,
-                    accentColor: theme.colorScheme.primary,
-                    size: 24,
-                    onChanged: () => _toggleActive(alert),
+                  Icon(
+                    alert.isAvailableInRange
+                        ? Icons.check_circle
+                        : Icons.notifications_active_outlined,
+                    color: alert.isAvailableInRange
+                        ? Colors.green
+                        : theme.colorScheme.onSurfaceVariant,
+                    size: 20,
                   ),
                 ],
               ),
@@ -953,20 +971,19 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
               : strings.statusOutOfStock);
 
     final (statusColor, statusText) = _resolveStatus(alert, price, strings);
+    final isGreen = alert.isAvailableInRange;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: alert.isActive
-          ? theme.colorScheme.primary.withValues(alpha: 0.12)
-          : null,
-      elevation: alert.isActive ? 3 : 1,
+      color: isGreen ? Colors.green.withValues(alpha: 0.12) : null,
+      elevation: isGreen ? 3 : 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: alert.isActive
-              ? theme.colorScheme.primary
+          color: isGreen
+              ? Colors.green
               : theme.colorScheme.outlineVariant,
-          width: alert.isActive ? 1.5 : 1,
+          width: isGreen ? 1.5 : 1,
         ),
       ),
       child: Padding(
@@ -982,9 +999,7 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerHighest,
                   border: Border.all(
-                    color: alert.isActive
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.outlineVariant,
+                    color: theme.colorScheme.outlineVariant,
                     width: 1,
                   ),
                   borderRadius: BorderRadius.circular(14),
@@ -1037,134 +1052,39 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
                     runSpacing: 4,
                     children: [
                       // Status Badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: statusColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: statusColor.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        child: Text(
-                          statusText,
-                          style: TextStyle(
-                            color: statusColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
+                      RangeStatusBadge(
+                        color: statusColor,
+                        text: statusText,
+                        compact: true,
                       ),
 
                       // Pre-Sale Indicator if current offer is pre-sale
                       if (alert.isPreSale)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.deepPurple,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            strings.statusPreSale.toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                            ),
-                          ),
+                        PreSaleStatusBadge(
+                          label: strings.statusPreSale.toUpperCase(),
+                          compact: true,
                         ),
 
                       // Allow Pre-Sale Tag
                       if (alert.allowPreSale && !alert.isPreSale)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            strings.preSaleAcceptedTag,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
+                        PreSaleAcceptedBadge(
+                          label: strings.preSaleAcceptedTag,
+                          compact: true,
                         ),
 
                       // Collection tag
                       if (alert.collectionTag.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: 0.12,
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.style_outlined,
-                                size: 11,
-                                color: theme.colorScheme.primary,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                alert.collectionTag,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ],
-                          ),
+                        CollectionTagBadge(
+                          name: alert.collectionTag,
+                          compact: true,
                         ),
 
                       // Language tag
                       if (alert.languageTag.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.tertiary.withValues(
-                              alpha: 0.12,
-                            ),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _languageFlag(alert.languageTag),
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                alert.languageTag,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.tertiary,
-                                ),
-                              ),
-                            ],
-                          ),
+                        LanguageFlagBadge(
+                          language: alert.languageTag,
+                          compact: true,
+                          showCode: true,
                         ),
                     ],
                   ),
@@ -1365,19 +1285,10 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
 
                   const SizedBox(height: 10),
 
-                  // Bottom Actions Bar (active check-toggle + item actions)
+                  // Bottom Actions Bar (item actions)
                   Row(
                     children: [
                       const Spacer(),
-
-                      // Check-toggle: white with black check when ON, black with
-                      // white X when OFF; accent border while active
-                      _RadarActiveToggle(
-                        value: alert.isActive,
-                        accentColor: theme.colorScheme.primary,
-                        onChanged: () => _toggleActive(alert),
-                      ),
-                      const SizedBox(width: 12),
 
                       // Check single item now button
                       IconButton(
@@ -1430,55 +1341,6 @@ class _LigaRadarScreenState extends ConsumerState<LigaRadarScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Check-style toggle used by the Liga Radar product widgets.
-///
-/// White with a black check (plus an accent border) when ON; dark with a
-/// white X when OFF.
-class _RadarActiveToggle extends StatelessWidget {
-  const _RadarActiveToggle({
-    required this.value,
-    required this.accentColor,
-    this.onChanged,
-    this.size = 26,
-  });
-
-  final bool value;
-  final Color accentColor;
-  final VoidCallback? onChanged;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onChanged,
-      customBorder: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: value ? Colors.white : Colors.black,
-          borderRadius: BorderRadius.circular(8),
-          border: value ? Border.all(color: accentColor, width: 2) : null,
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 3,
-              offset: Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Icon(
-          value ? Icons.check : Icons.close,
-          size: size * 0.6,
-          color: value ? Colors.black : Colors.white,
         ),
       ),
     );

@@ -99,7 +99,7 @@ void main() {
       const ptStrings = AppStrings(AppLanguage.ptBr);
 
       expect(enStrings.navPokedex, 'WorldDex');
-      expect(ptStrings.navPokedex, 'DexMundial');
+      expect(ptStrings.navPokedex, 'WorldDex');
       expect(enStrings.pokedexTitle, 'WorldDex');
       expect(ptStrings.pokedexTitle, 'DexMundial');
       expect(enStrings.dataSourcesTitle, 'Data Sources & Attribution');
@@ -112,7 +112,7 @@ void main() {
       expect(ptStrings.pokedexCardsFor('Pikachu'), 'Cartas de Pikachu');
 
       expect(enStrings.navSets, 'Expansions');
-      expect(ptStrings.navSets, 'Coleções TCG');
+      expect(ptStrings.navSets, 'Expansions');
 
       expect(enStrings.tabReleasedSets, 'Released Sets');
       expect(ptStrings.tabReleasedSets, 'Coleções Lançadas');

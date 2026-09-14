@@ -9,6 +9,7 @@ import '../../../../core/theme/theme_provider.dart';
 import '../../../../core/services/app_preferences_service.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/file_storage_helper.dart';
+import '../../../../core/widgets/app_screen_title.dart';
 import '../../../../core/widgets/card_scale_dialog.dart';
 import '../../../../core/providers/autoclicker_provider.dart';
 
@@ -33,7 +34,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(strings.settingsTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: AppScreenTitle(title: strings.settingsTitle),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/localization/app_strings.dart';
+import '../../../../core/services/app_preferences_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/app_network_image.dart';
@@ -32,9 +33,9 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
   late final TextEditingController _currentPriceController;
   late final TextEditingController _minPriceController;
   late final TextEditingController _maxPriceController;
-  late final TextEditingController _collectionController;
-  late final TextEditingController _languageController;
 
+  String _collection = '';
+  String _language = 'PT';
   late bool _allowPreSale;
   bool _isLoadingPreview = false;
   String? _previewImageUrl;
@@ -64,8 +65,10 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
           ? alert.maxTargetPrice.toStringAsFixed(2).replaceAll('.', ',')
           : '',
     );
-    _collectionController = TextEditingController(text: alert?.collectionTag ?? '');
-    _languageController = TextEditingController(text: alert?.languageTag ?? '');
+    _collection = alert?.collectionTag ?? '';
+    _language = alert?.languageTag.isNotEmpty == true
+        ? alert!.languageTag
+        : 'PT';
     _allowPreSale = alert?.allowPreSale ?? true;
     _previewImageUrl = alert?.imageUrl;
     _previewLowestPrice = alert?.currentLowestPrice;
@@ -79,8 +82,6 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
     _currentPriceController.dispose();
     _minPriceController.dispose();
     _maxPriceController.dispose();
-    _collectionController.dispose();
-    _languageController.dispose();
     super.dispose();
   }
 
@@ -144,11 +145,11 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
 
           // Auto-detect collection & language from the product title when not manually set
           final tags = LigaScraperService.detectTags(product.title);
-          if (_collectionController.text.trim().isEmpty) {
-            _collectionController.text = tags.collection;
+          if (_collection.isEmpty) {
+            _collection = tags.collection;
           }
-          if (_languageController.text.trim().isEmpty) {
-            _languageController.text = tags.language;
+          if (_language.isEmpty) {
+            _language = tags.language.isNotEmpty ? tags.language : 'PT';
           }
 
           if (product.lowestPrice != null && product.lowestPrice! > 0) {
@@ -178,6 +179,43 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
   }
 
   double _parseInputPrice(String text) => CurrencyFormatter.parseCurrencyOrDefault(text);
+
+  String _languageFlag(String code) {
+    switch (code.toUpperCase()) {
+      case 'PT':
+        return '🇧🇷';
+      case 'EN':
+        return '🇺🇸';
+      case 'JP':
+        return '🇯🇵';
+      default:
+        return '🌐';
+    }
+  }
+
+  List<DropdownMenuItem<String>> _collectionOptions() {
+    final names = <String>{};
+    names.addAll(AppPreferencesService.getRadarFolders());
+    final existing = widget.existingAlert?.collectionTag;
+    if (existing != null && existing.isNotEmpty) names.add(existing);
+    if (_collection.isNotEmpty) names.add(_collection);
+    final list = names.toList()..sort();
+    return [
+      DropdownMenuItem(value: '', child: Text(widget.strings.noFolderLabel)),
+      ...list.map((c) => DropdownMenuItem(value: c, child: Text(c))),
+    ];
+  }
+
+  List<DropdownMenuItem<String>> _languageOptions() {
+    final codes = <String>{'PT', 'EN', 'JP'};
+    if (_language.isNotEmpty) codes.add(_language);
+    return codes.map((code) {
+      return DropdownMenuItem(
+        value: code,
+        child: Text('${_languageFlag(code)} ${code.toUpperCase()}'),
+      );
+    }).toList();
+  }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
@@ -223,8 +261,8 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
       isActive: drift.Value(widget.existingAlert?.isActive ?? true),
       lastCheckedAt: drift.Value(DateTime.now()),
       createdAt: drift.Value(widget.existingAlert?.createdAt ?? DateTime.now()),
-      collectionTag: drift.Value(_collectionController.text.trim()),
-      languageTag: drift.Value(_languageController.text.trim()),
+      collectionTag: drift.Value(_collection.trim()),
+      languageTag: drift.Value(_language.trim()),
     );
 
     if (isEditing) {
@@ -356,33 +394,42 @@ class _AddEditLigaAlertDialogState extends State<AddEditLigaAlertDialog> {
 
                   const SizedBox(height: 12),
 
-                  // Collection & Language Tags (auto-detected, manually editable)
+                  // Collection & Language Tags (auto-detected, selectable from existing folders)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: TextFormField(
-                          controller: _collectionController,
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _collection,
                           decoration: InputDecoration(
                             labelText: widget.strings.collectionLabel,
-                            hintText: widget.strings.collectionHint,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            prefixIcon: const Icon(Icons.style_outlined, size: 20),
+                            prefixIcon:
+                                const Icon(Icons.style_outlined, size: 20),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             isDense: true,
                           ),
+                          items: _collectionOptions(),
+                          onChanged: (val) =>
+                              setState(() => _collection = val ?? ''),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: TextFormField(
-                          controller: _languageController,
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _language,
                           decoration: InputDecoration(
                             labelText: widget.strings.languageLabel,
-                            hintText: widget.strings.languageHint,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             prefixIcon: const Icon(Icons.language, size: 20),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             isDense: true,
                           ),
+                          items: _languageOptions(),
+                          onChanged: (val) =>
+                              setState(() => _language = val ?? 'PT'),
                         ),
                       ),
                     ],

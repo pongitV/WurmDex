@@ -637,7 +637,11 @@ class _CardDetailsScreenState extends ConsumerState<CardDetailsScreen> {
                           backgroundColor: theme.colorScheme.primary,
                           foregroundColor: Colors.white,
                         ),
-                        onPressed: () => CardQuickActionSheet.show(context, card),
+                        onPressed: () => CardQuickActionSheet.showAddToFolderDialog(
+                          context: context,
+                          ref: ref,
+                          card: card,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),

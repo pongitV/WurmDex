@@ -91,18 +91,17 @@ class _RadarBackgroundSettingsSheetState extends ConsumerState<RadarBackgroundSe
               margin: EdgeInsets.zero,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              child: SwitchListTile(
+              child: CheckboxListTile(
                 value: _enabled,
-                onChanged: _setEnabled,
-                activeTrackColor: colorScheme.primary,
-                activeThumbColor: colorScheme.primary,
-                inactiveTrackColor: colorScheme.surfaceContainerHighest,
-                inactiveThumbColor: colorScheme.surface,
+                onChanged: (val) => _setEnabled(val ?? false),
+                activeColor: colorScheme.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 title: Text(
                   strings.radarBackgroundEnabledLabel,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text(strings.radarBackgroundEnabledDesc),
+                controlAffinity: ListTileControlAffinity.trailing,
               ),
             ),
             if (_enabled) ...[

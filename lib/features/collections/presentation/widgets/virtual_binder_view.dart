@@ -1143,20 +1143,25 @@ class VirtualBinderViewState extends ConsumerState<VirtualBinderView>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.auto_stories, size: 16, color: Color(0xFFD4AF37)),
-                              const SizedBox(width: 6),
-                              Text(
-                                _strings.navCollection.toUpperCase(),
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.8,
-                                  color: Color(0xFFD4AF37),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(Icons.auto_stories, size: 16, color: Color(0xFFD4AF37)),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    _strings.navCollection.toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.8,
+                                      color: Color(0xFFD4AF37),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),

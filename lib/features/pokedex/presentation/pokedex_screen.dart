@@ -1,16 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:math' as math;
 import '../../../core/localization/app_strings.dart';
 import '../../../core/providers/card_scale_provider.dart';
 import '../../../core/providers/card_view_mode_provider.dart';
+import '../../../core/providers/currency_provider.dart';
 import '../../../core/providers/grid_composition_provider.dart';
+import '../../../core/widgets/app_action_fab.dart';
+import '../../../core/widgets/app_filter_modal.dart';
 import '../../../core/widgets/app_overflow_menu.dart';
-import '../../../core/widgets/app_search_bar.dart';
+import '../../../core/widgets/app_screen_title.dart';
+import '../../../core/widgets/app_search_dialog.dart';
+import '../../../core/widgets/app_sort_button.dart';
 import '../../../core/navigation/app_navigator.dart';
 import '../data/pokedex_data.dart';
 import '../models/pokedex_entry.dart';
 import 'widgets/pokemon_grid_card.dart';
 import 'widgets/pokemon_list_item.dart';
+
+enum PokedexSortOption {
+  numberAsc,
+  numberDesc,
+  nameAsc,
+  nameDesc,
+}
 
 class PokedexScreen extends ConsumerStatefulWidget {
   const PokedexScreen({super.key});
@@ -20,33 +33,131 @@ class PokedexScreen extends ConsumerStatefulWidget {
 }
 
 class _PokedexScreenState extends ConsumerState<PokedexScreen> {
-  final TextEditingController _searchController = TextEditingController();
   int _selectedGeneration = 0; // 0 = All
+  String? _selectedType;
   String _searchQuery = '';
+  PokedexSortOption _sortOption = PokedexSortOption.numberAsc;
+
+  int get _activeFilterCount =>
+      (_selectedGeneration > 0 ? 1 : 0) + (_selectedType != null ? 1 : 0);
+
+  void _clearFilters() {
+    setState(() {
+      _selectedGeneration = 0;
+      _selectedType = null;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    // Fetch fresh National Pokédex from billsarchive.com (falls back to the
-    // bundled list offline); local display names are always preserved.
     PokedexData.refresh().then((_) {
       if (mounted) setState(() {});
     });
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  Future<void> _showSearchDialog(AppStrings strings) async {
+    final query = await AppSearchDialog.show(
+      context,
+      initialQuery: _searchQuery,
+      hintText: strings.pokedexSearchHint,
+      strings: strings,
+      suggestions: const ['Pikachu', 'Charizard', 'Mewtwo', 'Gengar', 'Eevee', 'Lucario'],
+    );
+    if (query != null && mounted) {
+      setState(() => _searchQuery = query.trim());
+    }
+  }
+
+  void _showFilterDialog(AppStrings strings, int maxGeneration) {
+    int tempGen = _selectedGeneration;
+    String? tempType = _selectedType;
+
+    const pokemonTypes = [
+      'Normal', 'Fire', 'Water', 'Grass', 'Electric', 'Ice',
+      'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug',
+      'Rock', 'Ghost', 'Dark', 'Dragon', 'Steel', 'Fairy'
+    ];
+
+    AppFilterModalDialog.show(
+      context: context,
+      title: strings.filtersAndMore,
+      hasActiveFilters: _activeFilterCount > 0,
+      strings: strings,
+      onClear: _clearFilters,
+      onApply: () {
+        setState(() {
+          _selectedGeneration = tempGen;
+          _selectedType = tempType;
+        });
+      },
+      children: [
+        StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  strings.isEn ? 'Generation' : 'Geração',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilterChip(
+                      label: Text(strings.pokedexAllGens),
+                      selected: tempGen == 0,
+                      onSelected: (_) => setDialogState(() => tempGen = 0),
+                    ),
+                    for (int i = 1; i <= maxGeneration; i++)
+                      FilterChip(
+                        label: Text(strings.pokedexGen(i)),
+                        selected: tempGen == i,
+                        onSelected: (selected) {
+                          setDialogState(() => tempGen = selected ? i : 0);
+                        },
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  strings.isEn ? 'Pokémon Type' : 'Tipo do Pokémon',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: pokemonTypes.map((type) {
+                    final isSelected = tempType == type;
+                    return FilterChip(
+                      label: Text(type),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setDialogState(() => tempType = selected ? type : null);
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
   }
 
   List<PokedexEntry> _getFilteredEntries() {
-    return PokedexData.resolved.where((entry) {
-      // Generation filter
+    final filtered = PokedexData.resolved.where((entry) {
       if (_selectedGeneration > 0 && entry.generation != _selectedGeneration) {
         return false;
       }
-      // Text query filter (name, formatted number, or type)
+      if (_selectedType != null &&
+          !entry.types.any((t) => t.toLowerCase() == _selectedType!.toLowerCase())) {
+        return false;
+      }
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase().trim();
         final matchesName = entry.name.toLowerCase().contains(query);
@@ -59,97 +170,163 @@ class _PokedexScreenState extends ConsumerState<PokedexScreen> {
       }
       return true;
     }).toList();
+
+    switch (_sortOption) {
+      case PokedexSortOption.numberAsc:
+        filtered.sort((a, b) => a.id.compareTo(b.id));
+        break;
+      case PokedexSortOption.numberDesc:
+        filtered.sort((a, b) => b.id.compareTo(a.id));
+        break;
+      case PokedexSortOption.nameAsc:
+        filtered.sort((a, b) => a.name.compareTo(b.name));
+        break;
+      case PokedexSortOption.nameDesc:
+        filtered.sort((a, b) => b.name.compareTo(a.name));
+        break;
+    }
+
+    return filtered;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final currentLanguage = ref.watch(languageProvider);
     final strings = getStrings(currentLanguage);
 
     final filteredEntries = _getFilteredEntries();
 
-    // Max generation present in the data (e.g. 9 now, 10 once Gen X lands).
     final maxGeneration = PokedexData.resolved.fold<int>(
       1,
       (acc, e) => e.generation > acc ? e.generation : acc,
     );
 
-    // Watch providers during build so the grid responds to scale/grid changes.
     final cardScale = ref.watch(menuCardScaleProvider);
     ref.watch(gridCompositionProvider);
     final viewMode = ref.watch(cardViewModeProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          strings.pokedexTitle,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: AppScreenTitle(title: strings.pokedexTitle),
         actions: [
+          AppFilterButton(
+            activeFilterCount: _activeFilterCount,
+            tooltip: strings.filtersAndMore,
+            isFilledTonal: false,
+            onPressed: () => _showFilterDialog(strings, maxGeneration),
+          ),
+          AppSortButton<PokedexSortOption>(
+            currentOption: _sortOption,
+            isCompact: true,
+            tooltip: strings.isEn ? 'Sort Pokédex' : 'Ordenar Pokédex',
+            onSelected: (val) => setState(() => _sortOption = val),
+            options: [
+              SortOptionItem(
+                value: PokedexSortOption.numberAsc,
+                label: strings.isEn ? 'Number (#1 → #1025)' : 'Número (#1 → #1025)',
+                icon: Icons.tag,
+              ),
+              SortOptionItem(
+                value: PokedexSortOption.numberDesc,
+                label: strings.isEn ? 'Number (#1025 → #1)' : 'Número (#1025 → #1)',
+                icon: Icons.tag,
+              ),
+              SortOptionItem(
+                value: PokedexSortOption.nameAsc,
+                label: strings.isEn ? 'Name (A → Z)' : 'Nome (A → Z)',
+                icon: Icons.sort_by_alpha,
+              ),
+              SortOptionItem(
+                value: PokedexSortOption.nameDesc,
+                label: strings.isEn ? 'Name (Z → A)' : 'Nome (Z → A)',
+                icon: Icons.sort_by_alpha,
+              ),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: strings.refreshTooltip,
+            onPressed: () {
+              setState(() {});
+              ref.read(exchangeRateProvider.notifier).refreshRate();
+            },
+          ),
           const AppOverflowMenu(showCurrency: true, scaleTarget: CardScaleTarget.menu),
           const SizedBox(width: 8),
         ],
       ),
+      floatingActionButton: AppActionFab(
+        tooltip: strings.searchActionTitle,
+        sheetTitle: strings.pokedexTitle,
+        actions: [
+          AppFabAction(
+            icon: Icons.search,
+            title: strings.searchActionTitle,
+            subtitle: strings.pokedexSearchHint,
+            onTap: () => _showSearchDialog(strings),
+          ),
+          AppFabAction(
+            icon: Icons.casino_outlined,
+            title: strings.isEn ? 'Random Pokémon' : 'Pokémon Aleatório',
+            subtitle: strings.isEn ? 'Surprise discovery' : 'Descobrir Pokémon',
+            onTap: () {
+              final randomId = (1 + math.Random().nextInt(1025));
+              setState(() => _searchQuery = '$randomId');
+            },
+          ),
+          if (_searchQuery.isNotEmpty || _selectedGeneration != 0 || _selectedType != null)
+            AppFabAction(
+              icon: Icons.clear_all,
+              title: strings.btnClearFilters,
+              subtitle: strings.reset,
+              isDestructive: true,
+              onTap: _clearFilters,
+            ),
+        ],
+      ),
       body: CustomScrollView(
         slivers: [
-          // Search Box (DRY)
-          SliverToBoxAdapter(
-            child: AppSearchBar(
-              controller: _searchController,
-              hintText: strings.pokedexSearchHint,
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              onChanged: (val) => setState(() => _searchQuery = val),
-              onClear: () => setState(() => _searchQuery = ''),
-            ),
-          ),
-
-          // Generation Filter Dropdown
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 200),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int>(
-                      value: _selectedGeneration,
-                      isDense: true,
-                      icon: const Icon(Icons.arrow_drop_down, size: 18),
-                      style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface),
-                      items: [
-                        for (int i = 0; i <= maxGeneration; i++)
-                          DropdownMenuItem<int>(
-                            value: i,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  i == 0 ? Icons.all_inclusive : Icons.catching_pokemon,
-                                  size: 15,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(i == 0 ? strings.pokedexAllGens : strings.pokedexGen(i)),
-                              ],
-                            ),
+          // Active search and filter chips bar
+          if (_searchQuery.isNotEmpty || _activeFilterCount > 0)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: SizedBox(
+                  height: 32,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      if (_searchQuery.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: InputChip(
+                            avatar: const Icon(Icons.search, size: 14),
+                            label: Text(_searchQuery, style: const TextStyle(fontSize: 12)),
+                            onDeleted: () => setState(() => _searchQuery = ''),
                           ),
-                      ],
-                      onChanged: (val) => setState(() => _selectedGeneration = val ?? 0),
-                    ),
+                        ),
+                      if (_selectedGeneration > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: InputChip(
+                            label: Text(strings.pokedexGen(_selectedGeneration), style: const TextStyle(fontSize: 12)),
+                            onDeleted: () => setState(() => _selectedGeneration = 0),
+                          ),
+                        ),
+                      if (_selectedType != null)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: InputChip(
+                            label: Text(_selectedType!, style: const TextStyle(fontSize: 12)),
+                            onDeleted: () => setState(() => _selectedType = null),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
 
           // Pokémon Grid (3x3 on mobile, responsive on wider screens)
           if (filteredEntries.isEmpty)
@@ -164,7 +341,7 @@ class _PokedexScreenState extends ConsumerState<PokedexScreen> {
                           Icon(
                             Icons.catching_pokemon,
                             size: 64,
-                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                           ),
                           const SizedBox(height: 16),
                           Text(strings.noCardsFound, style: theme.textTheme.titleMedium),

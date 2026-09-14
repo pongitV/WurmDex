@@ -76,21 +76,21 @@ class LanguageFlagBadge extends StatelessWidget {
     final theme = Theme.of(context);
     final flag = getFlagEmoji(language);
     final code = normalizeCode(language);
-    final size = fontSize ?? (compact ? 11.0 : 13.0);
+    final size = fontSize ?? (compact ? 10.5 : 12.5);
 
     return Tooltip(
       message: getLanguageLabel(language),
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: compact ? 3.5 : 5.0,
-          vertical: compact ? 1.0 : 2.0,
+          horizontal: compact ? 4.5 : 7.0,
+          vertical: compact ? 1.0 : 2.5,
         ),
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(compact ? 4.0 : 6.0),
           border: Border.all(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-            width: 0.8,
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+            width: compact ? 0.7 : 1.0,
           ),
         ),
         child: Row(
@@ -105,12 +105,12 @@ class LanguageFlagBadge extends StatelessWidget {
               ),
             ),
             if (showCode) ...[
-              const SizedBox(width: 3),
+              const SizedBox(width: 3.5),
               Text(
                 code,
                 style: TextStyle(
-                  fontSize: size * 0.82,
-                  fontWeight: FontWeight.bold,
+                  fontSize: compact ? 8.5 : 10.5,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 0.3,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

@@ -11,9 +11,10 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late Directory tempDir;
 
-  setUp(() {
+  setUp(() async {
     tempDir = Directory.systemTemp.createTempSync('wurmdex_test_');
     AppPreferencesService.setMockDirectory(tempDir);
+    await AppPreferencesService.init();
   });
 
   tearDown(() {

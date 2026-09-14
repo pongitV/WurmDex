@@ -55,12 +55,12 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
 
   int get _mobileNavSelectedIndex {
     if (_currentIndex == 0) return 0;
-    if (_currentIndex == 6) return 1;
-    if (_currentIndex == 3) return 2;
+    if (_currentIndex == 5) return 1;
+    if (_currentIndex == 6) return 2;
     return 3;
   }
 
-  bool _isMoreScreen(int index) => index != 0 && index != 6 && index != 3;
+  bool _isMoreScreen(int index) => index != 0 && index != 5 && index != 6;
 
   IconData _getMoreScreenIcon(int index) {
     switch (index) {
@@ -123,9 +123,9 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
     if (barIndex == 0) {
       setState(() => _currentIndex = 0);
     } else if (barIndex == 1) {
-      setState(() => _currentIndex = 6);
+      setState(() => _currentIndex = 5);
     } else if (barIndex == 2) {
-      setState(() => _currentIndex = 3);
+      setState(() => _currentIndex = 6);
     } else {
       _showMoreBottomSheet(context);
     }
@@ -373,7 +373,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
       onKeyEvent: _handleShortcuts,
       child: Scaffold(
         body: screens[_currentIndex],
-        // Unified Bottom Navigation Bar: Catalog, Radar and More (identical across Windows exe and Android apk)
+        // Unified navigation: Catalog, Wishlist, Radar and More.
         bottomNavigationBar: NavigationBar(
           selectedIndex: _mobileNavSelectedIndex,
           onDestinationSelected: _onMobileNavSelected,
@@ -385,14 +385,14 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
               label: strings.navCatalog,
             ),
             NavigationDestination(
+              icon: const Icon(Icons.bookmark_border),
+              selectedIcon: const Icon(Icons.bookmark),
+              label: strings.navWishlist,
+            ),
+            NavigationDestination(
               icon: const Icon(Icons.radar_outlined),
               selectedIcon: const Icon(Icons.radar),
               label: strings.navLigaRadar,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.folder_copy_outlined),
-              selectedIcon: const Icon(Icons.folder_copy),
-              label: strings.navCollections,
             ),
             NavigationDestination(
               icon: Icon(_isMoreScreen(_currentIndex)
